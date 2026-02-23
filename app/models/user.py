@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, SmallInteger, TIMESTAMP
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from datetime import datetime
+from sqlalchemy import Column, DateTime
 
 
 class User(Base):
@@ -21,4 +23,4 @@ class User(Base):
     role_id = Column(Integer)
     user_type_id = Column(Integer)
     is_deleted = Column(SmallInteger)
-    created_on = Column(TIMESTAMP)
+    created_on = Column(DateTime, nullable=False, default=datetime.utcnow)
