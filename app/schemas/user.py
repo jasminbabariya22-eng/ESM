@@ -48,6 +48,29 @@ class UserResponse(BaseModel):
     user_type_id: Optional[int]
     is_deleted: int
     created_on: Optional[datetime]
+    
+class UserHybridResponse(BaseModel):
+    id: int
+    log_id: str
+    password: str
+    first_name: str
+    last_name: str
+    email: str
+    country: str
+    status: str
+
+    department_id: Optional[int]
+    department_name: Optional[str]
+
+    role_id: Optional[int]
+    role_name: Optional[str]
+
+    user_type_id: Optional[int]
+    user_type_name: Optional[str]
+
+    is_deleted: int
+    created_on: Optional[datetime]
+
 
     class Config:
         from_attributes = True

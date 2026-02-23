@@ -7,10 +7,18 @@ from app.api.user import router as user_router
 from app.schemas.user import UserResponse
 from typing import List
 
+from app.api.department import router as dept_router
+from app.api.role import router as role_router
+from app.api.user_type import router as user_type_router
+
 app = FastAPI()
 app.include_router(auth_router)
 app.include_router(user_router)
 
-@app.get("/users", response_model=List[UserResponse])
-def get_users(db: Session = Depends(get_db)):
-    return db.query(User).limit(5).all()
+app.include_router(dept_router)
+app.include_router(role_router)
+app.include_router(user_type_router)
+
+# @app.get("/users", response_model=List[UserResponse])
+# def get_users(db: Session = Depends(get_db)):
+#     return db.query(User).limit(5).all()

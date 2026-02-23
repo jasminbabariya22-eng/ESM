@@ -1,9 +1,7 @@
-from sqlalchemy import Column, Integer, String, SmallInteger, TIMESTAMP
+from sqlalchemy import Column, Integer, String, SmallInteger, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from app.core.database import Base
 from datetime import datetime
-from sqlalchemy import Column, DateTime
-
+from app.core.database import Base
 
 class User(Base):
     __tablename__ = "mst_users"
@@ -19,8 +17,15 @@ class User(Base):
     country = Column(String, nullable=False)
     address = Column(String, nullable=False)
     status = Column(String, nullable=False)
-    dept_id = Column(Integer)
-    role_id = Column(Integer)
-    user_type_id = Column(Integer)
-    is_deleted = Column(SmallInteger)
+
+    dept_id = Column(Integer, ForeignKey("ers.mst_department.id"))
+    role_id = Column(Integer, ForeignKey("ers.mst_user_role.id"))
+    user_type_id = Column(Integer, ForeignKey("ers.mst_user_type.id"))
+
+    is_deleted = Column(SmallInteger, default=0)
     created_on = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    department = relationship("Department", backref="users")
+    role = relationship("UserRole", backref="users")
+    user_type = relationship("UserType", backref="users")
