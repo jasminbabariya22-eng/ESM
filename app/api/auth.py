@@ -30,6 +30,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     return {
         "id": user.id,
+        "password": user.password,
         "first_name": user.first_name,
         "last_name": user.last_name,
         "logid": user.log_id,
