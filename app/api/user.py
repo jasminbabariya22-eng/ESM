@@ -6,10 +6,13 @@ from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from typing import List
 from datetime import datetime
 from app.schemas.user import UserHybridResponse
+from app.core.dependencies import get_current_user
 
-
-router = APIRouter(prefix="/users", tags=["Users"])
-
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # --------------------------------
 # 1️⃣ CREATE USER
