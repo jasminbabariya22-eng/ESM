@@ -19,7 +19,7 @@ def login(
         User.is_deleted == 0
     ).first()
 
-    if not user or user.password != form_data.password:
+    if not user or user.password != form_data.password:                    # plaintext password pass here
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token(

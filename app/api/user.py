@@ -11,7 +11,7 @@ from app.core.dependencies import get_current_user
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
-    dependencies=[Depends(get_current_user)]
+    dependencies=[Depends(get_current_user)]         #router-level protection
 )
 
 # --------------------------------
