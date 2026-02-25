@@ -4,19 +4,26 @@ from datetime import datetime
 
 # -------- CREATE --------
 class UserCreate(BaseModel):
-    #id: int = 0
     log_id: str
     password: str
     first_name: str
     last_name: str
     email: EmailStr
+
+    photo: Optional[str] = None
+    contact_no: Optional[str] = None
+    country_code: Optional[int] = None
+    std_code: Optional[int] = None
+
     country: str
-    status: str
     address: str
-    contact_no: str
-    role_id: Optional[int] = None
-    dept_id: Optional[int] = None
-    user_type_id: Optional[int] = None
+    user_city: Optional[str] = None
+
+    dept_id: int
+    role_id: int
+    user_type_id: Optional[int] = 0
+
+    status: str
 
 
 # -------- UPDATE --------
@@ -26,11 +33,21 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
+
+    photo: Optional[str] = None
+    contact_no: Optional[str] = None
+    country_code: Optional[int] = None
+    std_code: Optional[int] = None
+
     country: Optional[str] = None
-    status: Optional[str] = None
-    role_id: Optional[int] = None
+    address: Optional[str] = None
+    user_city: Optional[str] = None
+
     dept_id: Optional[int] = None
+    role_id: Optional[int] = None
     user_type_id: Optional[int] = None
+
+    status: Optional[str] = None
 
 
 # -------- RESPONSE --------

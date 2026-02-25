@@ -18,12 +18,16 @@ router = APIRouter(
 # 1️⃣ CREATE USER
 # --------------------------------
 @router.post("/", response_model=UserResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-
+def create_user(
+    user: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     db_user = User(
         **user.dict(),
-        is_deleted=0,
-        created_on=datetime.utcnow()   
+        created_by=current_user["id"],   # Auto from token
+        created_on=datetime.utcnow(),
+        is_deleted=0
     )
 
     db.add(db_user)
@@ -66,7 +70,13 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
         "user_type_name": user.user_type.name if user.user_type else None,
 
         "is_deleted": user.is_deleted,
-        "created_on": user.created_on
+        "created_on": user.created_on,
+        
+        "photo": user.photo,
+        "contact_no": user.contact_no,
+        "country_code": user.country_code,
+        "std_code": user.std_code,
+        "user_city": user.user_city,
     }
 
 # --------------------------------
@@ -89,8 +99,16 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 # 4️⃣ UPDATE USER
 # --------------------------------
 @router.put("/{user_id}", response_model=UserResponse)
-def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
+def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.is_deleted == 0
+    ).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -99,6 +117,9 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
 
     for key, value in update_data.items():
         setattr(user, key, value)
+
+    user.modified_by = current_user["id"]
+    user.modified_on = datetime.utcnow()
 
     db.commit()
     db.refresh(user)
@@ -132,7 +153,13 @@ def get_users(db: Session = Depends(get_db)):
             "user_type_name": user.user_type.name if user.user_type else None,
 
             "is_deleted": user.is_deleted,
-            "created_on": user.created_on
+            "created_on": user.created_on,
+            
+            "photo": user.photo,
+            "contact_no": user.contact_no,
+            "country_code": user.country_code,
+            "std_code": user.std_code,
+            "user_city": user.user_city,
         })
 
     return response
