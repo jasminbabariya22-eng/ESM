@@ -13,6 +13,7 @@ from app.api.user_type import router as user_type_router
 
 from app.api.risk_register import router as risk_router
 from app.api.risk_description import router as risk_description_router
+from app.api.risk_treatment import router as risk_treatment_router
 
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -32,6 +33,7 @@ app.include_router(user_type_router)
 
 app.include_router(risk_router)
 app.include_router(risk_description_router)
+app.include_router(risk_treatment_router)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
