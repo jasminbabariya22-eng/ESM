@@ -11,6 +11,8 @@ from app.api.department import router as dept_router
 from app.api.role import router as role_router
 from app.api.user_type import router as user_type_router
 
+from app.api.risk_register import router as risk_router
+
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.exception_handler import (
@@ -26,6 +28,8 @@ app.include_router(user_router)
 app.include_router(dept_router)
 app.include_router(role_router)
 app.include_router(user_type_router)
+
+app.include_router(risk_router)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
