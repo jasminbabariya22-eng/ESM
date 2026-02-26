@@ -18,6 +18,30 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
+def build_hybrid_response(risk):
+    return {
+        "risk_register_id": risk.risk_register_id,
+        "risk_id": risk.risk_id,
+        "risk_name": risk.risk_name,
+
+        "dept_id": risk.dept_id,
+        "department_name": risk.department.dept_name if risk.department else None,
+
+        "risk_owner_id": risk.risk_owner_id,
+        "risk_owner_name": (
+            f"{risk.risk_owner.first_name} {risk.risk_owner.last_name}"
+            if risk.risk_owner else None
+        ),
+
+        "financial_year": risk.financial_year,
+        "risk_status": risk.risk_status,
+        "risk_progress": risk.risk_progress,
+
+        "is_active": risk.is_active,
+        "is_deleted": risk.is_deleted,
+        "created_on": risk.created_on
+    }
+
 # CREATE
 @router.post("/", response_model=RiskRegisterHybridResponse)
 def create_risk(
@@ -103,28 +127,3 @@ def delete_risk(risk_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Risk deleted successfully"}
-
-
-def build_hybrid_response(risk):
-    return {
-        "risk_register_id": risk.risk_register_id,
-        "risk_id": risk.risk_id,
-        "risk_name": risk.risk_name,
-
-        "dept_id": risk.dept_id,
-        "department_name": risk.department.dept_name if risk.department else None,
-
-        "risk_owner_id": risk.risk_owner_id,
-        "risk_owner_name": (
-            f"{risk.risk_owner.first_name} {risk.risk_owner.last_name}"
-            if risk.risk_owner else None
-        ),
-
-        "financial_year": risk.financial_year,
-        "risk_status": risk.risk_status,
-        "risk_progress": risk.risk_progress,
-
-        "is_active": risk.is_active,
-        "is_deleted": risk.is_deleted,
-        "created_on": risk.created_on
-    }
