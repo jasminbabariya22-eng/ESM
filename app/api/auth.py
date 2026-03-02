@@ -4,6 +4,7 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse
 from app.core.security import create_access_token
+from app.core.response import success_response
 from app.schemas.auth import LoginResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -56,7 +57,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         }
     )
 
-    return {
+    return success_response({
         "id": user.id,
         "password": user.password,
         "first_name": user.first_name,
@@ -68,4 +69,4 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "user_type": user.user_type.name if user.user_type else None,
         "access_token": access_token,
         "token_type": "bearer"
-    }
+    })

@@ -7,6 +7,7 @@ from typing import List
 from datetime import datetime
 from app.schemas.user import UserHybridResponse
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
 
 router = APIRouter(
     prefix="/users",
@@ -34,7 +35,26 @@ def create_user(
     db.commit()
     db.refresh(db_user)
 
-    return db_user
+    return success_response({
+        "id": db_user.id,
+        "log_id": db_user.log_id,
+        "password": db_user.password,
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+        "email": db_user.email,
+        "country": db_user.country,
+        "status": db_user.status,
+        "dept_id": db_user.dept_id,
+        "role_id": db_user.role_id,
+        "user_type_id": db_user.user_type_id,
+        "is_deleted": db_user.is_deleted,
+        "created_on": db_user.created_on,
+        "photo": db_user.photo,
+        "contact_no": db_user.contact_no,
+        "country_code": db_user.country_code,
+        "std_code": db_user.std_code,
+        "user_city": db_user.user_city,
+    })
 
 
 # --------------------------------
@@ -50,7 +70,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {
+    return success_response({
         "id": user.id,
         "log_id": user.log_id,
         "password": user.password,
@@ -77,7 +97,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
         "country_code": user.country_code,
         "std_code": user.std_code,
         "user_city": user.user_city,
-    }
+    })
 
 # --------------------------------
 # 3️⃣ SOFT DELETE USER
@@ -124,8 +144,29 @@ def update_user(
     db.commit()
     db.refresh(user)
 
-    return user
+    return success_response({
+        "id": user.id,
+        "log_id": user.log_id,
+        "password": user.password,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "country": user.country,
+        "status": user.status,
+        "dept_id": user.dept_id,
+        "role_id": user.role_id,
+        "user_type_id": user.user_type_id,
+        "is_deleted": user.is_deleted,
+        "created_on": user.created_on,
+        "photo": user.photo,
+        "contact_no": user.contact_no,
+        "country_code": user.country_code,
+        "std_code": user.std_code,
+        "user_city": user.user_city,
+    })
 
+# --------------------------------
+# 5️⃣ GET ALL USERS   
 @router.get("/", response_model=List[UserHybridResponse])
 def get_users(db: Session = Depends(get_db)):
     users = db.query(User).filter(User.is_deleted == 0).all()
@@ -162,4 +203,4 @@ def get_users(db: Session = Depends(get_db)):
             "user_city": user.user_city,
         })
 
-    return response
+    return success_response(response)
