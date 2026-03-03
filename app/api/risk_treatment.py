@@ -5,6 +5,8 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
+
 from app.models.risk_treatment import RiskTreatment
 from app.schemas.risk_treatment import (
     RiskTreatmentCreate,
@@ -66,7 +68,7 @@ def create_treatment(
     db.commit()
     db.refresh(db_treatment)
 
-    return build_hybrid_response(db_treatment)
+    return success_response(build_hybrid_response(db_treatment))
 
 
 # Get ALL
@@ -76,8 +78,8 @@ def get_treatments(db: Session = Depends(get_db)):
         RiskTreatment.is_deleted == 0
     ).all()
 
-    return [build_hybrid_response(t) for t in treatments]
-
+    response_list = [build_hybrid_response(t) for t in treatments]
+    return success_response(response_list)
 
 # Get BY ID
 @router.get("/{treatment_id}", response_model=RiskTreatmentHybridResponse)
@@ -90,7 +92,7 @@ def get_treatment(treatment_id: int, db: Session = Depends(get_db)):
     if not treatment:
         raise HTTPException(status_code=404, detail="Risk Treatment not found")
 
-    return build_hybrid_response(treatment)
+    return success_response(build_hybrid_response(treatment))
 
 
 # UPDATE
@@ -120,7 +122,7 @@ def update_treatment(
     db.commit()
     db.refresh(treatment)
 
-    return build_hybrid_response(treatment)
+    return success_response(build_hybrid_response(treatment))
 
 
 # DELETE (Soft Delete)
@@ -136,4 +138,7 @@ def delete_treatment(treatment_id: int, db: Session = Depends(get_db)):
     treatment.is_deleted = 1
     db.commit()
 
-    return {"message": "Risk Treatment deleted successfully"}
+    return success_response({
+        "risk_treatment_id": treatment.risk_treatment_id,
+        "message": "Risk Treatment deleted successfully"
+    })

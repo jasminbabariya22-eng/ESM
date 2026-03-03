@@ -5,6 +5,8 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
+
 from app.models.risk_register import RiskRegister
 from app.schemas.risk_register import (
     RiskRegisterCreate,
@@ -43,7 +45,7 @@ def build_hybrid_response(risk):
     }
 
 # CREATE
-@router.post("/", response_model=RiskRegisterHybridResponse)
+@router.post("/")
 def create_risk(
     risk: RiskRegisterCreate,
     db: Session = Depends(get_db),
@@ -60,19 +62,20 @@ def create_risk(
     db.commit()
     db.refresh(db_risk)
 
-    return build_hybrid_response(db_risk)
+    return success_response(build_hybrid_response(db_risk))
 
 # Get ALL
-@router.get("/", response_model=List[RiskRegisterHybridResponse])
+@router.get("/")
 def get_risks(db: Session = Depends(get_db)):
     risks = db.query(RiskRegister).filter(
         RiskRegister.is_deleted == 0
     ).all()
 
-    return [build_hybrid_response(r) for r in risks]
+    response_list = [build_hybrid_response(r) for r in risks]
+    return success_response(response_list)
 
 # Get by ID
-@router.get("/{risk_id}", response_model=RiskRegisterHybridResponse)
+@router.get("/{risk_id}")
 def get_risk(risk_id: int, db: Session = Depends(get_db)):
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == risk_id,
@@ -82,10 +85,10 @@ def get_risk(risk_id: int, db: Session = Depends(get_db)):
     if not risk:
         raise HTTPException(status_code=404, detail="Risk not found")
 
-    return build_hybrid_response(risk)
+    return success_response(build_hybrid_response(risk))
 
 # UPDATE
-@router.put("/{risk_id}", response_model=RiskRegisterHybridResponse)
+@router.put("/{risk_id}")
 def update_risk(
     risk_id: int,
     risk_update: RiskRegisterUpdate,
@@ -111,7 +114,7 @@ def update_risk(
     db.commit()
     db.refresh(risk)
 
-    return build_hybrid_response(risk)
+    return success_response(build_hybrid_response(risk))
 
 # SOFT DELETE
 @router.delete("/{risk_id}")
@@ -126,4 +129,7 @@ def delete_risk(risk_id: int, db: Session = Depends(get_db)):
     risk.is_deleted = 1
     db.commit()
 
-    return {"message": "Risk deleted successfully"}
+    return success_response({
+        "risk_register_id": risk.risk_register_id,
+        "message": "Risk deleted successfully"
+    })

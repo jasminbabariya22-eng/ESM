@@ -11,6 +11,7 @@ from app.schemas.department import (
     DepartmentResponse
 )
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
 
 router = APIRouter(prefix="/departments", 
                    tags=["Departments"],
@@ -29,14 +30,31 @@ def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
     db.add(dept)
     db.commit()
     db.refresh(dept)
-    return dept
+    return success_response({
+        "id": dept.id,
+        "dept_name": dept.dept_name,
+        "description": dept.description
+    })
 
 
 # GET ALL
 
 @router.get("/", response_model=List[DepartmentResponse])
 def get_departments(db: Session = Depends(get_db)):
-    return db.query(Department).filter(Department.is_deleted == 0).all()
+    
+    departments = db.query(Department).filter(Department.is_deleted == 0).all()
+    response = []
+
+    for dept in departments:
+        response.append({
+            "id": dept.id,
+            "dept_name": dept.dept_name,
+            "description": dept.description,
+            "created_on": dept.created_on,
+            "modified_on": dept.modified_on
+        })
+
+    return success_response(response)
 
 
 # GET BY ID
@@ -50,7 +68,13 @@ def get_department(dept_id: int, db: Session = Depends(get_db)):
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
 
-    return dept
+    return success_response({
+        "id": dept.id,
+        "dept_name": dept.dept_name,
+        "description": dept.description,
+        "created_on": dept.created_on,
+        "modified_on": dept.modified_on
+    })
 
 
 # UPDATE
@@ -68,7 +92,13 @@ def update_department(dept_id: int, data: DepartmentUpdate, db: Session = Depend
 
     db.commit()
     db.refresh(dept)
-    return dept
+    return success_response({
+        "id": dept.id,
+        "dept_name": dept.dept_name,
+        "description": dept.description,
+        "created_on": dept.created_on,
+        "modified_on": dept.modified_on
+    })
 
 
 # SOFT DELETE
@@ -82,4 +112,4 @@ def delete_department(dept_id: int, db: Session = Depends(get_db)):
     dept.is_deleted = 1
     db.commit()
 
-    return {"message": "Department deleted successfully"}
+    return success_response(message="Department deleted successfully")

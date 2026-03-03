@@ -11,6 +11,7 @@ from app.schemas.role import (
     RoleResponse
 )
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
 
 router = APIRouter(prefix="/roles", 
                    tags=["Roles"],
@@ -30,13 +31,25 @@ def create_role(data: RoleCreate, db: Session = Depends(get_db)):
     db.add(role)
     db.commit()
     db.refresh(role)
-    return role
+    return success_response({
+        "id": role.id,
+        "name": role.name,
+        "description": role.description
+    })
 
 
 # GET ALL
 @router.get("/", response_model=List[RoleResponse])
 def get_roles(db: Session = Depends(get_db)):
-    return db.query(UserRole).filter(UserRole.is_deleted == 0).all()
+    roles = db.query(UserRole).filter(UserRole.is_deleted == 0).all()
+    response = []
+    for role in roles:
+        response.append({
+            "id": role.id,
+            "name": role.name,
+            "description": role.description
+        })
+    return success_response(response)
 
 
 # GET BY ID
@@ -50,7 +63,11 @@ def get_role(role_id: int, db: Session = Depends(get_db)):
     if not dept:
         raise HTTPException(status_code=404, detail="Role not found")
 
-    return dept
+    return success_response({
+        "id": dept.id,
+        "name": dept.name,
+        "description": dept.description
+    })
 
 # UPDATE
 @router.put("/{role_id}", response_model=RoleResponse)
@@ -67,8 +84,11 @@ def update_role(role_id: int, data: RoleUpdate, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(dept)
-    return dept
-
+    return success_response({
+        "id": dept.id,
+        "name": dept.name,
+        "description": dept.description
+    })
 
 # SOFT DELETE
 @router.delete("/{role_id}")
@@ -81,4 +101,4 @@ def delete_role(role_id: int, db: Session = Depends(get_db)):
     dept.is_deleted = 1
     db.commit()
 
-    return {"message": "Role deleted successfully"}
+    return success_response(message="Role deleted successfully")

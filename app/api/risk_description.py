@@ -5,6 +5,8 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
+
 from app.models.risk_description import RiskDescription
 from app.schemas.risk_description import (
     RiskDescriptionCreate,
@@ -40,7 +42,7 @@ def build_hybrid_response(desc):
     }
 
 # CREATE
-@router.post("/", response_model=RiskDescriptionHybridResponse)
+@router.post("/")
 def create_description(
     desc: RiskDescriptionCreate,
     db: Session = Depends(get_db),
@@ -57,16 +59,17 @@ def create_description(
     db.commit()
     db.refresh(db_desc)
 
-    return build_hybrid_response(db_desc)
+    return success_response(build_hybrid_response(db_desc))
 
 # Get ALL
-@router.get("/", response_model=List[RiskDescriptionHybridResponse])
+@router.get("/")
 def get_descriptions(db: Session = Depends(get_db)):
     descriptions = db.query(RiskDescription).filter(
         RiskDescription.is_deleted == 0
     ).all()
 
-    return [build_hybrid_response(d) for d in descriptions]
+    response_list = [build_hybrid_response(d) for d in descriptions]
+    return success_response(response_list)
 
 # Get BY ID
 @router.get("/{desc_id}", response_model=RiskDescriptionHybridResponse)
@@ -79,7 +82,7 @@ def get_description(desc_id: int, db: Session = Depends(get_db)):
     if not desc:
         raise HTTPException(status_code=404, detail="Risk Description not found")
 
-    return build_hybrid_response(desc)
+    return success_response(build_hybrid_response(desc))
 
 # UPDATE
 @router.put("/{desc_id}", response_model=RiskDescriptionHybridResponse)
@@ -108,7 +111,7 @@ def update_description(
     db.commit()
     db.refresh(desc)
 
-    return build_hybrid_response(desc)
+    return success_response(build_hybrid_response(desc))
 
 # SOFT DELETE
 @router.delete("/{desc_id}")
@@ -123,4 +126,7 @@ def delete_description(desc_id: int, db: Session = Depends(get_db)):
     desc.is_deleted = 1
     db.commit()
 
-    return {"message": "Risk Description deleted successfully"}
+    return success_response({
+        "risk_description_id": desc.risk_description_id,
+        "message": "Risk Description deleted successfully"
+    })

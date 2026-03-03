@@ -11,6 +11,7 @@ from app.schemas.user_type import (
     UserTypeResponse
 )
 from app.core.dependencies import get_current_user
+from app.core.response import success_response
 
 router = APIRouter(prefix="/user_types", 
                    tags=["User Types"],
@@ -30,13 +31,30 @@ def create_user_type(data: UserTypeCreate, db: Session = Depends(get_db)):
     db.add(dept)
     db.commit()
     db.refresh(dept)
-    return dept
+    return success_response({
+        "id": dept.id,
+        "name": dept.name,
+        "description": dept.description,
+        "created_on": dept.created_on,
+        "modified_on": dept.modified_on
+    })
 
 
 # GET ALL
 @router.get("/", response_model=List[UserTypeResponse])
 def get_user_types(db: Session = Depends(get_db)):
-    return db.query(UserType).filter(UserType.is_deleted == 0).all()
+    user_types = db.query(UserType).filter(UserType.is_deleted == 0).all()
+    response = []
+    
+    for user_type in user_types:
+        response.append({
+            "id": user_type.id,
+            "name": user_type.name,
+            "description": user_type.description,
+            "created_on": user_type.created_on,
+            "modified_on": user_type.modified_on
+        })
+    return success_response(response)
 
 
 # GET BY ID
@@ -50,8 +68,13 @@ def get_user_type(user_type_id: int, db: Session = Depends(get_db)):
     if not dept:
         raise HTTPException(status_code=404, detail="User Type not found")
 
-    return dept
-
+    return success_response({
+        "id": dept.id,
+        "name": dept.name,
+        "description": dept.description,
+        "created_on": dept.created_on,
+        "modified_on": dept.modified_on
+    })
 
 # UPDATE
 @router.put("/{user_type_id}", response_model=UserTypeResponse)
@@ -68,7 +91,13 @@ def update_user_type(user_type_id: int, data: UserTypeUpdate, db: Session = Depe
 
     db.commit()
     db.refresh(dept)
-    return dept
+    return success_response({
+        "id": dept.id,
+        "name": dept.name,
+        "description": dept.description,
+        "created_on": dept.created_on,
+        "modified_on": dept.modified_on
+    })
 
 
 # SOFT DELETE
@@ -82,4 +111,4 @@ def delete_user_type(user_type_id: int, db: Session = Depends(get_db)):
     dept.is_deleted = 1
     db.commit()
 
-    return {"message": "User Type deleted successfully"}
+    return success_response(message="User Type deleted successfully")

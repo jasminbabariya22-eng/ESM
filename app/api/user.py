@@ -112,7 +112,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     user.is_deleted = 1
     db.commit()
 
-    return {"message": "User deleted successfully"}
+    return success_response(message="User deleted successfully")
 
 
 # --------------------------------
