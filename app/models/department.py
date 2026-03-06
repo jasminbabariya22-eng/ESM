@@ -15,3 +15,5 @@ class Department(Base):
     modified_on = Column(DateTime)
     is_deleted = Column(SmallInteger, default=0)
     description = Column(Text)
+    dept_short_name = Column(String(10))
+    last_risk_number = Column(Integer, default=0)

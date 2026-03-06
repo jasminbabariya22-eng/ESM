@@ -4,7 +4,6 @@ from datetime import datetime
 
 
 class RiskRegisterCreate(BaseModel):
-    risk_id: str
     risk_name: str
     dept_id: int
     risk_owner_id: int
@@ -16,10 +15,15 @@ class RiskRegisterCreate(BaseModel):
     is_active: Optional[int] = 0
     
 class RiskRegisterUpdate(BaseModel):
+
     risk_name: Optional[str] = None
+    dept_id: Optional[int] = None
+    risk_owner_id: Optional[int] = None
+
     financial_year: Optional[str] = None
     risk_status: Optional[int] = None
     risk_progress: Optional[float] = None
+
     is_active: Optional[int] = None
     
 class RiskRegisterHybridResponse(BaseModel):

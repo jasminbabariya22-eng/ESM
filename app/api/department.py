@@ -23,6 +23,7 @@ router = APIRouter(prefix="/departments",
 def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
     dept = Department(
         dept_name=data.dept_name,
+        dept_short_name=data.dept_short_name,
         description=data.description,
         is_deleted=0,
         created_on=datetime.utcnow()
@@ -33,6 +34,7 @@ def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
     return success_response({
         "id": dept.id,
         "dept_name": dept.dept_name,
+        "dept_short_name": dept.dept_short_name,
         "description": dept.description
     })
 
@@ -49,6 +51,7 @@ def get_departments(db: Session = Depends(get_db)):
         response.append({
             "id": dept.id,
             "dept_name": dept.dept_name,
+            "dept_short_name": dept.dept_short_name,
             "description": dept.description,
             "created_on": dept.created_on,
             "modified_on": dept.modified_on
@@ -71,6 +74,7 @@ def get_department(dept_id: int, db: Session = Depends(get_db)):
     return success_response({
         "id": dept.id,
         "dept_name": dept.dept_name,
+        "dept_short_name": dept.dept_short_name,
         "description": dept.description,
         "created_on": dept.created_on,
         "modified_on": dept.modified_on
@@ -95,6 +99,7 @@ def update_department(dept_id: int, data: DepartmentUpdate, db: Session = Depend
     return success_response({
         "id": dept.id,
         "dept_name": dept.dept_name,
+        "dept_short_name": dept.dept_short_name,
         "description": dept.description,
         "created_on": dept.created_on,
         "modified_on": dept.modified_on

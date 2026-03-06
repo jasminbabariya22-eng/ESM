@@ -1,18 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.response import success_response
+from app.core.response import success_response, error_response
 
-from app.models.risk_description import RiskDescription
+
 from app.schemas.risk_description import (
     RiskDescriptionCreate,
     RiskDescriptionUpdate,
     RiskDescriptionHybridResponse,
 )
+from app.models.risk_register import RiskRegister
+from app.models.risk_description import RiskDescription
+from app.models.risk_description_hist import RiskDescriptionHist
 
 router = APIRouter(
     prefix="/risk-description",
@@ -43,27 +46,76 @@ def build_hybrid_response(desc):
 
 # CREATE
 @router.post("/")
-def create_description(
-    desc: RiskDescriptionCreate,
+def create_risk_description(
+    payload: RiskDescriptionCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    db_desc = RiskDescription(
-        **desc.dict(),
+
+    # Fetch risk_register
+    risk_register = db.query(RiskRegister).filter(
+        RiskRegister.risk_register_id == payload.risk_register_id,
+        RiskRegister.is_deleted == 0
+    ).first()
+
+    if not risk_register:
+        raise HTTPException(status_code=404, detail="Risk Register not found")
+
+    # Fetch risk_id from risk_register
+    risk_id = risk_register.risk_id
+
+    # Insert into risk_description
+    new_risk_desc = RiskDescription(
+        risk_register_id=payload.risk_register_id,
+        risk_id=risk_id,
+        risk_description=payload.risk_description,
+
+        inherent_risk_likelihood_id=payload.inherent_risk_likelihood_id,
+        inherent_risk_impact_id=payload.inherent_risk_impact_id,
+
+        mitigation=payload.mitigation,
+
+        current_risk_likelihood_id=payload.current_risk_likelihood_id,
+        current_risk_impact_id=payload.current_risk_impact_id,
+
         created_by=current_user["id"],
-        created_on=datetime.utcnow(),
+        created_on = datetime.now(timezone.utc),
         is_deleted=0
     )
 
-    db.add(db_desc)
+    db.add(new_risk_desc)
     db.commit()
-    db.refresh(db_desc)
+    db.refresh(new_risk_desc)
 
-    return success_response(build_hybrid_response(db_desc))
+    # Insert into history table
+    hist = RiskDescriptionHist(
+        risk_description_id=new_risk_desc.risk_description_id,
+        risk_register_id=new_risk_desc.risk_register_id,
+        risk_id=new_risk_desc.risk_id,
+        risk_description=new_risk_desc.risk_description,
 
-# Get ALL
+        inherent_risk_likelihood_id=new_risk_desc.inherent_risk_likelihood_id,
+        inherent_risk_impact_id=new_risk_desc.inherent_risk_impact_id,
+
+        mitigation=new_risk_desc.mitigation,
+
+        current_risk_likelihood_id=new_risk_desc.current_risk_likelihood_id,
+        current_risk_impact_id=new_risk_desc.current_risk_impact_id,
+
+        created_by=new_risk_desc.created_by,
+        created_on=new_risk_desc.created_on,
+        is_deleted=new_risk_desc.is_deleted
+    )
+
+    db.add(hist)
+    db.commit()
+
+    return success_response(build_hybrid_response(new_risk_desc))
+
+
+# Get ALL Risk Description
 @router.get("/")
-def get_descriptions(db: Session = Depends(get_db)):
+def get_All_Risk_Descriptions(db: Session = Depends(get_db)):
     descriptions = db.query(RiskDescription).filter(
         RiskDescription.is_deleted == 0
     ).all()
@@ -71,11 +123,44 @@ def get_descriptions(db: Session = Depends(get_db)):
     response_list = [build_hybrid_response(d) for d in descriptions]
     return success_response(response_list)
 
-# Get BY ID
-@router.get("/{desc_id}", response_model=RiskDescriptionHybridResponse)
-def get_description(desc_id: int, db: Session = Depends(get_db)):
+
+# Get by risk_id
+@router.get("/{risk_id}")
+def get_Risk_Description_by_risk_id(risk_id: str, db: Session = Depends(get_db)):
+    try:
+        if any(char.isdigit() for char in risk_id):            # if user fill complete risk_id with prefix and number
+
+            risk = db.query(RiskDescription).filter(
+                RiskDescription.risk_id == risk_id,
+                RiskDescription.is_deleted == 0
+            ).first()
+
+            if not risk:
+                raise HTTPException(status_code=404, detail="Risk Description not found")
+
+            return success_response(build_hybrid_response(risk))
+
+        
+        else:                                         # if user fill prfix only
+            risks = db.query(RiskDescription).filter(
+                RiskDescription.risk_id.like(f"{risk_id}%"),
+                RiskDescription.is_deleted == 0
+            ).all()
+
+            if not risks:
+                raise HTTPException(status_code=404, detail="No Risk Descriptions found")
+
+            return success_response([build_hybrid_response(r) for r in risks])
+
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
+# Get BY Risk_Description_id
+@router.get("risk_description_id/{risk_description_id}", response_model=RiskDescriptionHybridResponse)
+def Get_Risk_Description_by_risk_description_id(risk_description_id: int, db: Session = Depends(get_db)):
     desc = db.query(RiskDescription).filter(
-        RiskDescription.risk_description_id == desc_id,
+        RiskDescription.risk_description_id == risk_description_id,
         RiskDescription.is_deleted == 0
     ).first()
 
@@ -84,49 +169,113 @@ def get_description(desc_id: int, db: Session = Depends(get_db)):
 
     return success_response(build_hybrid_response(desc))
 
+
+
 # UPDATE
-@router.put("/{desc_id}", response_model=RiskDescriptionHybridResponse)
-def update_description(
-    desc_id: int,
-    desc_update: RiskDescriptionUpdate,
+@router.put("/{risk_description_id}", response_model=RiskDescriptionHybridResponse)
+def update_Risk_Description(
+    risk_description_id: int,
+    payload: RiskDescriptionUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    desc = db.query(RiskDescription).filter(
-        RiskDescription.risk_description_id == desc_id,
-        RiskDescription.is_deleted == 0
-    ).first()
 
-    if not desc:
-        raise HTTPException(status_code=404, detail="Risk Description not found")
+    try:
+        risk_desc = db.query(RiskDescription).filter(
+            RiskDescription.risk_description_id == risk_description_id,
+            RiskDescription.is_deleted == 0
+        ).first()
+        
+        risk_id = risk_desc.risk_id
 
-    update_data = desc_update.dict(exclude_unset=True)
+        if not risk_desc:
+            return error_response("Risk Description not found", 404)
 
-    for key, value in update_data.items():
-        setattr(desc, key, value)
+        update_data = payload.dict(exclude_unset=True)      # update fields
 
-    desc.modified_by = current_user["id"]
-    desc.modified_on = datetime.utcnow()
+        for key, value in update_data.items():
+            setattr(risk_desc, key, value)
 
-    db.commit()
-    db.refresh(desc)
+        risk_desc.modified_by = current_user["id"]
+        risk_desc.modified_on = datetime.now(timezone.utc)
 
-    return success_response(build_hybrid_response(desc))
+        db.flush()                                       # apply update before history insert
+
+        # insert updated record into history table
+        hist = RiskDescriptionHist(
+            risk_description_id=risk_desc.risk_description_id,
+            risk_register_id=risk_desc.risk_register_id,
+            risk_id=risk_id,
+            risk_description=risk_desc.risk_description,
+            inherent_risk_likelihood_id=risk_desc.inherent_risk_likelihood_id,
+            inherent_risk_impact_id=risk_desc.inherent_risk_impact_id,
+            mitigation=risk_desc.mitigation,
+            current_risk_likelihood_id=risk_desc.current_risk_likelihood_id,
+            current_risk_impact_id=risk_desc.current_risk_impact_id,
+            created_on=datetime.now(timezone.utc),
+            created_by=current_user["id"],
+            is_deleted=risk_desc.is_deleted
+        )
+
+        db.add(hist)
+
+        db.commit()
+
+        return success_response(
+            {"risk_description_id": risk_desc.risk_description_id,
+            "message": "Risk Description updated successfully"}
+        )
+
+    except Exception as e:
+        db.rollback()
+        return error_response(str(e), 400)
+    
 
 # SOFT DELETE
-@router.delete("/{desc_id}")
-def delete_description(desc_id: int, db: Session = Depends(get_db)):
-    desc = db.query(RiskDescription).filter(
-        RiskDescription.risk_description_id == desc_id
-    ).first()
+@router.delete("/{risk_description_id}")
+def Delete_Risk_Description(risk_description_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    try:
+        risk_desc = db.query(RiskDescription).filter(
+            RiskDescription.risk_description_id == risk_description_id
+        ).first()
 
-    if not desc:
-        raise HTTPException(status_code=404, detail="Risk Description not found")
+        if not risk_desc:
+            raise HTTPException(status_code=404, detail="Risk Description not found")
 
-    desc.is_deleted = 1
-    db.commit()
+        # Soft delete main table
+        risk_desc.is_deleted = 1
+        risk_desc.is_active = 1
 
-    return success_response({
-        "risk_description_id": desc.risk_description_id,
-        "message": "Risk Description deleted successfully"
-    })
+        # Insert into history table
+        hist = RiskDescriptionHist(
+            risk_description_id=risk_desc.risk_description_id,
+            risk_register_id=risk_desc.risk_register_id,
+            risk_id=risk_desc.risk_id,
+            risk_description=risk_desc.risk_description,
+            inherent_risk_likelihood_id=risk_desc.inherent_risk_likelihood_id,
+            inherent_risk_impact_id=risk_desc.inherent_risk_impact_id,
+            mitigation=risk_desc.mitigation,
+            current_risk_likelihood_id=risk_desc.current_risk_likelihood_id,
+            current_risk_impact_id=risk_desc.current_risk_impact_id,
+            
+            created_by=current_user["id"],
+            created_on=datetime.now(timezone.utc),
+            
+            modified_by=current_user["id"],
+            modified_on=datetime.now(timezone.utc),
+            
+            is_deleted=risk_desc.is_deleted
+        )
+
+        db.add(hist)
+        db.commit()
+        db.refresh(risk_desc)
+
+        return success_response({
+            "risk_description_id": risk_desc.risk_description_id,
+            "message": "Risk Description deleted successfully"
+        })
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

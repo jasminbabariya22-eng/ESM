@@ -13,6 +13,9 @@ from app.schemas.risk_treatment import (
     RiskTreatmentUpdate,
     RiskTreatmentHybridResponse,
 )
+from app.models.risk_description import RiskDescription
+from app.models.risk_register import RiskRegister
+from app.models.risk_treatment_hist import RiskTreatmentHist
 
 router = APIRouter(
     prefix="/risk-treatment",
