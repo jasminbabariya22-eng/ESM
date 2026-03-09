@@ -51,78 +51,87 @@ def create_risk_description(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    try:
+        # Fetch risk_register
+        risk_register = db.query(RiskRegister).filter(
+            RiskRegister.risk_register_id == payload.risk_register_id,
+            RiskRegister.is_deleted == 0
+        ).first()
 
-    # Fetch risk_register
-    risk_register = db.query(RiskRegister).filter(
-        RiskRegister.risk_register_id == payload.risk_register_id,
-        RiskRegister.is_deleted == 0
-    ).first()
+        if not risk_register:
+            raise HTTPException(status_code=404, detail="Risk Register not found")
 
-    if not risk_register:
-        raise HTTPException(status_code=404, detail="Risk Register not found")
+        # Fetch risk_id from risk_register
+        risk_id = risk_register.risk_id
 
-    # Fetch risk_id from risk_register
-    risk_id = risk_register.risk_id
+        # Insert into risk_description
+        new_risk_desc = RiskDescription(
+            risk_register_id=payload.risk_register_id,
+            risk_id=risk_id,
+            risk_description=payload.risk_description,
 
-    # Insert into risk_description
-    new_risk_desc = RiskDescription(
-        risk_register_id=payload.risk_register_id,
-        risk_id=risk_id,
-        risk_description=payload.risk_description,
+            inherent_risk_likelihood_id=payload.inherent_risk_likelihood_id,
+            inherent_risk_impact_id=payload.inherent_risk_impact_id,
 
-        inherent_risk_likelihood_id=payload.inherent_risk_likelihood_id,
-        inherent_risk_impact_id=payload.inherent_risk_impact_id,
+            mitigation=payload.mitigation,
 
-        mitigation=payload.mitigation,
+            current_risk_likelihood_id=payload.current_risk_likelihood_id,
+            current_risk_impact_id=payload.current_risk_impact_id,
 
-        current_risk_likelihood_id=payload.current_risk_likelihood_id,
-        current_risk_impact_id=payload.current_risk_impact_id,
+            created_by=current_user["id"],
+            created_on = datetime.now(timezone.utc),
+            is_deleted=0
+        )
 
-        created_by=current_user["id"],
-        created_on = datetime.now(timezone.utc),
-        is_deleted=0
-    )
+        db.add(new_risk_desc)
+        db.commit()
+        db.refresh(new_risk_desc)
 
-    db.add(new_risk_desc)
-    db.commit()
-    db.refresh(new_risk_desc)
+        # Insert into history table
+        hist = RiskDescriptionHist(
+            risk_description_id=new_risk_desc.risk_description_id,
+            risk_register_id=new_risk_desc.risk_register_id,
+            risk_id=new_risk_desc.risk_id,
+            risk_description=new_risk_desc.risk_description,
 
-    # Insert into history table
-    hist = RiskDescriptionHist(
-        risk_description_id=new_risk_desc.risk_description_id,
-        risk_register_id=new_risk_desc.risk_register_id,
-        risk_id=new_risk_desc.risk_id,
-        risk_description=new_risk_desc.risk_description,
+            inherent_risk_likelihood_id=new_risk_desc.inherent_risk_likelihood_id,
+            inherent_risk_impact_id=new_risk_desc.inherent_risk_impact_id,
 
-        inherent_risk_likelihood_id=new_risk_desc.inherent_risk_likelihood_id,
-        inherent_risk_impact_id=new_risk_desc.inherent_risk_impact_id,
+            mitigation=new_risk_desc.mitigation,
 
-        mitigation=new_risk_desc.mitigation,
+            current_risk_likelihood_id=new_risk_desc.current_risk_likelihood_id,
+            current_risk_impact_id=new_risk_desc.current_risk_impact_id,
 
-        current_risk_likelihood_id=new_risk_desc.current_risk_likelihood_id,
-        current_risk_impact_id=new_risk_desc.current_risk_impact_id,
+            created_by=new_risk_desc.created_by,
+            created_on=new_risk_desc.created_on,
+            is_deleted=new_risk_desc.is_deleted
+        )
 
-        created_by=new_risk_desc.created_by,
-        created_on=new_risk_desc.created_on,
-        is_deleted=new_risk_desc.is_deleted
-    )
+        db.add(hist)
 
-    db.add(hist)
-    db.commit()
+        db.commit()
 
-    return success_response(build_hybrid_response(new_risk_desc))
+        return success_response(build_hybrid_response(new_risk_desc))
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Get ALL Risk Description
 @router.get("/")
 def get_All_Risk_Descriptions(db: Session = Depends(get_db)):
-    descriptions = db.query(RiskDescription).filter(
-        RiskDescription.is_deleted == 0
-    ).all()
+    try:
+        descriptions = db.query(RiskDescription).filter(
+            RiskDescription.is_deleted == 0
+        ).all()
 
-    response_list = [build_hybrid_response(d) for d in descriptions]
-    return success_response(response_list)
+        response_list = [build_hybrid_response(d) for d in descriptions]
+        return success_response(response_list)
 
+    except Exception as e:
+        return error_response(str(e), 400)
+    
 
 # Get by risk_id
 @router.get("/{risk_id}")
@@ -138,7 +147,8 @@ def get_Risk_Description_by_risk_id(risk_id: str, db: Session = Depends(get_db))
             if not risk:
                 raise HTTPException(status_code=404, detail="Risk Description not found")
 
-            return success_response(build_hybrid_response(risk))
+            response_list = [build_hybrid_response(risk)]
+            return success_response(response_list)
 
         
         else:                                         # if user fill prfix only
@@ -159,15 +169,20 @@ def get_Risk_Description_by_risk_id(risk_id: str, db: Session = Depends(get_db))
 # Get BY Risk_Description_id
 @router.get("risk_description_id/{risk_description_id}", response_model=RiskDescriptionHybridResponse)
 def Get_Risk_Description_by_risk_description_id(risk_description_id: int, db: Session = Depends(get_db)):
-    desc = db.query(RiskDescription).filter(
-        RiskDescription.risk_description_id == risk_description_id,
-        RiskDescription.is_deleted == 0
-    ).first()
+    try:
+        desc = db.query(RiskDescription).filter(
+            RiskDescription.risk_description_id == risk_description_id,
+            RiskDescription.is_deleted == 0
+        ).first()
 
-    if not desc:
-        raise HTTPException(status_code=404, detail="Risk Description not found")
+        if not desc:
+            raise HTTPException(status_code=404, detail="Risk Description not found")
 
-    return success_response(build_hybrid_response(desc))
+        response_list = [build_hybrid_response(desc)]
+        return success_response(response_list)
+
+    except Exception as e:
+        return error_response(str(e), 400)
 
 
 
@@ -207,13 +222,18 @@ def update_Risk_Description(
             risk_register_id=risk_desc.risk_register_id,
             risk_id=risk_id,
             risk_description=risk_desc.risk_description,
+            
             inherent_risk_likelihood_id=risk_desc.inherent_risk_likelihood_id,
             inherent_risk_impact_id=risk_desc.inherent_risk_impact_id,
+            
             mitigation=risk_desc.mitigation,
             current_risk_likelihood_id=risk_desc.current_risk_likelihood_id,
             current_risk_impact_id=risk_desc.current_risk_impact_id,
             created_on=datetime.now(timezone.utc),
             created_by=current_user["id"],
+            
+            modified_by=current_user["id"],
+            modified_on=datetime.now(timezone.utc),
             is_deleted=risk_desc.is_deleted
         )
 
@@ -244,7 +264,6 @@ def Delete_Risk_Description(risk_description_id: int, db: Session = Depends(get_
 
         # Soft delete main table
         risk_desc.is_deleted = 1
-        risk_desc.is_active = 1
 
         # Insert into history table
         hist = RiskDescriptionHist(

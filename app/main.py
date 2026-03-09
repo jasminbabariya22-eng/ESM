@@ -31,9 +31,14 @@ from app.core.exception_handler import (
     generic_exception_handler,
 )
 
+from app.api.Status import router as status_router
+# from app.api.risk_api import router as risk_api_router
+
 app = FastAPI()
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(status_router)
+# app.include_router(risk_api_router)
 
 app.include_router(dept_router)
 app.include_router(role_router)

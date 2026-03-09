@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, Float, SmallInteger, DateTime, F
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
+from app.models.mst_status import Status
+
 
 class RiskRegister(Base):
     __tablename__ = "risk_register"
@@ -16,7 +18,7 @@ class RiskRegister(Base):
     risk_owner_id = Column(Integer, ForeignKey("ers.mst_users.id"), nullable=False)
 
     financial_year = Column(String(10))
-    risk_status = Column(Integer)
+    risk_status = Column(Integer, ForeignKey("ers.mst_status.id"))
     risk_progress = Column(Float)
 
     risk_function_head_approval_status = Column(Integer)
@@ -29,11 +31,6 @@ class RiskRegister(Base):
     risk_head_approval_remark = Column(String(500))
     risk_head_approval_by = Column(Integer)
 
-    risk_manager_approval_status = Column(Integer)
-    risk_manager_approved_on = Column(DateTime)
-    risk_manager_approval_remark = Column(String(500))
-    risk_manager_approval_by = Column(Integer)
-
     created_by = Column(Integer, nullable=False, default=1)
     created_on = Column(DateTime)
     modified_by = Column(Integer)
@@ -45,3 +42,4 @@ class RiskRegister(Base):
     # Relationships
     department = relationship("Department", backref="risks")
     risk_owner = relationship("User", foreign_keys=[risk_owner_id])
+    status = relationship("Status")

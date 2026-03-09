@@ -31,7 +31,7 @@ class RiskTreatment(Base):
 
     target_date = Column(DateTime)
     progress = Column(Float)
-    action_status_id = Column(Integer)
+    action_status_id = Column(Integer, ForeignKey("ers.mst_status.id"))
 
     next_followup_date = Column(DateTime)
 
@@ -47,3 +47,4 @@ class RiskTreatment(Base):
     risk_description = relationship("RiskDescription", backref="treatments")
     risk_register = relationship("RiskRegister")
     action_owner = relationship("User", foreign_keys=[action_owner_id])
+    status = relationship("Status")

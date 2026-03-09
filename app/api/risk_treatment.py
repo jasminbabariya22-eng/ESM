@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.response import success_response
+from app.core.response import success_response, error_response
 
 from app.models.risk_treatment import RiskTreatment
 from app.schemas.risk_treatment import (
@@ -54,94 +54,257 @@ def build_hybrid_response(t):
     
 
 # CREATE
-@router.post("/", response_model=RiskTreatmentHybridResponse)
-def create_treatment(
-    treatment: RiskTreatmentCreate,
+@router.post("/")
+def create_risk_treatment(
+    payload: RiskTreatmentCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    db_treatment = RiskTreatment(
-        **treatment.dict(),
-        created_by=current_user["id"],
-        created_on=datetime.utcnow(),
-        is_deleted=0
-    )
+    try:
+        # Fetch risk_description
+        risk_Description = db.query(RiskDescription).filter(
+            RiskDescription.risk_description_id == payload.risk_description_id,
+            RiskDescription.is_deleted == 0
+        ).first()
 
-    db.add(db_treatment)
-    db.commit()
-    db.refresh(db_treatment)
+        if not risk_Description:
+            raise HTTPException(status_code=404, detail="Risk Description not found")
 
-    return success_response(build_hybrid_response(db_treatment))
+        # Fetch risk_id from risk_register
+        risk_register = risk_Description.risk_register_id
+        risk_id = risk_Description.risk_id
+
+        # Insert into risk_treatment
+        new_risk_treatment = RiskTreatment(
+            risk_Description = payload.risk_description_id,
+            risk_register_id = risk_register,
+            risk_id = risk_id,
+            
+            action_plan = payload.action_plan,
+            acttion_owner_id = payload.action_owner_id,    # may be change
+            targeted_date = payload.target_date,
+            progress = payload.progress,
+            action_status_id = payload.action_status_id,
+            next_followup_date = payload.next_followup_date,
+            
+            created_on = datetime.now(timezone.utc),
+            created_by = current_user["id"],
+            
+            is_deleted = 0)
+
+        db.add(new_risk_treatment)
+        db.commit()
+        db.refresh(new_risk_treatment)
+
+        # Insert into history table
+        hist = RiskTreatmentHist(
+            risk_treatment_id=new_risk_treatment.risk_treatment_id,
+            risk_description_id=new_risk_treatment.risk_description_id,
+            risk_register_id=new_risk_treatment.risk_register_id,
+            risk_id=new_risk_treatment.risk_id,
+            
+            action_plan=new_risk_treatment.action_plan,
+            action_owner_id=new_risk_treatment.action_owner_id,
+            
+            targeted_date=new_risk_treatment.targeted_date,
+            progress=new_risk_treatment.progress,
+            
+            action_status_id=new_risk_treatment.action_status_id,
+            next_followup_date=new_risk_treatment.next_followup_date,
+
+            created_by=new_risk_treatment.created_by,
+            created_on=new_risk_treatment.created_on,
+            modified_by=new_risk_treatment.modified_by,
+            modified_on=new_risk_treatment.modified_on,
+            is_deleted=new_risk_treatment.is_deleted
+        )
+
+        db.add(hist)
+        db.commit()
+
+        return success_response(build_hybrid_response(new_risk_treatment))
+    
+    except Exception as e:
+        db.rollback()
+        return error_response(str(e), 400)
 
 
 # Get ALL
 @router.get("/", response_model=List[RiskTreatmentHybridResponse])
 def get_treatments(db: Session = Depends(get_db)):
-    treatments = db.query(RiskTreatment).filter(
-        RiskTreatment.is_deleted == 0
-    ).all()
+    try:
+        treatments = db.query(RiskTreatment).filter(
+            RiskTreatment.is_deleted == 0
+        ).all()
 
-    response_list = [build_hybrid_response(t) for t in treatments]
-    return success_response(response_list)
+        response_list = [build_hybrid_response(t) for t in treatments]
+        return success_response(response_list)
+    
+    except Exception as e:
+        return error_response(str(e), 400)
 
-# Get BY ID
-@router.get("/{treatment_id}", response_model=RiskTreatmentHybridResponse)
-def get_treatment(treatment_id: int, db: Session = Depends(get_db)):
-    treatment = db.query(RiskTreatment).filter(
-        RiskTreatment.risk_treatment_id == treatment_id,
-        RiskTreatment.is_deleted == 0
-    ).first()
 
-    if not treatment:
-        raise HTTPException(status_code=404, detail="Risk Treatment not found")
+# Get BY risk_treatment_id
+@router.get("risk_treatment_id/{risk_treatment_id}", response_model=RiskTreatmentHybridResponse)
+def get_treatment(risk_treatment_id: int, db: Session = Depends(get_db)):
+    try:
+        treatment = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_treatment_id == risk_treatment_id,
+            RiskTreatment.is_deleted == 0
+        ).first()
 
-    return success_response(build_hybrid_response(treatment))
+        if not treatment:
+            raise HTTPException(status_code=404, detail="Risk Treatment not found")
+
+        response_list = [build_hybrid_response(treatment)]
+        return success_response(response_list)
+
+    except Exception as e:
+        return error_response(str(e), 400)
+
+
+# Get by risk_id
+@router.get("/{risk_id}")
+def get_Risk_Treatment_by_risk_id(risk_id: str, db: Session = Depends(get_db)):
+    try:
+        if any(char.isdigit() for char in risk_id):            # if user fill complete risk_id with prefix and number
+
+            risk = db.query(RiskTreatment).filter(
+                RiskTreatment.risk_id == risk_id,
+                RiskTreatment.is_deleted == 0
+            ).first()
+
+            if not risk:
+                raise HTTPException(status_code=404, detail="Risk Treatment not found")
+
+            response_list = [build_hybrid_response(risk)]
+            return success_response(response_list)
+
+        
+        else:                                         # if user fill prfix only
+            risks = db.query(RiskTreatment).filter(
+                RiskTreatment.risk_id.like(f"{risk_id}%"),
+                RiskTreatment.is_deleted == 0
+            ).all()
+
+            if not risks:
+                raise HTTPException(status_code=404, detail="No Risk Treatments found")
+
+            return success_response([build_hybrid_response(r) for r in risks])
+
+    except Exception as e:
+        return error_response(str(e), 400)
+
 
 
 # UPDATE
-@router.put("/{treatment_id}", response_model=RiskTreatmentHybridResponse)
-def update_treatment(
-    treatment_id: int,
-    treatment_update: RiskTreatmentUpdate,
+@router.put("/{risk_treatment_id}")
+def update_Risk_treatment(
+    risk_treatment_id: int,
+    payload: RiskTreatmentUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    treatment = db.query(RiskTreatment).filter(
-        RiskTreatment.risk_treatment_id == treatment_id,
-        RiskTreatment.is_deleted == 0
-    ).first()
 
-    if not treatment:
-        raise HTTPException(status_code=404, detail="Risk Treatment not found")
+    try:
+        risk_tretment = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_treatment_id == risk_treatment_id,
+            RiskTreatment.is_deleted == 0
+        ).first()
 
-    update_data = treatment_update.dict(exclude_unset=True)
+        if not risk_tretment:
+            return error_response("Risk Treatment not found", 404)
 
-    for key, value in update_data.items():
-        setattr(treatment, key, value)
+        update_data = payload.dict(exclude_unset=True)      # update fields
 
-    treatment.modified_by = current_user["id"]
-    treatment.modified_on = datetime.utcnow()
+        for key, value in update_data.items():
+            setattr(risk_tretment, key, value)
 
-    db.commit()
-    db.refresh(treatment)
+        risk_tretment.modified_by = current_user["id"]
+        risk_tretment.modified_on = datetime.now(timezone.utc)
 
-    return success_response(build_hybrid_response(treatment))
+        db.flush()                                       # apply update before history insert
+
+        # insert updated record into history table
+        hist = RiskTreatmentHist(
+            risk_treatment_id=risk_tretment.risk_treatment_id,
+            risk_description_id=risk_tretment.risk_description_id,
+            risk_register_id=risk_tretment.risk_register_id,
+            risk_id=risk_tretment.risk_id,
+            
+            action_plan=risk_tretment.action_plan,
+            action_owner_id=risk_tretment.action_owner_id,
+            
+            targeted_date=risk_tretment.targeted_date,
+            progress=risk_tretment.progress,
+            
+            action_status_id=risk_tretment.action_status_id,
+            next_followup_date=risk_tretment.next_followup_date,
+
+            created_by=risk_tretment.created_by,
+            created_on=risk_tretment.created_on,
+            modified_by=risk_tretment.modified_by,
+            modified_on=risk_tretment.modified_on,
+            is_deleted=risk_tretment.is_deleted
+        )
+
+        db.add(hist)
+
+        db.commit()
+        db.refresh(risk_tretment)
+
+        return success_response(
+            {"risk_register_id": risk_tretment.risk_register_id,
+            "message": "Risk updated successfully"}
+        )
+
+    except Exception as e:
+        db.rollback()
+        return error_response(str(e), 400)
 
 
 # DELETE (Soft Delete)
 @router.delete("/{treatment_id}")
 def delete_treatment(treatment_id: int, db: Session = Depends(get_db)):
-    treatment = db.query(RiskTreatment).filter(
-        RiskTreatment.risk_treatment_id == treatment_id
-    ).first()
+    try:
+        treatment = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_treatment_id == treatment_id
+        ).first()
 
-    if not treatment:
-        raise HTTPException(status_code=404, detail="Risk Treatment not found")
+        if not treatment:
+            raise HTTPException(status_code=404, detail="Risk Treatment not found")
 
-    treatment.is_deleted = 1
-    db.commit()
+        treatment.is_deleted = 1
+        
+        hist = RiskTreatmentHist(
+            risk_treatment_id = treatment.risk_treatment_id,
+            risk_description_id = treatment.risk_description_id,
+            risk_register_id = treatment.risk_register_id,
+            risk_id = treatment.risk_id,
+            action_plan = treatment.action_plan,
+            action_owner_id = treatment.action_owner_id,
+            TabErrorget_date = treatment.target_date,
+            progress = treatment.progress,
+            action_status_id = treatment.action_status_id,
+            newt_followup_date = treatment.next_followup_date,
+            crated_by = treatment.created_by,
+            created_on = treatment.created_on,
+            
+            modified_by = treatment.modified_by,
+            modified_on = treatment.modified_on,
+            
+            is_deleted = treatment.is_deleted)
+        
+        db.add(hist)
+        db.commit()
+        
+        db.refresh(treatment)
 
-    return success_response({
-        "risk_treatment_id": treatment.risk_treatment_id,
-        "message": "Risk Treatment deleted successfully"
-    })
+        return success_response({
+            "risk_treatment_id": treatment.risk_treatment_id,
+            "message": "Risk Treatment deleted successfully"
+        })
+        
+    except Exception as e:
+        db.rollback()
+        return error_response(str(e), 400)

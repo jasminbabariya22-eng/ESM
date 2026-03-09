@@ -126,12 +126,15 @@ def create_risk_register(payload: RiskRegisterCreate, db: Session = Depends(get_
 # Get ALL 
 @router.get("/")
 def get_All_Risks(db: Session = Depends(get_db)):
-    risks = db.query(RiskRegister).filter(
-        RiskRegister.is_deleted == 0 and RiskRegister.is_active == 0
-    ).all()
+    try:
+        risks = db.query(RiskRegister).filter(
+            RiskRegister.is_deleted == 0 and RiskRegister.is_active == 0
+        ).all()
 
-    response_list = [build_hybrid_response(r) for r in risks]
-    return success_response(response_list)
+        response_list = [build_hybrid_response(r) for r in risks]
+        return success_response(response_list)
+    except Exception as e:
+        return error_response(str(e), 400)
 
 
 # Get by risk_id
@@ -149,7 +152,8 @@ def get_Risk_by_risk__id(risk_id: str, db: Session = Depends(get_db)):
             if not risk:
                 raise HTTPException(status_code=404, detail="Risk not found")
 
-            return success_response(build_hybrid_response(risk))
+            response_list = [build_hybrid_response(risk)]
+            return success_response(response_list)
 
         
         else:                                         # if user fill prfix only
@@ -161,8 +165,9 @@ def get_Risk_by_risk__id(risk_id: str, db: Session = Depends(get_db)):
 
             if not risks:
                 raise HTTPException(status_code=404, detail="No risks found")
-
-            return success_response([build_hybrid_response(r) for r in risks])
+            
+            response_list = [build_hybrid_response(r) for r in risks]
+            return success_response(response_list)
 
     except Exception as e:
         return error_response(str(e), 400)
@@ -178,7 +183,8 @@ def get_Risk_by_register_id(risk_register_id: int, db: Session = Depends(get_db)
             RiskRegister.is_active == 0
         ).first()
         
-        return success_response(build_hybrid_response(risk))
+        response_list = [build_hybrid_response(risk)]
+        return success_response(response_list)
 
     except Exception as e:
         return error_response(str(e), 400)
