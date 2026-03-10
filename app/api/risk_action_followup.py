@@ -11,7 +11,7 @@ from app.schemas.risk_action_followup import (
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 
-router = APIRouter(prefix="/risk-followup", tags=["Risk Followup"])
+router = APIRouter(prefix="/risk-followup", tags=["Risk Followup"], dependencies=[Depends(get_current_user)])
 
 
 def build_followup_response(obj):
