@@ -11,9 +11,7 @@ from app.models.risk_description_hist import RiskDescriptionHist
 from app.models.risk_treatment_hist import RiskTreatmentHist
 
 
-# -----------------------------
 # Generate Risk ID
-# -----------------------------
 def generate_risk_id(db: Session, dept_id: int):
 
     dept = db.query(Department).filter(
@@ -32,6 +30,7 @@ def generate_risk_id(db: Session, dept_id: int):
     return risk_id
 
 
+# CREATE OR UPDATE RISK
 def create_update_risk(db: Session, data, current_user):
 
     try:
@@ -39,11 +38,8 @@ def create_update_risk(db: Session, data, current_user):
         register_data = data.risk_register
         desc_data = data.risk_description
         treatments = data.risk_treatments
-
-        # ---------------------------------
+        
         # RISK REGISTER
-        # ---------------------------------
-
         if register_data.risk_register_id == 0:
 
             # INSERT
@@ -103,9 +99,7 @@ def create_update_risk(db: Session, data, current_user):
 
         db.add(hist_register)
 
-        # ---------------------------------
         # RISK DESCRIPTION
-        # ---------------------------------
 
         if desc_data.risk_description_id == 0:
 
@@ -162,9 +156,9 @@ def create_update_risk(db: Session, data, current_user):
 
         db.add(hist_desc)
 
-        # ---------------------------------
+    
+    
         # RISK TREATMENT
-        # ---------------------------------
 
         if register_data.risk_register_id > 0:
 
@@ -222,73 +216,37 @@ def create_update_risk(db: Session, data, current_user):
         raise e
 
 
-# -----------------------------
-# UPDATE RISK
-# -----------------------------
+# Risk get by User
+def get_risk_by_user(db, user_id):
 
-def update_risk(db: Session, risk_id: int, data):
-
-    risk = db.query(RiskRegister).filter(
-        RiskRegister.risk_register_id == risk_id
-    ).first()
-
-    if not risk:
-        return None
-
-    # UPDATE REGISTER
-    for key, value in data.risk_register.dict().items():
-        setattr(risk, key, value)
-
-    # UPDATE DESCRIPTION
-    desc = db.query(RiskDescription).filter(
-        RiskDescription.risk_register_id == risk_id
-    ).first()
-
-    for key, value in data.risk_description.dict().items():
-        setattr(desc, key, value)
-
-    # DELETE OLD TREATMENTS
-    db.query(RiskTreatment).filter(
-        RiskTreatment.risk_register_id == risk_id
-    ).delete()
-
-    # INSERT NEW TREATMENTS
-    for t in data.risk_treatments:
-
-        treatment_data = t.dict()
-        treatment_data["risk_register_id"] = risk_id
-        treatment_data["risk_description_id"] = desc.risk_description_id
-
-        new_treatment = RiskTreatment(**treatment_data)
-
-        db.add(new_treatment)
-
-    db.commit()
-
-    return risk
-
-
-
-def get_risk_detail(db: Session, risk_id: int):
-
-    risk = db.query(RiskRegister).filter(
-        RiskRegister.risk_register_id == risk_id
-    ).first()
-
-    if not risk:
-        return None
-
-    description = db.query(RiskDescription).filter(
-        RiskDescription.risk_register_id == risk_id
-    ).first()
-
-    treatments = db.query(RiskTreatment).filter(
-        RiskTreatment.risk_register_id == risk_id,
-        RiskTreatment.is_deleted == 0
+    risks = db.query(RiskRegister).filter(
+        RiskRegister.risk_owner_id == user_id,
+        RiskRegister.is_deleted == 0
     ).all()
 
-    return {
-        "risk": risk,
-        "description": description,
-        "treatments": treatments
-    }
+    result = []
+
+    for risk in risks:
+
+        description = db.query(RiskDescription).filter(
+            RiskDescription.risk_register_id == risk.risk_register_id
+        ).first()
+
+        treatments = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_register_id == risk.risk_register_id
+        ).all()
+        
+        result.append({
+            "risk_register_id": risk.risk_register_id,
+            "risk_id": risk.risk_id,
+            "risk_name": risk.risk_name,
+            "financial_year": risk.financial_year,
+            "risk_status": risk.risk_status,
+            "risk_progress": risk.risk_progress,
+
+            "description": description,
+
+            "treatments": treatments
+        })
+
+    return result
