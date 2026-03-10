@@ -183,8 +183,7 @@ def get_Risk_by_register_id(risk_register_id: int, db: Session = Depends(get_db)
             RiskRegister.is_active == 0
         ).first()
         
-        response_list = [build_hybrid_response(risk)]
-        return success_response(response_list)
+        return success_response(build_hybrid_response(risk))
 
     except Exception as e:
         return error_response(str(e), 400)
