@@ -19,7 +19,7 @@ from app.api.department import router as dept_router
 from app.api.role import router as role_router
 from app.api.user_type import router as user_type_router
 
-from app.api.risk_register import router as risk_router
+from app.api.risk_register import router as risk_registery_router
 from app.api.risk_description import router as risk_description_router
 from app.api.risk_treatment import router as risk_treatment_router
 
@@ -46,7 +46,7 @@ app.include_router(dept_router)
 app.include_router(role_router)
 app.include_router(user_type_router)
 
-app.include_router(risk_router)
+app.include_router(risk_registery_router)
 app.include_router(risk_description_router)
 app.include_router(risk_treatment_router)
 
