@@ -4,6 +4,7 @@ from datetime import datetime
 
 
 class RiskDescriptionCreate(BaseModel):
+    risk_description_id: Optional[int] = None
     risk_description: Optional[str] = None
 
     inherent_risk_likelihood_id: Optional[int] = None

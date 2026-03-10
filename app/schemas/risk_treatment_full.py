@@ -4,6 +4,7 @@ from datetime import datetime
 
 
 class RiskTreatmentCreate(BaseModel):
+    risk_treatment_id: Optional[int] = None
     action_plan: str
     action_owner_id: int
 

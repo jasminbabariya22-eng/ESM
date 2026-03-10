@@ -9,6 +9,8 @@ from app.models.risk_treatment import RiskTreatment
 from app.models.risk_register_hist import RiskRegisterHist
 from app.models.risk_description_hist import RiskDescriptionHist
 from app.models.risk_treatment_hist import RiskTreatmentHist
+
+
 # -----------------------------
 # Generate Risk ID
 # -----------------------------
@@ -30,38 +32,58 @@ def generate_risk_id(db: Session, dept_id: int):
     return risk_id
 
 
-# -----------------------------
-# SAVE FULL RISK
-# -----------------------------
-def save_full_risk(db: Session, data, current_user):
+def create_update_risk(db: Session, data, current_user):
 
     try:
 
-        # -----------------------------
-        # CREATE RISK REGISTER
-        # -----------------------------
-        dept_id = data.risk_register.dept_id
+        register_data = data.risk_register
+        desc_data = data.risk_description
+        treatments = data.risk_treatments
 
-        risk_id = generate_risk_id(db, dept_id)
+        # ---------------------------------
+        # RISK REGISTER
+        # ---------------------------------
 
-        risk = RiskRegister(
-            risk_id=risk_id,
-            risk_name=data.risk_register.risk_name,
-            dept_id=data.risk_register.dept_id,
-            risk_owner_id=data.risk_register.risk_owner_id,
-            financial_year=data.risk_register.financial_year,
-            risk_status=data.risk_register.risk_status,
-            risk_progress=data.risk_register.risk_progress,
-            created_by=current_user["id"],
-            created_on=datetime.now(timezone.utc),
-            is_active=0,
-            is_deleted=0
-        )
+        if register_data.risk_register_id == 0:
 
-        db.add(risk)
-        db.flush()
+            # INSERT
+            risk_id = generate_risk_id(db, register_data.dept_id)
 
-        # HISTORY
+            risk = RiskRegister(
+                risk_id=risk_id,
+                risk_name=register_data.risk_name,
+                dept_id=register_data.dept_id,
+                risk_owner_id=register_data.risk_owner_id,
+                financial_year=register_data.financial_year,
+                risk_status=register_data.risk_status,
+                risk_progress=register_data.risk_progress,
+                created_by=current_user["id"],
+                created_on=datetime.now(timezone.utc),
+                is_active=0,
+                is_deleted=0
+            )
+
+            db.add(risk)
+            db.flush()
+
+        else:
+
+            # UPDATE
+            risk = db.query(RiskRegister).filter(
+                RiskRegister.risk_register_id == register_data.risk_register_id
+            ).first()
+
+            risk.risk_name = register_data.risk_name
+            risk.dept_id = register_data.dept_id
+            risk.risk_owner_id = register_data.risk_owner_id
+            risk.financial_year = register_data.financial_year
+            risk.risk_status = register_data.risk_status
+            risk.risk_progress = register_data.risk_progress
+
+            risk.modified_by = current_user["id"]
+            risk.modified_on = datetime.now(timezone.utc)
+
+        # HISTORY ENTRY
         hist_register = RiskRegisterHist(
             risk_register_id=risk.risk_register_id,
             risk_id=risk.risk_id,
@@ -72,106 +94,120 @@ def save_full_risk(db: Session, data, current_user):
             risk_status=risk.risk_status,
             risk_progress=risk.risk_progress,
             created_by=risk.created_by,
-            created_on=datetime.now(timezone.utc),
+            created_on=risk.created_on,
+            modified_by=risk.modified_by,
+            modified_on=risk.modified_on,
             is_active=risk.is_active,
             is_deleted=risk.is_deleted
         )
 
         db.add(hist_register)
 
-        # -----------------------------
-        # CREATE RISK DESCRIPTION
-        # -----------------------------
-        desc = RiskDescription(
+        # ---------------------------------
+        # RISK DESCRIPTION
+        # ---------------------------------
 
-            risk_register_id=risk.risk_register_id,
-            risk_id=risk.risk_id,
+        if desc_data.risk_description_id == 0:
 
-            risk_description=data.risk_description.risk_description,
+            description = RiskDescription(
+                risk_register_id=risk.risk_register_id,
+                risk_id=risk.risk_id,
+                risk_description=desc_data.risk_description,
+                inherent_risk_likelihood_id=desc_data.inherent_risk_likelihood_id,
+                inherent_risk_impact_id=desc_data.inherent_risk_impact_id,
+                mitigation=desc_data.mitigation,
+                current_risk_likelihood_id=desc_data.current_risk_likelihood_id,
+                current_risk_impact_id=desc_data.current_risk_impact_id,
+                created_by=current_user["id"],
+                created_on=datetime.now(timezone.utc),
+                is_deleted=0
+            )
 
-            inherent_risk_likelihood_id=data.risk_description.inherent_risk_likelihood_id,
-            inherent_risk_impact_id=data.risk_description.inherent_risk_impact_id,
+            db.add(description)
+            db.flush()
 
-            mitigation=data.risk_description.mitigation,
+        else:
 
-            current_risk_likelihood_id=data.risk_description.current_risk_likelihood_id,
-            current_risk_impact_id=data.risk_description.current_risk_impact_id,
+            description = db.query(RiskDescription).filter(
+                RiskDescription.risk_description_id == desc_data.risk_description_id
+            ).first()
 
-            created_by=current_user["id"],
-            created_on=datetime.now(timezone.utc),
-            is_deleted=0
-        )
+            description.risk_description = desc_data.risk_description
+            description.inherent_risk_likelihood_id = desc_data.inherent_risk_likelihood_id
+            description.inherent_risk_impact_id = desc_data.inherent_risk_impact_id
+            description.mitigation = desc_data.mitigation
+            description.current_risk_likelihood_id = desc_data.current_risk_likelihood_id
+            description.current_risk_impact_id = desc_data.current_risk_impact_id
 
-        db.add(desc)
-        db.flush()
+            description.modified_by = current_user["id"]
+            description.modified_on = datetime.now(timezone.utc)
 
-        # HISTORY
+        # HISTORY ENTRY
         hist_desc = RiskDescriptionHist(
-            risk_description_id=desc.risk_description_id,
-            risk_register_id=desc.risk_register_id,
-            risk_id=desc.risk_id,
-            risk_description=desc.risk_description,
-            inherent_risk_likelihood_id=desc.inherent_risk_likelihood_id,
-            inherent_risk_impact_id=desc.inherent_risk_impact_id,
-            mitigation=desc.mitigation,
-            current_risk_likelihood_id=desc.current_risk_likelihood_id,
-            current_risk_impact_id=desc.current_risk_impact_id,
-            created_by=desc.created_by,
-            created_on=desc.created_on,
-            is_deleted=desc.is_deleted
+            risk_description_id=description.risk_description_id,
+            risk_register_id=description.risk_register_id,
+            risk_id=description.risk_id,
+            risk_description=description.risk_description,
+            inherent_risk_likelihood_id=description.inherent_risk_likelihood_id,
+            inherent_risk_impact_id=description.inherent_risk_impact_id,
+            mitigation=description.mitigation,
+            current_risk_likelihood_id=description.current_risk_likelihood_id,
+            current_risk_impact_id=description.current_risk_impact_id,
+            created_by=description.created_by,
+            created_on=description.created_on,
+            modified_by=description.modified_by,
+            modified_on=description.modified_on,
+            is_deleted=description.is_deleted
         )
 
         db.add(hist_desc)
 
-        # -----------------------------
-        # CREATE RISK TREATMENTS
-        # -----------------------------
-        for treatment in data.risk_treatments:
+        # ---------------------------------
+        # RISK TREATMENT
+        # ---------------------------------
+
+        if register_data.risk_register_id > 0:
+
+            db.query(RiskTreatment).filter(
+                RiskTreatment.risk_register_id == risk.risk_register_id
+            ).delete()
+
+        for treatment in treatments:
 
             new_treatment = RiskTreatment(
-
-                risk_description_id=desc.risk_description_id,
                 risk_register_id=risk.risk_register_id,
+                risk_description_id=description.risk_description_id,
                 risk_id=risk.risk_id,
 
                 action_plan=treatment.action_plan,
                 action_owner_id=treatment.action_owner_id,
                 target_date=treatment.target_date,
-
                 progress=treatment.progress,
                 action_status_id=treatment.action_status_id,
-
                 next_followup_date=treatment.next_followup_date,
 
                 created_by=current_user["id"],
                 created_on=datetime.now(timezone.utc),
-
                 is_deleted=0
             )
 
             db.add(new_treatment)
             db.flush()
 
-            # HISTORY
+            # HISTORY ENTRY
             hist_treatment = RiskTreatmentHist(
-
                 risk_treatment_id=new_treatment.risk_treatment_id,
                 risk_description_id=new_treatment.risk_description_id,
                 risk_register_id=new_treatment.risk_register_id,
                 risk_id=new_treatment.risk_id,
-
                 action_plan=new_treatment.action_plan,
                 action_owner_id=new_treatment.action_owner_id,
-
                 target_date=new_treatment.target_date,
                 progress=new_treatment.progress,
-
                 action_status_id=new_treatment.action_status_id,
                 next_followup_date=new_treatment.next_followup_date,
-
                 created_by=new_treatment.created_by,
                 created_on=new_treatment.created_on,
-
                 is_deleted=new_treatment.is_deleted
             )
 

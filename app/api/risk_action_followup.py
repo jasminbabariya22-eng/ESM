@@ -86,6 +86,23 @@ def get_followup(followup_id: int, db: Session = Depends(get_db)):
     
     except Exception as e:
         return error_response(str(e), 400)
+    
+# Get by reference id (Based on Treatmnent ID or Risk Register ID or Risk Description ID)
+@router.get("/reference_id/{reference_id}")
+def get_followup_by_reference_id(reference_id: int, db: Session = Depends(get_db)):
+    
+    try:
+        data = db.query(RiskActionFollowup).filter(
+            RiskActionFollowup.reference_id == reference_id
+        ).first()
+
+        if not data:
+            raise HTTPException(status_code=404, detail="Followup not found")
+
+        return success_response(build_followup_response(data))
+    
+    except Exception as e:
+        return error_response(str(e), 400)
 
 
 # -------------------------

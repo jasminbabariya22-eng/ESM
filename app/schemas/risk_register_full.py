@@ -4,6 +4,7 @@ from datetime import datetime
 
 
 class RiskRegisterCreate(BaseModel):
+    risk_register_id: Optional[int] = None
     risk_name: str
     dept_id: int
     risk_owner_id: int

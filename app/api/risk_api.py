@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_user
 from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDetailResponse
 from app.core.response import success_response, error_response
 
-from app.services.risk_service import get_risk_detail, update_risk, save_full_risk
+from app.services.risk_service import get_risk_detail, update_risk, create_update_risk
 from app.models.risk_register import RiskRegister
 
 
@@ -14,16 +14,16 @@ router = APIRouter(prefix="/risk", tags=["Risk"])
 
 
 @router.post("/save")
-def create_risk(
+def save_risk_api(
     data: RiskSaveRequest,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
 
-    risk = save_full_risk(db, data, current_user)
+    risk = create_update_risk(db, data, current_user)
 
     return {
-        "message": "Risk created successfully",
+        "message": "Risk saved successfully",
         "risk_register_id": risk.risk_register_id,
         "risk_id": risk.risk_id
     }
