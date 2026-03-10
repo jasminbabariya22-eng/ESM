@@ -32,13 +32,15 @@ from app.core.exception_handler import (
 )
 
 from app.api.Status import router as status_router
-from app.api.risk_api import router as risk_api_router
+from app.api.risk_api import router as risk_router
+
+from app.api.risk_action_followup import router as risk_action_followup_router
 
 app = FastAPI()
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(status_router)
-app.include_router(risk_api_router)
+app.include_router(risk_router)
 
 app.include_router(dept_router)
 app.include_router(role_router)
@@ -47,6 +49,8 @@ app.include_router(user_type_router)
 app.include_router(risk_router)
 app.include_router(risk_description_router)
 app.include_router(risk_treatment_router)
+
+app.include_router(risk_action_followup_router)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

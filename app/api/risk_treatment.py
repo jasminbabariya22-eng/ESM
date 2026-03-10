@@ -161,6 +161,24 @@ def get_treatment(risk_treatment_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         return error_response(str(e), 400)
+    
+# Get BY risk_Description_id
+@router.get("/risk_description_id/{risk_description_id}", response_model=RiskTreatmentHybridResponse)
+def get_treatment(risk_description_id: int, db: Session = Depends(get_db)):
+    try:
+        treatment = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_description_id == risk_description_id,
+            RiskTreatment.is_deleted == 0
+        ).first()
+
+        if not treatment:
+            raise HTTPException(status_code=404, detail="Risk Description not found")
+
+        response_list = [build_hybrid_response(treatment)]
+        return success_response(response_list)
+
+    except Exception as e:
+        return error_response(str(e), 400)
 
 
 # Get by risk_id
