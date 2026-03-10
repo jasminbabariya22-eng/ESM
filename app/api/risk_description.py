@@ -167,7 +167,7 @@ def get_Risk_Description_by_risk_id(risk_id: str, db: Session = Depends(get_db))
 
 
 # Get BY Risk_Description_id
-@router.get("risk_description_id/{risk_description_id}", response_model=RiskDescriptionHybridResponse)
+@router.get("/risk_description_id/{risk_description_id}", response_model=RiskDescriptionHybridResponse)
 def Get_Risk_Description_by_risk_description_id(risk_description_id: int, db: Session = Depends(get_db)):
     try:
         desc = db.query(RiskDescription).filter(

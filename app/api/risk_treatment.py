@@ -145,7 +145,7 @@ def get_treatments(db: Session = Depends(get_db)):
 
 
 # Get BY risk_treatment_id
-@router.get("risk_treatment_id/{risk_treatment_id}", response_model=RiskTreatmentHybridResponse)
+@router.get("/risk_treatment_id/{risk_treatment_id}", response_model=RiskTreatmentHybridResponse)
 def get_treatment(risk_treatment_id: int, db: Session = Depends(get_db)):
     try:
         treatment = db.query(RiskTreatment).filter(

@@ -1,26 +1,19 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 
-class RiskRegister(BaseModel):
-    id: int = 0
-    risk_title: str
-    risk_status: int
+from app.schemas.risk_register import RiskRegisterCreate
+from app.schemas.risk_description import RiskDescriptionCreate
+from app.schemas.risk_treatment import RiskTreatmentCreate
 
-class RiskDescription(BaseModel):
-    id: int = 0
-    description: str
 
-class RiskTreatment(BaseModel):
-    treatment: str
-    owner_id: int
+class RiskSaveRequest(BaseModel):
+    risk_register: RiskRegisterCreate
+    risk_description: RiskDescriptionCreate
+    risk_treatments: List[RiskTreatmentCreate]
 
-class RiskRequest(BaseModel):
-    risk_register: RiskRegister
-    risk_description: RiskDescription
-    risk_treatment: List[RiskTreatment]
 
-class ApprovalRequest(BaseModel):
-    risk_id: int
-    status: str
-    approved_by: int
-    remark: Optional[str]
+class RiskUpdateRequest(BaseModel):
+    risk_register_id: int
+    risk_register: RiskRegisterCreate
+    risk_description: RiskDescriptionCreate
+    risk_treatments: List[RiskTreatmentCreate]
