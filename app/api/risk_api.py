@@ -69,7 +69,8 @@ def get_my_risks(
 def get_my_dept_risks(
     
     dept_id: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
 
     try:

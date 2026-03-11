@@ -44,7 +44,7 @@ class RiskTreatment(Base):
     is_deleted = Column(SmallInteger, default=0)
 
     # Relationships
-    risk_description = relationship("RiskDescription", backref="treatments")
+    risk_description = relationship("RiskDescription", back_populates="treatments")
     risk_register = relationship("RiskRegister")
     action_owner = relationship("User", foreign_keys=[action_owner_id])
     status = relationship("Status")
