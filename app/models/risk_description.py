@@ -35,3 +35,5 @@ class RiskDescription(Base):
 
     # Relationship
     risk_register = relationship("RiskRegister", backref="risk_descriptions")
+    
+    treatments = relationship("RiskTreatment",back_populates="risk_description",cascade="all,delete-orphan")

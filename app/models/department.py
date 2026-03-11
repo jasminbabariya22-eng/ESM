@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, SmallInteger
 from app.core.database import Base
+from sqlalchemy.orm import relationship
 
 class Department(Base):
     __tablename__ = "mst_department"
@@ -17,3 +18,6 @@ class Department(Base):
     description = Column(Text)
     dept_short_name = Column(String(10))
     last_risk_number = Column(Integer, default=0)
+    
+    # Relationship
+    risks = relationship("RiskRegister", back_populates="department")

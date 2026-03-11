@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -7,7 +8,7 @@ from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDeta
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user
+from app.services.risk_service import get_risk_by_user,get_risk_by_dept
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -59,12 +60,23 @@ def get_my_risks(
     return success_response(data=risks)
 
 
-# @router.get("/{risk_id}")
-# def get_risk_detail_api(risk_id: int, db: Session = Depends(get_db)):
 
-#     data = get_risk_detail(db, risk_id)
+# -----------------------------
+# GET BY DEPARTMENT ID
+# -----------------------------
 
-#     if not data:
-#         return error_response(message="Risk not found")
+@router.get("/risks")
+def get_my_dept_risks(
+    
+    dept_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
 
-#     return success_response(data=data)
+    try:
+        risks = get_risk_by_dept(db, dept_id)
+
+        return success_response(data=risks)
+    except Exception as e:
+        return error_response(message=str(e),status_code=500)
+    
+    

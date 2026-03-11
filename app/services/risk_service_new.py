@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
 from datetime import datetime, timezone
 from sqlalchemy.inspection import inspect
 
@@ -30,19 +31,6 @@ def generate_risk_id(db: Session, dept_id: int):
 
     return risk_id
 
-# Type Convertion
-def to_int(val):
-    return int(val) if val not in [None, ""] else None
-
-
-def to_float(val):
-    return float(val) if val not in [None, ""] else None
-
-
-def to_datetime(val):
-    from datetime import datetime
-    return datetime.fromisoformat(val) if val not in [None, ""] else None
-
 
 # CREATE OR UPDATE RISK
 def create_update_risk(db: Session, data, current_user):
@@ -51,23 +39,22 @@ def create_update_risk(db: Session, data, current_user):
 
         register_data = data.risk_register
         desc_data = data.risk_description
-        treatments = data.risk_treatments or []
-
+        treatments = data.risk_treatments
         
         # RISK REGISTER
-       
-        if to_int(register_data.risk_register_id) == 0:
+        if register_data.risk_register_id == 0:
 
-            risk_id = generate_risk_id(db, to_int(register_data.dept_id))
+            # INSERT
+            risk_id = generate_risk_id(db, register_data.dept_id)
 
             risk = RiskRegister(
                 risk_id=risk_id,
                 risk_name=register_data.risk_name,
-                dept_id=to_int(register_data.dept_id),
-                risk_owner_id=to_int(register_data.risk_owner_id),
+                dept_id=register_data.dept_id,
+                risk_owner_id=register_data.risk_owner_id,
                 financial_year=register_data.financial_year,
-                risk_status=to_int(register_data.risk_status),
-                risk_progress=to_float(register_data.risk_progress),
+                risk_status=register_data.risk_status,
+                risk_progress=register_data.risk_progress,
                 created_by=current_user["id"],
                 created_on=datetime.now(timezone.utc),
                 is_active=0,
@@ -79,23 +66,22 @@ def create_update_risk(db: Session, data, current_user):
 
         else:
 
+            # UPDATE
             risk = db.query(RiskRegister).filter(
-                RiskRegister.risk_register_id == to_int(register_data.risk_register_id)
+                RiskRegister.risk_register_id == register_data.risk_register_id
             ).first()
 
             risk.risk_name = register_data.risk_name
-            risk.dept_id = to_int(register_data.dept_id)
-            risk.risk_owner_id = to_int(register_data.risk_owner_id)
+            risk.dept_id = register_data.dept_id
+            risk.risk_owner_id = register_data.risk_owner_id
             risk.financial_year = register_data.financial_year
-            risk.risk_status = to_int(register_data.risk_status)
-            risk.risk_progress = to_float(register_data.risk_progress)
+            risk.risk_status = register_data.risk_status
+            risk.risk_progress = register_data.risk_progress
 
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
 
-        
-        # HISTORY ENTRY - REGISTER
-       
+        # HISTORY ENTRY
         hist_register = RiskRegisterHist(
             risk_register_id=risk.risk_register_id,
             risk_id=risk.risk_id,
@@ -115,19 +101,19 @@ def create_update_risk(db: Session, data, current_user):
 
         db.add(hist_register)
 
-       
         # RISK DESCRIPTION
-        if to_int(desc_data.risk_description_id) == 0:
+
+        if desc_data.risk_description_id == 0:
 
             description = RiskDescription(
                 risk_register_id=risk.risk_register_id,
                 risk_id=risk.risk_id,
                 risk_description=desc_data.risk_description,
-                inherent_risk_likelihood_id=to_int(desc_data.inherent_risk_likelihood_id),
-                inherent_risk_impact_id=to_int(desc_data.inherent_risk_impact_id),
+                inherent_risk_likelihood_id=desc_data.inherent_risk_likelihood_id,
+                inherent_risk_impact_id=desc_data.inherent_risk_impact_id,
                 mitigation=desc_data.mitigation,
-                current_risk_likelihood_id=to_int(desc_data.current_risk_likelihood_id),
-                current_risk_impact_id=to_int(desc_data.current_risk_impact_id),
+                current_risk_likelihood_id=desc_data.current_risk_likelihood_id,
+                current_risk_impact_id=desc_data.current_risk_impact_id,
                 created_by=current_user["id"],
                 created_on=datetime.now(timezone.utc),
                 is_deleted=0
@@ -139,21 +125,20 @@ def create_update_risk(db: Session, data, current_user):
         else:
 
             description = db.query(RiskDescription).filter(
-                RiskDescription.risk_description_id == to_int(desc_data.risk_description_id)
+                RiskDescription.risk_description_id == desc_data.risk_description_id
             ).first()
 
             description.risk_description = desc_data.risk_description
-            description.inherent_risk_likelihood_id = to_int(desc_data.inherent_risk_likelihood_id)
-            description.inherent_risk_impact_id = to_int(desc_data.inherent_risk_impact_id)
+            description.inherent_risk_likelihood_id = desc_data.inherent_risk_likelihood_id
+            description.inherent_risk_impact_id = desc_data.inherent_risk_impact_id
             description.mitigation = desc_data.mitigation
-            description.current_risk_likelihood_id = to_int(desc_data.current_risk_likelihood_id)
-            description.current_risk_impact_id = to_int(desc_data.current_risk_impact_id)
+            description.current_risk_likelihood_id = desc_data.current_risk_likelihood_id
+            description.current_risk_impact_id = desc_data.current_risk_impact_id
 
             description.modified_by = current_user["id"]
             description.modified_on = datetime.now(timezone.utc)
 
-        
-        # HISTORY ENTRY - DESCRIPTION
+        # HISTORY ENTRY
         hist_desc = RiskDescriptionHist(
             risk_description_id=description.risk_description_id,
             risk_register_id=description.risk_register_id,
@@ -173,11 +158,14 @@ def create_update_risk(db: Session, data, current_user):
 
         db.add(hist_desc)
 
+    
+    
         # RISK TREATMENT
-        if to_int(desc_data.risk_description_id) > 0:
+
+        if register_data.risk_register_id > 0:
 
             db.query(RiskTreatment).filter(
-                RiskTreatment.risk_description_id == description.risk_description_id
+                RiskTreatment.risk_register_id == risk.risk_register_id
             ).delete()
 
         for treatment in treatments:
@@ -188,11 +176,11 @@ def create_update_risk(db: Session, data, current_user):
                 risk_id=risk.risk_id,
 
                 action_plan=treatment.action_plan,
-                action_owner_id=to_int(treatment.action_owner_id),
-                target_date=to_datetime(treatment.target_date),
-                progress=to_float(treatment.progress),
-                action_status_id=to_int(treatment.action_status_id),
-                next_followup_date=to_datetime(treatment.next_followup_date),
+                action_owner_id=treatment.action_owner_id,
+                target_date=treatment.target_date,
+                progress=treatment.progress,
+                action_status_id=treatment.action_status_id,
+                next_followup_date=treatment.next_followup_date,
 
                 created_by=current_user["id"],
                 created_on=datetime.now(timezone.utc),
@@ -202,6 +190,7 @@ def create_update_risk(db: Session, data, current_user):
             db.add(new_treatment)
             db.flush()
 
+            # HISTORY ENTRY
             hist_treatment = RiskTreatmentHist(
                 risk_treatment_id=new_treatment.risk_treatment_id,
                 risk_description_id=new_treatment.risk_description_id,
@@ -245,13 +234,10 @@ def get_risk_by_user(db, user_id):
             RiskDescription.risk_register_id == risk.risk_register_id
         ).first()
 
-        treatments = []
-
-        if description:
-            treatments = db.query(RiskTreatment).filter(
-                RiskTreatment.risk_description_id == description.risk_description_id
-            ).all()
-
+        treatments = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_register_id == risk.risk_register_id
+        ).all()
+        
         result.append({
             "risk_register_id": risk.risk_register_id,
             "risk_id": risk.risk_id,
@@ -259,15 +245,33 @@ def get_risk_by_user(db, user_id):
             "financial_year": risk.financial_year,
             "risk_status": risk.risk_status,
             "risk_progress": risk.risk_progress,
+
             "description": description,
+
             "treatments": treatments
         })
 
     return result
 
+def get_risk_by_dept_old(db, dept_id):
+    try:
+        risks = (
+            db.query(RiskRegister)
+            .options(
+                joinedload(RiskRegister.risk_descriptions)
+                .joinedload(RiskDescription.treatments)
+            )
+            .filter(
+                RiskRegister.dept_id == dept_id,
+                RiskRegister.is_deleted == 0
+            )
+            .all()
+        )
 
+        return risks
+    except Exception as e:
+        raise e
 
-# Risk LIST fromDepartment id
 def to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 

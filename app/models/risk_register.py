@@ -38,21 +38,29 @@ class RiskRegister(Base):
 
     is_active = Column(SmallInteger, default=0)
     is_deleted = Column(SmallInteger, default=0)
+    
+    # risk_co_owner_id = Column(Integer, ForeignKey("ers.mst_users.id"))
 
     # Relationships
-    department = relationship("Department", backref="risks")
-    risk_owner = relationship("User", foreign_keys=[risk_owner_id])
-    status = relationship(
-        "Status",
-        foreign_keys=[risk_status]
-    )
+    department = relationship("Department", back_populates="risks")
     
-    function_head_status = relationship(
-        "Status",
-        foreign_keys=[risk_function_head_approval_status]
-    )
+    risk_descriptions = relationship("RiskDescription",back_populates="risk_register",cascade="all, delete-orphan")
+    risk_owner = relationship("User", foreign_keys=[risk_owner_id])
+    # risk_co_owner_id = relationship(
+    #     "User",
+    #     foreign_keys=[risk_co_owner_id])
+    
+    # status = relationship(
+    #     "Status",
+    #     foreign_keys=[risk_status]
+    # )
+    
+    # function_head_status = relationship(
+    #     "Status",
+    #     foreign_keys=[risk_function_head_approval_status]
+    # )
 
-    risk_head_status = relationship(
-        "Status",
-        foreign_keys=[risk_head_approval_status]
-    )
+    # risk_head_status = relationship(
+    #     "Status",
+    #     foreign_keys=[risk_head_approval_status]
+    # )
