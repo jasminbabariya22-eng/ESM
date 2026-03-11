@@ -4,27 +4,28 @@ from datetime import datetime
 
 
 class RiskDescriptionCreate(BaseModel):
-    risk_description_id: Optional[int] = None
-    risk_description: Optional[str] = None
+    risk_description_id: Optional[str] = "0"
+    risk_description: Optional[str] = ""
 
-    inherent_risk_likelihood_id: Optional[int] = None
-    inherent_risk_impact_id: Optional[int] = None
+    inherent_risk_likelihood_id: Optional[str] = "0"
+    inherent_risk_impact_id: Optional[str] = "0"
 
-    mitigation: Optional[str] = None
+    mitigation: Optional[str] = ""
 
-    current_risk_likelihood_id: Optional[int] = None
-    current_risk_impact_id: Optional[int] = None
+    current_risk_likelihood_id: Optional[str] = "0"
+    current_risk_impact_id: Optional[str] = "0"
     
     
 class RiskDescriptionUpdate(BaseModel):
-    risk_description: Optional[str] = None
-    mitigation: Optional[str] = None
 
-    inherent_risk_likelihood_id: Optional[int] = None
-    inherent_risk_impact_id: Optional[int] = None
+    risk_description: Optional[str] = ""
+    mitigation: Optional[str] = ""
 
-    current_risk_likelihood_id: Optional[int] = None
-    current_risk_impact_id: Optional[int] = None
+    inherent_risk_likelihood_id: Optional[str] = "0"
+    inherent_risk_impact_id: Optional[str] = "0"
+
+    current_risk_likelihood_id: Optional[str] = "0"
+    current_risk_impact_id: Optional[str] = "0"
     
 
 class RiskDescriptionHybridResponse(BaseModel):

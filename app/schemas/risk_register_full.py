@@ -4,28 +4,28 @@ from datetime import datetime
 
 
 class RiskRegisterCreate(BaseModel):
-    risk_register_id: Optional[int] = None
+    risk_register_id: Optional[str] = "0"
     risk_name: str
-    dept_id: int
-    risk_owner_id: int
+    dept_id: Optional[str] = "0"
+    risk_owner_id: Optional[str] = "0"
 
-    financial_year: Optional[str] = None
-    risk_status: Optional[int] = None
-    risk_progress: Optional[float] = None
+    financial_year: Optional[str] = ""
+    risk_status: Optional[str] = "0"
+    risk_progress: Optional[str] = "0"
 
-    is_active: Optional[int] = 0
+    is_active: Optional[str] = "0"
     
 class RiskRegisterUpdate(BaseModel):
 
-    risk_name: Optional[str] = None
-    dept_id: Optional[int] = None
-    risk_owner_id: Optional[int] = None
+    risk_name: Optional[str] = ""
+    dept_id: Optional[str] = "0"
+    risk_owner_id: Optional[str] = "0"
 
-    financial_year: Optional[str] = None
-    risk_status: Optional[int] = None
-    risk_progress: Optional[float] = None
+    financial_year: Optional[str] = ""
+    risk_status: Optional[str] = "0"
+    risk_progress: Optional[str] = "0"
 
-    is_active: Optional[int] = None
+    is_active: Optional[str] = "0"
     
 class RiskRegisterHybridResponse(BaseModel):
     risk_register_id: int

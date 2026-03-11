@@ -13,17 +13,16 @@ from .risk_treatment_full import RiskTreatmentHybridResponse
 class RiskSaveRequest(BaseModel):
     risk_register: RiskRegisterCreate
     risk_description: RiskDescriptionCreate
-    risk_treatments: List[RiskTreatmentCreate]
+    risk_treatments: Optional[List[RiskTreatmentCreate]] = []
 
 
 class RiskUpdateRequest(BaseModel):
-    risk_register_id: int
+    risk_register_id: str
     risk_register: RiskRegisterCreate
     risk_description: RiskDescriptionCreate
-    risk_treatments: List[RiskTreatmentCreate]
+    risk_treatments: Optional[List[RiskTreatmentCreate]] = []
     
 class RiskDetailResponse(BaseModel):
-
     risk_register: RiskRegisterHybridResponse
     risk_description: Optional[RiskDescriptionHybridResponse]
     risk_treatments: List[RiskTreatmentHybridResponse]

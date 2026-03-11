@@ -4,21 +4,22 @@ from datetime import datetime
 
 
 class RiskTreatmentCreate(BaseModel):
-    risk_treatment_id: Optional[int] = None
+    risk_treatment_id: Optional[str] = "0"
     action_plan: str
-    action_owner_id: int
+    action_owner_id: Optional[str] = "0"
 
-    target_date: Optional[datetime] = None
-    progress: Optional[float] = None
-    action_status_id: Optional[int] = None
-    next_followup_date: Optional[datetime] = None
+    target_date: Optional[str] = ""
+    progress: Optional[str] = "0"
+    action_status_id: Optional[str] = "0"
+    next_followup_date: Optional[str] = ""
+    
     
 class RiskTreatmentUpdate(BaseModel):
-    action_plan: Optional[str] = None
-    progress: Optional[float] = None
-    action_status_id: Optional[int] = None
-    target_date: Optional[datetime] = None
-    next_followup_date: Optional[datetime] = None
+    action_plan: Optional[str] = ""
+    progress: Optional[str] = "0"
+    action_status_id: Optional[str] = "0"
+    target_date: Optional[str] = ""
+    next_followup_date: Optional[str] = ""
     
 class RiskTreatmentHybridResponse(BaseModel):
     risk_treatment_id: int
