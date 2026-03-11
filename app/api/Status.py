@@ -2,16 +2,18 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.mst_status import Status
-
+from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 
-
-router = APIRouter()
+router = APIRouter(
+    prefix="/approval",
+    tags=["Approval"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # GET STATUS BY TYPE
-@router.get("/types/{status_type}")
+@router.get("/type/{status_type}")
 def get_status_by_type(status_type: str, db: Session = Depends(get_db)):
-    
     try:
         statuses = db.query(Status).filter(
             Status.type == status_type,
@@ -25,15 +27,14 @@ def get_status_by_type(status_type: str, db: Session = Depends(get_db)):
             }
             for s in statuses
         ])
-        
+
     except Exception as e:
         return error_response(str(e))
-    
 
-# Get STATUS BY ID
-@router.get("/{status_id}")
+
+# GET STATUS BY ID
+@router.get("/id/{status_id}")
 def get_status_by_id(status_id: int, db: Session = Depends(get_db)):
-    
     try:
         status = db.query(Status).filter(
             Status.id == status_id,
@@ -47,15 +48,14 @@ def get_status_by_id(status_id: int, db: Session = Depends(get_db)):
             "id": status.id,
             "status_name": status.status_name
         })
-        
+
     except Exception as e:
         return error_response(str(e))
 
 
-# Get Status by Status Name
+# GET STATUS BY NAME
 @router.get("/name/{status_name}")
 def get_status_by_status_name(status_name: str, db: Session = Depends(get_db)):
-    
     try:
         status = db.query(Status).filter(
             Status.status_name == status_name,
@@ -69,6 +69,6 @@ def get_status_by_status_name(status_name: str, db: Session = Depends(get_db)):
             "id": status.id,
             "status_name": status.status_name
         })
-        
+
     except Exception as e:
         return error_response(str(e))

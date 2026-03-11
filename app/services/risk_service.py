@@ -160,10 +160,10 @@ def create_update_risk(db: Session, data, current_user):
     
         # RISK TREATMENT
 
-        if register_data.risk_register_id > 0:
+        if desc_data.risk_description_id > 0:
 
             db.query(RiskTreatment).filter(
-                RiskTreatment.risk_register_id == risk.risk_register_id
+                RiskTreatment.risk_description_id == description.risk_description_id
             ).delete()
 
         for treatment in treatments:
@@ -232,10 +232,13 @@ def get_risk_by_user(db, user_id):
             RiskDescription.risk_register_id == risk.risk_register_id
         ).first()
 
-        treatments = db.query(RiskTreatment).filter(
-            RiskTreatment.risk_register_id == risk.risk_register_id
-        ).all()
-        
+        treatments = []
+
+        if description:
+            treatments = db.query(RiskTreatment).filter(
+                RiskTreatment.risk_description_id == description.risk_description_id
+            ).all()
+
         result.append({
             "risk_register_id": risk.risk_register_id,
             "risk_id": risk.risk_id,
@@ -243,9 +246,7 @@ def get_risk_by_user(db, user_id):
             "financial_year": risk.financial_year,
             "risk_status": risk.risk_status,
             "risk_progress": risk.risk_progress,
-
             "description": description,
-
             "treatments": treatments
         })
 

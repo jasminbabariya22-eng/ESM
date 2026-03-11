@@ -35,30 +35,37 @@ from app.api.Status import router as status_router
 from app.api.risk_api import router as risk_router
 
 from app.api.risk_action_followup import router as risk_action_followup_router
+from app.api.approval import router as approval_router
 
 app = FastAPI()
+
+# Authenticate and get current user
 app.include_router(auth_router)
 app.include_router(user_router)
-app.include_router(status_router)
-app.include_router(risk_router)
 
+# Include Master Data APIs
 app.include_router(dept_router)
 app.include_router(role_router)
 app.include_router(user_type_router)
 
+# Full Risk Register APIs
+app.include_router(risk_router)
+
+# Approval and Status APIs
+app.include_router(status_router)
+app.include_router(risk_action_followup_router)
+app.include_router(approval_router)
+
+
+# Risk Register APIs
 app.include_router(risk_registery_router)
 app.include_router(risk_description_router)
 app.include_router(risk_treatment_router)
 
-app.include_router(risk_action_followup_router)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
-
-# @app.get("/users", response_model=List[UserResponse])
-# def get_users(db: Session = Depends(get_db)):
-#     return db.query(User).limit(5).all()
 
 
 ## Logging Middleware

@@ -20,10 +20,13 @@ def save_risk_api(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    try:
+        risk = create_update_risk(db, data, current_user)
 
-    risk = create_update_risk(db, data, current_user)
-
-    return success_response(message="Risk saved successfully", data={"risk_id": risk.risk_id})
+        return success_response(data=data, message="Risk saved successfully")
+    
+    except Exception as e:
+        return error_response(str(e), 400)
 
 
 # # -----------------------------
