@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import joinedload
 
 from app.models.department import Department
 from app.models.risk_register import RiskRegister
@@ -343,5 +344,26 @@ def get_risk_by_dept(db, dept_id):
             })
 
         return result
+    except Exception as e:
+        raise e
+
+
+# Risk Register by ID
+def get_risk_by_risk_id(db, risk_id):
+    try:
+        risks = (
+            db.query(RiskRegister)
+            .options(
+                joinedload(RiskRegister.risk_descriptions)
+                .joinedload(RiskDescription.treatments)
+            )
+            .filter(
+                RiskRegister.risk_id == risk_id,
+                RiskRegister.is_deleted == 0
+            )
+            .all()
+        )
+
+        return risks
     except Exception as e:
         raise e

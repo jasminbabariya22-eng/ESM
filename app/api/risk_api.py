@@ -8,7 +8,7 @@ from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDeta
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user,get_risk_by_dept
+from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -66,7 +66,7 @@ def get_my_risks(
 # -----------------------------
 
 @router.get("/risks")
-def get_my_dept_risks(
+def get_my_dept_risks_by_dept_id(
     
     dept_id: Optional[int] = None,
     db: Session = Depends(get_db),
@@ -81,3 +81,23 @@ def get_my_dept_risks(
         return error_response(message=str(e),status_code=500)
     
     
+    
+
+# -----------------------------
+# GET BY Risk ID
+# -----------------------------
+
+@router.get("/risks_by_id/{risk_id}")
+def get_my_dept_risks_by_risk_id(
+    
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+
+    try:
+        risks = get_risk_by_risk_id(db, risk_id)
+
+        return success_response(data=risks)
+    except Exception as e:
+        return error_response(message=str(e),status_code=500)
