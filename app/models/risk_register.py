@@ -30,6 +30,11 @@ class RiskRegister(Base):
     risk_head_approved_on = Column(DateTime)
     risk_head_approval_remark = Column(String(500))
     risk_head_approval_by = Column(Integer)
+    
+    risk_manager_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
+    risk_manager_approved_on = Column(DateTime)
+    risk_manager_approval_remark = Column(String(500))
+    risk_manager_approval_by = Column(Integer)
 
     created_by = Column(Integer, nullable=False, default=1)
     created_on = Column(DateTime)
@@ -39,28 +44,38 @@ class RiskRegister(Base):
     is_active = Column(SmallInteger, default=0)
     is_deleted = Column(SmallInteger, default=0)
     
-    # risk_co_owner_id = Column(Integer, ForeignKey("ers.mst_users.id"))
+    risk_co_owner_id = Column(Integer, ForeignKey("ers.mst_users.id"))
 
     # Relationships
     department = relationship("Department", back_populates="risks")
-    
-    risk_descriptions = relationship("RiskDescription",back_populates="risk_register",cascade="all, delete-orphan")
-    risk_owner = relationship("User", foreign_keys=[risk_owner_id])
-    # risk_co_owner_id = relationship(
-    #     "User",
-    #     foreign_keys=[risk_co_owner_id])
-    
-    # status = relationship(
-    #     "Status",
-    #     foreign_keys=[risk_status]
-    # )
-    
-    # function_head_status = relationship(
-    #     "Status",
-    #     foreign_keys=[risk_function_head_approval_status]
-    # )
 
-    # risk_head_status = relationship(
-    #     "Status",
-    #     foreign_keys=[risk_head_approval_status]
-    # )
+    risk_descriptions = relationship(
+        "RiskDescription",
+        back_populates="risk_register",
+        cascade="all, delete-orphan"
+    )
+
+    risk_owner = relationship(
+        "User",
+        foreign_keys=[risk_owner_id]
+    )
+
+    risk_co_owner = relationship(
+        "User",
+        foreign_keys=[risk_co_owner_id]
+    )
+    
+    status = relationship(
+        "Status",
+        foreign_keys=[risk_status]
+    )
+    
+    function_head_status = relationship(
+        "Status",
+        foreign_keys=[risk_function_head_approval_status]
+    )
+
+    risk_head_status = relationship(
+        "Status",
+        foreign_keys=[risk_head_approval_status]
+    )

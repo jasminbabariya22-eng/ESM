@@ -8,7 +8,7 @@ from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDeta
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id
+from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -90,14 +90,41 @@ def get_my_dept_risks_by_dept_id(
 @router.get("/risks_by_id/{risk_id}")
 def get_my_dept_risks_by_risk_id(
     
-    risk_id: str,
+    risk_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
 
     try:
         risks = get_risk_by_risk_id(db, risk_id)
-
+        if not risks:
+            return error_response(message="Risk not found", status_code=404)
+        
         return success_response(data=risks)
+    
     except Exception as e:
         return error_response(message=str(e),status_code=500)
+    
+    
+# -----------------------------
+# GET BY Risk Description ID
+# -----------------------------
+
+@router.get("/risk_by_description/{description_id}")
+def get_risk_by_description(
+    description_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+
+    try:
+
+        risk_description = get_risk_by_description_id(db, description_id)
+
+        if not risk_description:
+            return error_response(message="Risk Description not found", status_code=404)
+
+        return success_response(data=risk_description)
+
+    except Exception as e:
+        return error_response(message=str(e), status_code=500)

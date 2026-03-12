@@ -348,7 +348,7 @@ def get_risk_by_dept(db, dept_id):
         raise e
 
 
-# Risk Register by ID
+# Risk Register by risk_id
 def get_risk_by_risk_id(db, risk_id):
     try:
         risks = (
@@ -358,12 +358,33 @@ def get_risk_by_risk_id(db, risk_id):
                 .joinedload(RiskDescription.treatments)
             )
             .filter(
-                RiskRegister.risk_id == risk_id,
+                RiskRegister.risk_register_id == risk_id,
                 RiskRegister.is_deleted == 0
             )
             .all()
         )
 
         return risks
+    except Exception as e:
+        raise e
+    
+    
+    
+# Risk Register by risk_description_id
+def get_risk_by_description_id(db, description_id):
+    try:
+
+        risk_description = (
+            db.query(RiskDescription)
+            .options(joinedload(RiskDescription.treatments))
+            .filter(
+                RiskDescription.risk_description_id == description_id,
+                RiskDescription.is_deleted == 0
+            )
+            .first()
+        )
+
+        return risk_description
+
     except Exception as e:
         raise e

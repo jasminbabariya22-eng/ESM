@@ -16,8 +16,12 @@ def approve_risk_api(
     current_user = Depends(get_current_user)
 ):
 
-    risk = approve_risk(db, data, current_user["id"])
+    try:
+        risk = approve_risk(db, data, current_user["id"])
 
-    return success_response(
-        message="Approval updated successfully"
-    )
+        return success_response(
+            data=data
+        )
+        
+    except Exception as e:
+        return error_response(str(e), 400)
