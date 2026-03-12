@@ -8,28 +8,27 @@ class RiskRegisterCreate(BaseModel):
     risk_name: str
     dept_id: Optional[str] = "0"
     risk_owner_id: Optional[str] = "0"
+    risk_co_owner_id: Optional[str] = "0"   
 
     financial_year: Optional[str] = ""
     risk_status: Optional[str] = "0"
     risk_progress: Optional[str] = "0"
 
     is_active: Optional[str] = "0"
+    
     
 class RiskRegisterUpdate(BaseModel):
 
     risk_name: Optional[str] = ""
     dept_id: Optional[str] = "0"
     risk_owner_id: Optional[str] = "0"
+    risk_co_owner_id: Optional[str] = "0"   
 
     financial_year: Optional[str] = ""
     risk_status: Optional[str] = "0"
     risk_progress: Optional[str] = "0"
 
     is_active: Optional[str] = "0"
-    
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
 
 
 class RiskRegisterHybridResponse(BaseModel):

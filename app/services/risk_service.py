@@ -367,7 +367,7 @@ def get_risk_by_risk_id(db, risk_id):
 
                 joinedload(RiskRegister.risk_descriptions)
                 .joinedload(RiskDescription.treatments)
-                .joinedload(RiskTreatment.action_status)
+                .joinedload(RiskTreatment.status)
             )
             .filter(
                 RiskRegister.risk_register_id == risk_id,
@@ -405,7 +405,7 @@ def get_risk_by_risk_id(db, risk_id):
                     treatments_list.append({
                         **to_dict(rt),
                         "action_owner_name": rt.action_owner.log_id if rt.action_owner else None,
-                        "action_status_name": rt.action_status.status_name if rt.action_status else None
+                        "action_status_name": rt.status.status_name if rt.status else None
                     })
                 
                 rd_dict = {
