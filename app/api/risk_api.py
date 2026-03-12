@@ -7,7 +7,7 @@ from app.core.dependencies import get_current_user
 from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDetailResponse
 from app.core.response import success_response, error_response
 
-from app.schemas.risk_treatment import RiskRegisterResponse,RiskDescriptionResponse
+# from app.schemas.risk_treatment import RiskRegisterResponse,RiskDescriptionResponse
 
 from app.services.risk_service import create_update_risk
 from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id
@@ -93,8 +93,8 @@ def get_my_dept_risks_by_dept_id(
 def get_my_dept_risks_by_risk_id(
     
     risk_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
+    # current_user: dict = Depends(get_current_user)
 ):
 
     try:
@@ -116,7 +116,6 @@ def get_my_dept_risks_by_risk_id(
 def get_risk_by_description(
     description_id: int,
     db: Session = Depends(get_db)
-    # current_user: dict = Depends(get_current_user)
 ):
 
     try:
@@ -126,19 +125,8 @@ def get_risk_by_description(
         if not risk_description:
             return error_response(message="Risk Description not found", status_code=404)
 
-        return success_response(
-            data=RiskDescriptionResponse.model_validate({
-                "risk_description": risk_description,
-                "treatments": [
-                    {
-                        **t.__dict__,
-                        "action_owner_name": t.action_owner.log_id if t.action_owner else None,
-                        "action_status_name": t.action_status.status_name if t.action_status else None
-                    }
-                    for t in risk_description.treatments
-                ]
-            })
-        )
+
+        return success_response(data=risk_description)
 
     except Exception as e:
         return error_response(message=str(e), status_code=400)

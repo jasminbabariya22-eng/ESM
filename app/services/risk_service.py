@@ -12,6 +12,9 @@ from app.models.risk_register_hist import RiskRegisterHist
 from app.models.risk_description_hist import RiskDescriptionHist
 from app.models.risk_treatment_hist import RiskTreatmentHist
 
+from app.models.mst_status import Status
+from app.models.user import User
+
 
 # Generate Risk ID
 def generate_risk_id(db: Session, dept_id: int):
@@ -430,12 +433,15 @@ def get_risk_by_description_id(db, description_id):
         risk_description = (
             db.query(RiskDescription)
             .options(
+                
                 joinedload(RiskDescription.treatments)
-                .joinedload(RiskTreatment.action_owner),
+                .joinedload(RiskTreatment.status)
+                .load_only(Status.status_name),
 
                 joinedload(RiskDescription.treatments)
-                .joinedload(RiskTreatment.action_status)
-            )
+                .joinedload(RiskTreatment.action_owner)
+                .load_only(User.log_id)
+                )
             .filter(
                 RiskDescription.risk_description_id == description_id,
                 RiskDescription.is_deleted == 0
@@ -443,7 +449,33 @@ def get_risk_by_description_id(db, description_id):
             .first()
         )
 
-        return risk_description
+        result = risk_description.__dict__.copy()
+
+        treatments_list = []
+
+        for t in risk_description.treatments:
+            treatment_dict = t.__dict__.copy()
+
+            # remove SQLAlchemy internal state
+            treatment_dict.pop("_sa_instance_state", None)
+
+            # add status_name
+            treatment_dict["status_name"] = (
+                t.status.status_name if t.status else None
+            )
+            treatment_dict["action_owner_name"] = (
+                t.action_owner.log_id if t.action_owner else None
+            )
+
+            # remove nested status object
+            treatment_dict.pop("status", None)
+            treatment_dict.pop("action_owner", None)
+
+            treatments_list.append(treatment_dict)
+
+        result["treatments"] = treatments_list
+        result.pop("_sa_instance_state", None)
+        return result
 
     except Exception as e:
         raise e
