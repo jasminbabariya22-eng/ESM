@@ -274,7 +274,7 @@ def get_risk_by_user(db, user_id):
 
 
 
-# Risk LIST fromDepartment id
+# Risk LIST from Department id
 def to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 
