@@ -115,8 +115,8 @@ def get_my_dept_risks_by_risk_id(
 @router.get("/risk_by_description/{description_id}")
 def get_risk_by_description(
     description_id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db)
+    # current_user: dict = Depends(get_current_user)
 ):
 
     try:
@@ -129,7 +129,14 @@ def get_risk_by_description(
         return success_response(
             data=RiskDescriptionResponse.model_validate({
                 "risk_description": risk_description,
-                "treatments": risk_description.treatments
+                "treatments": [
+                    {
+                        **t.__dict__,
+                        "action_owner_name": t.action_owner.log_id if t.action_owner else None,
+                        "action_status_name": t.action_status.status_name if t.action_status else None
+                    }
+                    for t in risk_description.treatments
+                ]
             })
         )
 

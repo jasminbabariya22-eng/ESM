@@ -37,13 +37,13 @@ class RiskTreatmentHybridResponse(BaseModel):
     action_plan: str
 
     action_owner_id: int
-    action_owner_name: Optional[str]
+    action_owner_name: Optional[str] = None
 
     target_date: Optional[datetime]
     progress: Optional[float]
     
     action_status_id: Optional[int]
-    action_status_name: Optional[str]
+    action_status_name: Optional[str] = None
     
     next_followup_date: Optional[datetime]
 
