@@ -66,6 +66,7 @@ def create_update_risk(db: Session, data, current_user):
                 risk_name=register_data.risk_name,
                 dept_id=to_int(register_data.dept_id),
                 risk_owner_id=to_int(register_data.risk_owner_id),
+                risk_co_owner_id=to_int(register_data.risk_co_owner_id),
                 financial_year=register_data.financial_year,
                 risk_status=to_int(register_data.risk_status),
                 risk_progress=to_float(register_data.risk_progress),
@@ -87,6 +88,7 @@ def create_update_risk(db: Session, data, current_user):
             risk.risk_name = register_data.risk_name
             risk.dept_id = to_int(register_data.dept_id)
             risk.risk_owner_id = to_int(register_data.risk_owner_id)
+            risk.risk_co_owner_id = to_int(register_data.risk_co_owner_id)
             risk.financial_year = register_data.financial_year
             risk.risk_status = to_int(register_data.risk_status)
             risk.risk_progress = to_float(register_data.risk_progress)
@@ -103,6 +105,7 @@ def create_update_risk(db: Session, data, current_user):
             risk_name=risk.risk_name,
             dept_id=risk.dept_id,
             risk_owner_id=risk.risk_owner_id,
+            risk_co_owner_id=risk.risk_co_owner_id,
             financial_year=risk.financial_year,
             risk_status=risk.risk_status,
             risk_progress=risk.risk_progress,
@@ -350,12 +353,18 @@ def get_risk_by_dept(db, dept_id):
 
 # Risk Register by risk_id
 def get_risk_by_risk_id(db, risk_id):
+    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     try:
         risks = (
             db.query(RiskRegister)
             .options(
                 joinedload(RiskRegister.risk_descriptions)
                 .joinedload(RiskDescription.treatments)
+                .joinedload(RiskTreatment.action_owner),
+
+                joinedload(RiskRegister.risk_descriptions)
+                .joinedload(RiskDescription.treatments)
+                .joinedload(RiskTreatment.action_status)
             )
             .filter(
                 RiskRegister.risk_register_id == risk_id,
@@ -364,10 +373,54 @@ def get_risk_by_risk_id(db, risk_id):
             .all()
         )
 
-        return risks
+        result = []
+        for rr in risks:
+            risk_dict = to_dict(rr)
+            risk_desc_list = []
+            for rd in rr.risk_descriptions:
+                likelihood = rd.inherent_risk_likelihood_id
+                impact = rd.inherent_risk_impact_id
+                current_likelihood = rd.current_risk_likelihood_id
+                current_impact = rd.current_risk_impact_id
+
+                inherent_color_str = None
+                inherent_color_code = None
+                current_color_str = None
+                current_color_code = None
+
+                if likelihood and impact:
+                    inherent_color_str = get_color(likelihood*impact)
+                    inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+                if current_likelihood and current_impact:
+                    current_color_str = get_color(current_likelihood*current_impact)
+                    current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+
+
+                # treatments array
+                treatments_list = []
+                for rt in rd.treatments:
+                    treatments_list.append({
+                        **to_dict(rt),
+                        "action_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                        "action_status_name": rt.action_status.status_name if rt.action_status else None
+                    })
+                
+                rd_dict = {
+                    **to_dict(rd),
+                    "inherent_color_str": inherent_color_str,
+                    "inherent_color_code": inherent_color_code,
+                    "current_color_str": current_color_str,
+                    "current_color_code": current_color_code,
+                    "treatments": treatments_list
+                }
+                risk_desc_list.append(rd_dict)
+            risk_dict["risk_descriptions"] = risk_desc_list    
+            result.append(risk_dict)
+
+        return result
+    
     except Exception as e:
         raise e
-    
     
     
 # Risk Register by risk_description_id
@@ -376,7 +429,13 @@ def get_risk_by_description_id(db, description_id):
 
         risk_description = (
             db.query(RiskDescription)
-            .options(joinedload(RiskDescription.treatments))
+            .options(
+                joinedload(RiskDescription.treatments)
+                .joinedload(RiskTreatment.action_owner),
+
+                joinedload(RiskDescription.treatments)
+                .joinedload(RiskTreatment.action_status)
+            )
             .filter(
                 RiskDescription.risk_description_id == description_id,
                 RiskDescription.is_deleted == 0

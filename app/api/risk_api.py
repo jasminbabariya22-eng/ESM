@@ -7,6 +7,8 @@ from app.core.dependencies import get_current_user
 from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDetailResponse
 from app.core.response import success_response, error_response
 
+from app.schemas.risk_treatment import RiskRegisterResponse,RiskDescriptionResponse
+
 from app.services.risk_service import create_update_risk
 from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id
 
@@ -78,7 +80,7 @@ def get_my_dept_risks_by_dept_id(
 
         return success_response(data=risks)
     except Exception as e:
-        return error_response(message=str(e),status_code=500)
+        return error_response(message=str(e),status_code=400)
     
     
     
@@ -103,7 +105,7 @@ def get_my_dept_risks_by_risk_id(
         return success_response(data=risks)
     
     except Exception as e:
-        return error_response(message=str(e),status_code=500)
+        return error_response(message=str(e),status_code=400)
     
     
 # -----------------------------
@@ -124,7 +126,12 @@ def get_risk_by_description(
         if not risk_description:
             return error_response(message="Risk Description not found", status_code=404)
 
-        return success_response(data=risk_description)
+        return success_response(
+            data=RiskDescriptionResponse.model_validate({
+                "risk_description": risk_description,
+                "treatments": risk_description.treatments
+            })
+        )
 
     except Exception as e:
-        return error_response(message=str(e), status_code=500)
+        return error_response(message=str(e), status_code=400)

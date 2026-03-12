@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, SmallInteger, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.models.mst_status import Status
+from app.models.user import User
 
 
 class RiskTreatment(Base):
@@ -46,5 +48,26 @@ class RiskTreatment(Base):
     # Relationships
     risk_description = relationship("RiskDescription", back_populates="treatments")
     risk_register = relationship("RiskRegister")
-    action_owner = relationship("User", foreign_keys=[action_owner_id])
-    status = relationship("Status")
+
+
+    # Action Owner
+    action_owner = relationship(
+        User,
+        foreign_keys=[action_owner_id]
+    )
+
+    # Action Status
+    action_status = relationship(
+        Status,
+        foreign_keys=[action_status_id]
+    )
+
+
+    @property
+    def action_owner_name(self):
+        return self.action_owner.user_name if self.action_owner else None
+
+
+    @property
+    def action_status_name(self):
+        return self.action_status.status_name if self.action_status else None

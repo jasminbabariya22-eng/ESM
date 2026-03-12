@@ -36,6 +36,7 @@ def build_hybrid_response(risk):
             f"{risk.risk_owner.first_name} {risk.risk_owner.last_name}"
             if risk.risk_owner else None
         ),
+        "risk_co_owner_id": risk.risk_co_owner_id,
 
         "financial_year": risk.financial_year,
         "risk_status": risk.risk_status,
@@ -85,6 +86,7 @@ def create_risk_register(payload: RiskRegisterCreate, db: Session = Depends(get_
             risk_name=payload.risk_name,
             dept_id=payload.dept_id,
             risk_owner_id=payload.risk_owner_id,
+            risk_co_owner_id=payload.risk_co_owner_id,
             financial_year=payload.financial_year,
             risk_status=payload.risk_status,
             risk_progress=payload.risk_progress,
@@ -103,6 +105,7 @@ def create_risk_register(payload: RiskRegisterCreate, db: Session = Depends(get_
             risk_name=risk.risk_name,
             dept_id=risk.dept_id,
             risk_owner_id=risk.risk_owner_id,
+            risk_co_owner_id=risk.risk_co_owner_id,
             financial_year=risk.financial_year,
             risk_status=risk.risk_status,
             risk_progress=risk.risk_progress,
@@ -224,6 +227,7 @@ def update_Risk(
             risk_name=risk.risk_name,
             dept_id=risk.dept_id,
             risk_owner_id=risk.risk_owner_id,
+            risk_co_owner_id=risk.risk_co_owner_id,
             financial_year=risk.financial_year,
             risk_status=risk.risk_status,
             risk_progress=risk.risk_progress,
@@ -270,6 +274,7 @@ def delete_risk(risk_register_id: int, db: Session = Depends(get_db)):
             risk_name=risk.risk_name,
             dept_id=risk.dept_id,
             risk_owner_id=risk.risk_owner_id,
+            risk_co_owner_id=risk.risk_co_owner_id,
             financial_year=risk.financial_year,
             risk_status=risk.risk_status,
             risk_progress=risk.risk_progress,
