@@ -4,7 +4,7 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.schemas.risk_schema import RiskSaveRequest, RiskUpdateRequest, RiskDetailResponse
+from app.schemas.risk_schema import RiskSaveRequest
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk

@@ -1,3 +1,4 @@
+from alembic.migration import nullcontext
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from sqlalchemy.inspection import inspect
@@ -53,13 +54,30 @@ def create_update_risk(db: Session, data, current_user):
 
     try:
 
-        register_data = data.risk_register
-        desc_data = data.risk_description
-        treatments = data.risk_treatments or []
+        if data is None:
+            raise ValueError("Request body cannot be empty")
 
+        if not hasattr(data, "risk_register") or data.risk_register is None:
+            raise ValueError("risk_register is required")
+
+        register_data = data.risk_register
+
+        if register_data.risk_register_id is None:
+            raise ValueError("risk_register_id cannot be null")
+
+
+        if not hasattr(data, "risk_description") or data.risk_description is None:
+            raise ValueError("risk_description is required")
+
+        desc_data = data.risk_description
+
+        if desc_data.risk_description_id is None:
+            raise ValueError("risk_description_id cannot be null")
+
+        treatments = data.risk_treatments or []
         
-        # RISK REGISTER
-       
+        
+        
         if to_int(register_data.risk_register_id) == 0:
 
             risk_id = generate_risk_id(db, to_int(register_data.dept_id))
@@ -87,6 +105,9 @@ def create_update_risk(db: Session, data, current_user):
             risk = db.query(RiskRegister).filter(
                 RiskRegister.risk_register_id == to_int(register_data.risk_register_id)
             ).first()
+            
+            if not risk:
+                raise ValueError("RiskRegister not found")
 
             risk.risk_name = register_data.risk_name
             risk.dept_id = to_int(register_data.dept_id)
@@ -148,6 +169,9 @@ def create_update_risk(db: Session, data, current_user):
             description = db.query(RiskDescription).filter(
                 RiskDescription.risk_description_id == to_int(desc_data.risk_description_id)
             ).first()
+            
+            if not description:
+                raise ValueError("RiskDescription not found")
 
             description.risk_description = desc_data.risk_description
             description.inherent_risk_likelihood_id = to_int(desc_data.inherent_risk_likelihood_id)
@@ -323,6 +347,11 @@ def get_risk_by_dept(db, dept_id):
         #result = [ {**to_dict(rr), **to_dict(rd), **to_dict(rt)} for rr, rd, rt in records ]
         result = []
         for rr, rd, rt in records:
+            risk_owner_name = None
+            if rr.risk_owner:
+                risk_owner_name = rr.risk_owner.log_id
+            
+            
             likelihood = rd.inherent_risk_likelihood_id
             impact = rd.inherent_risk_impact_id
             current_likelihood = rd.current_risk_likelihood_id
@@ -346,7 +375,8 @@ def get_risk_by_dept(db, dept_id):
                 "inherent_color_str": inherent_color_str,
                 "inherent_color_code" : inherent_color_code,
                 "current_color_str": current_color_str,
-                "current_color_code" : current_color_code
+                "current_color_code" : current_color_code,
+                "risk_owner_name" : risk_owner_name
             })
 
         return result

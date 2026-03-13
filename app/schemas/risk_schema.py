@@ -11,8 +11,8 @@ from .risk_treatment_full import RiskTreatmentHybridResponse
 
 
 class RiskSaveRequest(BaseModel):
-    risk_register: RiskRegisterCreate
-    risk_description: RiskDescriptionCreate
+    risk_register: RiskRegisterCreate = None
+    risk_description: RiskDescriptionCreate = None
     risk_treatments: Optional[List[RiskTreatmentCreate]] = []
 
 

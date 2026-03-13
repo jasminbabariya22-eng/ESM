@@ -9,6 +9,8 @@ from app.services.risk_approval import approve_risk
 
 router = APIRouter(prefix="/approval", tags=["Approval"], dependencies=[Depends(get_current_user)])
 
+
+# Get Approval for existing Risk
 @router.post("/approve")
 def approve_risk_api(
     data: RiskApprovalRequest,
