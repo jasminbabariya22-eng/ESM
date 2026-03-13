@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Optional
 
+from sqlalchemy.inspection import inspect
+
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.schemas.risk_schema import RiskSaveRequest
@@ -14,6 +16,10 @@ from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk
 router = APIRouter(prefix="/risk", tags=["Risk"])
 
 
+def model_to_dict(obj):
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+
+
 # CREATE OR UPDATE RISK
 @router.post("/save")
 def save_risk_api(
@@ -22,10 +28,20 @@ def save_risk_api(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        risk = create_update_risk(db, data, current_user)
+        result = create_update_risk(db, data, current_user)
 
-        return success_response(data=data, message="Risk saved successfully")
-    
+        risk_register = result["risk_register"]
+        risk_description = result["risk_description"]
+        treatments = result["risk_treatments"]
+
+        risk_description["treatments"] = treatments
+        risk_register["risk_descriptions"] = [risk_description]
+
+        return success_response(
+            data=[risk_register],
+            message="Success"
+        )
+
     except Exception as e:
         return error_response(str(e), 400)
 

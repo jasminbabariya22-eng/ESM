@@ -17,3 +17,5 @@ pydantic-settings==2.1.0
 # Utilities
 python-dotenv==1.0.1
 python-multipart==0.0.9
+
+pandas

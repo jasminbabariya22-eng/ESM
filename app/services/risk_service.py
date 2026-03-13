@@ -49,6 +49,10 @@ def to_datetime(val):
     return datetime.fromisoformat(val) if val not in [None, ""] else None
 
 
+def model_to_dict(obj):
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+
+
 # CREATE OR UPDATE RISK
 def create_update_risk(db: Session, data, current_user):
 
@@ -75,7 +79,6 @@ def create_update_risk(db: Session, data, current_user):
             raise ValueError("risk_description_id cannot be null")
 
         treatments = data.risk_treatments or []
-        
         
         
         if to_int(register_data.risk_register_id) == 0:
@@ -211,6 +214,8 @@ def create_update_risk(db: Session, data, current_user):
                 RiskTreatment.risk_description_id == description.risk_description_id
             ).delete()
 
+
+        saved_treatments = []
         for treatment in treatments:
 
             new_treatment = RiskTreatment(
@@ -232,6 +237,8 @@ def create_update_risk(db: Session, data, current_user):
 
             db.add(new_treatment)
             db.flush()
+            
+            saved_treatments.append(new_treatment)
 
             hist_treatment = RiskTreatmentHist(
                 risk_treatment_id=new_treatment.risk_treatment_id,
@@ -253,7 +260,11 @@ def create_update_risk(db: Session, data, current_user):
 
         db.commit()
 
-        return risk
+        return {
+            "risk_register": model_to_dict(risk),
+            "risk_description": model_to_dict(description),
+            "risk_treatments": [model_to_dict(t) for t in saved_treatments]
+        }
 
     except Exception as e:
         db.rollback()
