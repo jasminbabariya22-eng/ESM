@@ -5,6 +5,9 @@ from sqlalchemy.orm import joinedload
 import pandas as pd
 import io
 
+import math
+from openpyxl.styles import PatternFill, Alignment,Font
+
 from app.models.department import Department
 from app.models.risk_register import RiskRegister
 from app.models.risk_description import RiskDescription
@@ -535,48 +538,240 @@ def get_risk_by_description_id(db, description_id):
     
     
 # Download Risk data
+def calculate_row_height(text, column_width):
+    if not text:
+        return 15
+    
+    # Estimate characters per line
+    chars_per_line = column_width * 1.2
+    
+    # Estimate number of lines
+    lines = math.ceil(len(str(text)) / chars_per_line)
+    
+    # Excel default row height ≈ 15
+    return max(15, lines * 15)
 
-def get_risk_data_excel(db):
+    
+def get_risk_data_excel(db,dept_id):
+    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    green_value = {"1A", "2A", "3A", "1B", "2B","1C"}
+    yellow_value = {"4A", "5A", "3B", "3C", "2D","2C","1D","1E"}
+    amber_value = {"2E", "3E", "3D", "4C", "4B","5B"}
+    red_value = {"4E", "5E", "4D", "5D", "5C"}
+    
+    green_fill = PatternFill(start_color="4CAF50",
+                            end_color="4CAF50",
+                            fill_type="solid")
+    yellow_fill = PatternFill(start_color="FFEB3B",
+                            end_color="FFEB3B",
+                            fill_type="solid")
+    amber_fill = PatternFill(start_color="FF9800",
+                            end_color="FF9800",
+                            fill_type="solid")
+    red_fill = PatternFill(start_color="F44336",
+                            end_color="F44336",
+                            fill_type="solid")
     try:
-        risks = (
-            db.query(RiskRegister)
-            .options(
+        query = db.query(RiskRegister).options(
                 joinedload(RiskRegister.risk_descriptions)
                 .joinedload(RiskDescription.treatments)
             )
-            .filter(
-                RiskRegister.is_deleted == 0
-            )
-            .all()
-        )
-        rows = []
+        if dept_id:
+            query = query.filter(RiskRegister.dept_id == dept_id)
+        query = query.filter(RiskRegister.is_deleted == 0)
+        risks = query.all()
 
+        # risks = (
+        #     db.query(RiskRegister)
+        #     .options(
+        #         joinedload(RiskRegister.risk_descriptions)
+        #         .joinedload(RiskDescription.treatments)
+        #     )
+        #     .filter(
+        #         RiskRegister.is_deleted == 0
+        #     )
+        #     .all()
+        # )
+
+        department_rows  = {}
+        merge_ranges = {}
+        current_rows = {}
+
+        #current_row = 2
         for risk in risks:
-
             first_risk = True
+            risk_owner_name = ""
+            dept_name = "UNKNOWN"
+            if risk.risk_owner :
+                risk_owner_name = risk.risk_owner.log_id
 
+            if risk.department:
+                dept_name = risk.department.dept_short_name
+
+            if dept_name not in department_rows:
+                department_rows[dept_name] = []
+                merge_ranges[dept_name] = []
+                current_rows[dept_name] = 2
+
+            start_row = current_rows[dept_name]
             for desc in risk.risk_descriptions:
 
                 first_desc = True
+                likelihood = desc.inherent_risk_likelihood_id
+                impact = desc.inherent_risk_impact_id
+                current_likelihood = desc.current_risk_likelihood_id
+                current_impact = desc.current_risk_impact_id
+
+                inherent_color_str = None
+                inherent_color_code = None
+                current_color_str = None
+                current_color_code = None
+
+                if likelihood and impact:
+                    inherent_color_str = get_color(likelihood*impact)
+                    inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+                if current_likelihood and current_impact:
+                    current_color_str = get_color(current_likelihood*current_impact)
+                    current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
 
                 for treatment in desc.treatments:
 
-                    rows.append({
+                    department_rows[dept_name].append({
                         "Risk ID": risk.risk_id if first_risk else "",
+                        "Risk Name" : risk.risk_name if first_risk else "",
                         "Risk Description": desc.risk_description if first_desc else "",
-                        "Mitigation": desc.mitigation if first_desc else "",
-                        "Risk Treatment": treatment.action_plan
+                        "Inherent Risk Level" : inherent_color_code if first_desc else "",
+                        "Current Mitigation": desc.mitigation if first_desc else "",
+                        "Current Risk Level" : current_color_code if first_desc else "",
+                        "Risk Owner" : risk_owner_name if first_risk else "",
+                        "Action Owner" : treatment.action_owner.log_id if treatment.action_owner else "",
+                        "Risk Treatment": treatment.action_plan,
+                        "Target Date" :treatment.target_date.date() if treatment.target_date else ""
+                        
                     })
 
                     first_risk = False
                     first_desc = False
+                    current_rows[dept_name] += 1
+            end_row = current_rows[dept_name] - 1
+            if end_row >= start_row:
+                merge_ranges[dept_name].append((start_row, end_row))
 
-        df = pd.DataFrame(rows)
+        #df = pd.DataFrame(rows)
 
         output = io.BytesIO()
+        wrap_alignment = Alignment(
+            wrap_text=True,
+            vertical="top"
+        )
+
+        merge_alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+            wrap_text=True
+        )
 
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Risk Report")
+            for dept_name, rows in department_rows.items():
+                df = pd.DataFrame(rows)
+                sheet_name = dept_name[:31]
+                df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+                workbook = writer.book
+                worksheet = writer.sheets[sheet_name]
+            
+
+                # Apply color logic
+                for row in range(2, len(df) + 2):   # Excel row index starts at 1
+                    cell = worksheet[f"D{row}"]     # Column D = Inherent Risk Level
+
+                    if cell.value in green_value:
+                        cell.fill = green_fill
+                    elif cell.value in amber_value:
+                        cell.fill = amber_fill
+                    elif cell.value in yellow_value:
+                        cell.fill = yellow_fill
+                    elif cell.value in red_value:
+                        cell.fill = red_fill
+
+                    cell_f = worksheet[f"F{row}"]     # Column D = Inherent Risk Level
+
+                    if cell_f.value in green_value:
+                        cell_f.fill = green_fill
+                    elif cell_f.value in amber_value:
+                        cell_f.fill = amber_fill
+                    elif cell_f.value in yellow_value:
+                        cell_f.fill = yellow_fill
+                    elif cell_f.value in red_value:
+                        cell_f.fill = red_fill
+
+                # Column Widths
+                column_widths = {
+                    "A": 15,   # Risk ID (A)
+                    "B" :20, # Risk Name (B)
+                    "C": 50,   # Risk Description (C)
+                    "D": 10,   # Inherent Risk Level (D)
+                    "E": 70,    # Mitigation (E)
+                    "F": 10, # Current risk level (F)
+                    "G": 15, # Risk Owner (G)
+                    "H": 15, # Action Owner (H)
+                    "I": 70, # Treatment (I)
+                    "J": 15  # Target Date (J)
+                }
+
+                for col, width in column_widths.items():
+                    worksheet.column_dimensions[col].width = width
+
+                
+                for start, end in merge_ranges[dept_name]:
+                    if start != end:
+
+                        worksheet.merge_cells(f"A{start}:A{end}")  # Risk ID
+                        worksheet.merge_cells(f"B{start}:B{end}")  # Risk Name
+                        worksheet.merge_cells(f"C{start}:C{end}")  # Risk Description
+                        worksheet.merge_cells(f"D{start}:D{end}")  # Inherent Risk Level
+                        worksheet.merge_cells(f"E{start}:E{end}")  # Current Mitigation
+                        worksheet.merge_cells(f"F{start}:F{end}")  # Current Risk Level
+                        worksheet.merge_cells(f"G{start}:G{end}")  # Risk Owner
+                    
+                    worksheet[f"A{start}"].alignment = merge_alignment
+                    worksheet[f"B{start}"].alignment = merge_alignment
+                    worksheet[f"C{start}"].alignment = merge_alignment
+                    worksheet[f"D{start}"].alignment = merge_alignment
+                    worksheet[f"E{start}"].alignment = merge_alignment
+                    worksheet[f"F{start}"].alignment = merge_alignment
+                    worksheet[f"G{start}"].alignment = merge_alignment
+
+                # Wrap Text for all cells
+                for row in range(2, len(df)+2):
+                    worksheet[f"C{row}"].alignment = wrap_alignment   # Description
+                    worksheet[f"E{row}"].alignment = wrap_alignment   # Mitigation
+                    worksheet[f"I{row}"].alignment = wrap_alignment   # Treatment
+                    
+                    desc = worksheet[f"C{row}"].value
+                    mitigation = worksheet[f"E{row}"].value
+                    treatment = worksheet[f"I{row}"].value
+
+                    height_desc = calculate_row_height(desc, column_widths["C"])
+                    height_mit = calculate_row_height(mitigation, column_widths["E"])
+                    height_treat = calculate_row_height(treatment, column_widths["I"])
+
+                    worksheet.row_dimensions[row].height = max(height_desc, height_mit, height_treat)
+
+                # Wrap Header
+                header_alignment = Alignment(
+                    wrap_text=True,
+                    horizontal="center",
+                    vertical="center"
+                )
+                
+                header_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+                header_font = Font(bold=True)
+
+                for cell in worksheet[1]:
+                    cell.alignment = header_alignment
+                    cell.fill = header_fill
+                    cell.font = header_font
 
         output.seek(0)
 

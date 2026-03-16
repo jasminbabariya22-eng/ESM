@@ -156,9 +156,11 @@ def get_risk_by_description(
     
     
     
-# -----------------------------
-# GET Risk data in excel sheet
-# -----------------------------
+# ------------------------------------------------------------
+# This API is use to export all information of registered risk in excel sheet
+# Department wise sheet will be created for all department.
+# Argument = Department ID, Optional
+# -------------------------------------------------------------
 
 @router.get(
     "/export-data",
@@ -173,12 +175,14 @@ def get_risk_by_description(
     }
 )
 def export_risk_excel(
-    db: Session = Depends(get_db)
+    dept_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
 
     try:
 
-        risk_data = get_risk_data_excel(db)
+        risk_data = get_risk_data_excel(db,dept_id)
 
         if not risk_data:
             return error_response(message="Risk data not found", status_code=404)

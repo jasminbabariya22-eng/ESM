@@ -33,7 +33,6 @@ from app.core.exception_handler import (
 
 from app.api.Status import router as status_router
 from app.api.risk_api import router as risk_router
-from app.api.risk_download_excel import router as risk_excel_router
 
 from app.api.risk_action_followup import router as risk_action_followup_router
 from app.api.approval import router as approval_router
@@ -53,7 +52,7 @@ app.include_router(user_type_router)
 app.include_router(risk_router)
 
 # Risk Excel Download API
-app.include_router(risk_excel_router)
+
 
 # Approval and Status APIs
 app.include_router(status_router)
