@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload
+import pandas as pd
+import io
 
 from app.models.department import Department
 from app.models.risk_register import RiskRegister
@@ -361,6 +363,10 @@ def get_risk_by_dept(db, dept_id):
             risk_owner_name = None
             if rr.risk_owner:
                 risk_owner_name = rr.risk_owner.log_id
+                
+            risk_status_name = None
+            if rt.status:
+                risk_status_name = rt.status.status_name
             
             
             likelihood = rd.inherent_risk_likelihood_id
@@ -387,7 +393,8 @@ def get_risk_by_dept(db, dept_id):
                 "inherent_color_code" : inherent_color_code,
                 "current_color_str": current_color_str,
                 "current_color_code" : current_color_code,
-                "risk_owner_name" : risk_owner_name
+                "risk_owner_name" : risk_owner_name,
+                "risk_status_name": risk_status_name
             })
 
         return result
@@ -518,5 +525,57 @@ def get_risk_by_description_id(db, description_id):
         result.pop("_sa_instance_state", None)
         return result
 
+    except Exception as e:
+        raise e
+    
+    
+    
+# Download Risk data
+
+def get_risk_data_excel(db):
+    try:
+        risks = (
+            db.query(RiskRegister)
+            .options(
+                joinedload(RiskRegister.risk_descriptions)
+                .joinedload(RiskDescription.treatments)
+            )
+            .filter(
+                RiskRegister.is_deleted == 0
+            )
+            .all()
+        )
+        rows = []
+
+        for risk in risks:
+
+            first_risk = True
+
+            for desc in risk.risk_descriptions:
+
+                first_desc = True
+
+                for treatment in desc.treatments:
+
+                    rows.append({
+                        "Risk ID": risk.risk_id if first_risk else "",
+                        "Risk Description": desc.risk_description if first_desc else "",
+                        "Mitigation": desc.mitigation if first_desc else "",
+                        "Risk Treatment": treatment.action_plan
+                    })
+
+                    first_risk = False
+                    first_desc = False
+
+        df = pd.DataFrame(rows)
+
+        output = io.BytesIO()
+
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Risk Report")
+
+        output.seek(0)
+
+        return output
     except Exception as e:
         raise e

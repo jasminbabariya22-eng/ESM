@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Optional
+from fastapi.responses import StreamingResponse
 
 from sqlalchemy.inspection import inspect
 
@@ -10,7 +11,7 @@ from app.schemas.risk_schema import RiskSaveRequest
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id
+from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id,get_risk_data_excel
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -145,6 +146,47 @@ def get_risk_by_description(
 
 
         return success_response(data=risk_description)
+
+    except Exception as e:
+        return error_response(message=str(e), status_code=400)
+    
+    
+    
+    
+# -----------------------------
+# GET Risk data in excel sheet
+# -----------------------------
+
+@router.get(
+    "/export-data",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "content": {
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
+            },
+            "description": "Excel file"
+        }
+    }
+)
+def export_risk_excel(
+    db: Session = Depends(get_db)
+):
+
+    try:
+
+        risk_data = get_risk_data_excel(db)
+
+        if not risk_data:
+            return error_response(message="Risk data not found", status_code=404)
+
+        return StreamingResponse(
+            risk_data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": "attachment; filename=risk_report.xlsx"
+            }
+        )
 
     except Exception as e:
         return error_response(message=str(e), status_code=400)

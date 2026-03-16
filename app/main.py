@@ -33,6 +33,7 @@ from app.core.exception_handler import (
 
 from app.api.Status import router as status_router
 from app.api.risk_api import router as risk_router
+from app.api.risk_download_excel import router as risk_excel_router
 
 from app.api.risk_action_followup import router as risk_action_followup_router
 from app.api.approval import router as approval_router
@@ -50,6 +51,9 @@ app.include_router(user_type_router)
 
 # Full Risk Register APIs
 app.include_router(risk_router)
+
+# Risk Excel Download API
+app.include_router(risk_excel_router)
 
 # Approval and Status APIs
 app.include_router(status_router)
@@ -75,7 +79,10 @@ async def log_requests(request: Request, call_next):
 
     # Read request body safely
     request_body = await request.body()
-    request_body_text = request_body.decode("utf-8") if request_body else ""
+    try:
+        request_body_text = request_body.decode("utf-8") if request_body else ""
+    except UnicodeDecodeError:
+        request_body_text = "<binary request>"
 
     # Hide password if present
     if "password" in request_body_text:
@@ -93,7 +100,10 @@ async def log_requests(request: Request, call_next):
     async for chunk in response.body_iterator:
         response_body += chunk
 
-    response_body_text = response_body.decode("utf-8")
+    try:
+        response_body_text = response_body.decode("utf-8")
+    except UnicodeDecodeError:
+        response_body_text = "<binary request>"
 
     process_time = time.time() - start_time
 
