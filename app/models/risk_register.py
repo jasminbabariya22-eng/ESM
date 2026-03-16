@@ -36,7 +36,7 @@ class RiskRegister(Base):
     risk_manager_approval_remark = Column(String(500))
     risk_manager_approval_by = Column(Integer)
 
-    created_by = Column(Integer, nullable=False, default=1)
+    created_by = Column(Integer, ForeignKey("ers.mst_users.id"), nullable=False, default=1)
     created_on = Column(DateTime)
     modified_by = Column(Integer)
     modified_on = Column(DateTime)
@@ -55,6 +55,12 @@ class RiskRegister(Base):
         cascade="all, delete-orphan"
     )
 
+    created_user = relationship(
+        "User",
+        foreign_keys=[created_by],
+        viewonly=True
+    )
+    
     risk_owner = relationship(
         "User",
         foreign_keys=[risk_owner_id]

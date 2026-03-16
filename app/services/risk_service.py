@@ -1,4 +1,3 @@
-from alembic.migration import nullcontext
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from sqlalchemy.inspection import inspect
@@ -10,6 +9,7 @@ from app.models.department import Department
 from app.models.risk_register import RiskRegister
 from app.models.risk_description import RiskDescription
 from app.models.risk_treatment import RiskTreatment
+from app.models.risk_action_followup import RiskActionFollowup
 
 from app.models.risk_register_hist import RiskRegisterHist
 from app.models.risk_description_hist import RiskDescriptionHist
@@ -30,14 +30,14 @@ def generate_risk_id(db: Session, dept_id: int):
         raise Exception("Department not found")
 
     dept.last_risk_number += 1
-
     number = dept.last_risk_number
 
     risk_id = f"{dept.dept_short_name}-{str(number).zfill(4)}"
 
     return risk_id
 
-# Type Convertion
+
+# Type Conversion
 def to_int(val):
     return int(val) if val not in [None, ""] else None
 
@@ -60,29 +60,17 @@ def create_update_risk(db: Session, data, current_user):
 
     try:
 
-        if data is None:
-            raise ValueError("Request body cannot be empty")
-
-        if not hasattr(data, "risk_register") or data.risk_register is None:
+        if not data or not data.risk_register:
             raise ValueError("risk_register is required")
 
         register_data = data.risk_register
-
-        if register_data.risk_register_id is None:
-            raise ValueError("risk_register_id cannot be null")
-
-
-        if not hasattr(data, "risk_description") or data.risk_description is None:
-            raise ValueError("risk_description is required")
-
         desc_data = data.risk_description
-
-        if desc_data.risk_description_id is None:
-            raise ValueError("risk_description_id cannot be null")
-
         treatments = data.risk_treatments or []
-        
-        
+
+        # -----------------------------
+        # CREATE OR UPDATE RISK REGISTER
+        # -----------------------------
+
         if to_int(register_data.risk_register_id) == 0:
 
             risk_id = generate_risk_id(db, to_int(register_data.dept_id))
@@ -110,7 +98,7 @@ def create_update_risk(db: Session, data, current_user):
             risk = db.query(RiskRegister).filter(
                 RiskRegister.risk_register_id == to_int(register_data.risk_register_id)
             ).first()
-            
+
             if not risk:
                 raise ValueError("RiskRegister not found")
 
@@ -125,9 +113,10 @@ def create_update_risk(db: Session, data, current_user):
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
 
-        
-        # HISTORY ENTRY - REGISTER
-       
+        # -----------------------------
+        # HISTORY - RISK REGISTER
+        # -----------------------------
+
         hist_register = RiskRegisterHist(
             risk_register_id=risk.risk_register_id,
             risk_id=risk.risk_id,
@@ -148,123 +137,138 @@ def create_update_risk(db: Session, data, current_user):
 
         db.add(hist_register)
 
-       
-        # RISK DESCRIPTION
-        if to_int(desc_data.risk_description_id) == 0:
+        # -----------------------------
+        # RISK DESCRIPTION (OPTIONAL)
+        # -----------------------------
 
-            description = RiskDescription(
-                risk_register_id=risk.risk_register_id,
-                risk_id=risk.risk_id,
-                risk_description=desc_data.risk_description,
-                inherent_risk_likelihood_id=to_int(desc_data.inherent_risk_likelihood_id),
-                inherent_risk_impact_id=to_int(desc_data.inherent_risk_impact_id),
-                mitigation=desc_data.mitigation,
-                current_risk_likelihood_id=to_int(desc_data.current_risk_likelihood_id),
-                current_risk_impact_id=to_int(desc_data.current_risk_impact_id),
-                created_by=current_user["id"],
-                created_on=datetime.now(timezone.utc),
-                is_deleted=0
+        description = None
+
+        if desc_data and any([
+            desc_data.risk_description not in [None, ""],
+            desc_data.mitigation not in [None, ""],
+            to_int(desc_data.inherent_risk_likelihood_id) not in [None, 0],
+            to_int(desc_data.inherent_risk_impact_id) not in [None, 0],
+            to_int(desc_data.current_risk_likelihood_id) not in [None, 0],
+            to_int(desc_data.current_risk_impact_id) not in [None, 0]
+        ]):
+
+            if to_int(desc_data.risk_description_id) == 0:
+
+                description = RiskDescription(
+                    risk_register_id=risk.risk_register_id,
+                    risk_id=risk.risk_id,
+                    risk_description=desc_data.risk_description,
+                    inherent_risk_likelihood_id=to_int(desc_data.inherent_risk_likelihood_id),
+                    inherent_risk_impact_id=to_int(desc_data.inherent_risk_impact_id),
+                    mitigation=desc_data.mitigation,
+                    current_risk_likelihood_id=to_int(desc_data.current_risk_likelihood_id),
+                    current_risk_impact_id=to_int(desc_data.current_risk_impact_id),
+                    created_by=current_user["id"],
+                    created_on=datetime.now(timezone.utc),
+                    is_deleted=0
+                )
+
+                db.add(description)
+                db.flush()
+
+            else:
+
+                description = db.query(RiskDescription).filter(
+                    RiskDescription.risk_description_id == to_int(desc_data.risk_description_id)
+                ).first()
+
+                if not description:
+                    raise ValueError("RiskDescription not found")
+
+                description.risk_description = desc_data.risk_description
+                description.inherent_risk_likelihood_id = to_int(desc_data.inherent_risk_likelihood_id)
+                description.inherent_risk_impact_id = to_int(desc_data.inherent_risk_impact_id)
+                description.mitigation = desc_data.mitigation
+                description.current_risk_likelihood_id = to_int(desc_data.current_risk_likelihood_id)
+                description.current_risk_impact_id = to_int(desc_data.current_risk_impact_id)
+
+                description.modified_by = current_user["id"]
+                description.modified_on = datetime.now(timezone.utc)
+
+            # HISTORY DESCRIPTION
+
+            hist_desc = RiskDescriptionHist(
+                risk_description_id=description.risk_description_id,
+                risk_register_id=description.risk_register_id,
+                risk_id=description.risk_id,
+                risk_description=description.risk_description,
+                inherent_risk_likelihood_id=description.inherent_risk_likelihood_id,
+                inherent_risk_impact_id=description.inherent_risk_impact_id,
+                mitigation=description.mitigation,
+                current_risk_likelihood_id=description.current_risk_likelihood_id,
+                current_risk_impact_id=description.current_risk_impact_id,
+                created_by=description.created_by,
+                created_on=description.created_on,
+                modified_by=description.modified_by,
+                modified_on=description.modified_on,
+                is_deleted=description.is_deleted
             )
 
-            db.add(description)
-            db.flush()
+            db.add(hist_desc)
 
-        else:
-
-            description = db.query(RiskDescription).filter(
-                RiskDescription.risk_description_id == to_int(desc_data.risk_description_id)
-            ).first()
-            
-            if not description:
-                raise ValueError("RiskDescription not found")
-
-            description.risk_description = desc_data.risk_description
-            description.inherent_risk_likelihood_id = to_int(desc_data.inherent_risk_likelihood_id)
-            description.inherent_risk_impact_id = to_int(desc_data.inherent_risk_impact_id)
-            description.mitigation = desc_data.mitigation
-            description.current_risk_likelihood_id = to_int(desc_data.current_risk_likelihood_id)
-            description.current_risk_impact_id = to_int(desc_data.current_risk_impact_id)
-
-            description.modified_by = current_user["id"]
-            description.modified_on = datetime.now(timezone.utc)
-
-        
-        # HISTORY ENTRY - DESCRIPTION
-        hist_desc = RiskDescriptionHist(
-            risk_description_id=description.risk_description_id,
-            risk_register_id=description.risk_register_id,
-            risk_id=description.risk_id,
-            risk_description=description.risk_description,
-            inherent_risk_likelihood_id=description.inherent_risk_likelihood_id,
-            inherent_risk_impact_id=description.inherent_risk_impact_id,
-            mitigation=description.mitigation,
-            current_risk_likelihood_id=description.current_risk_likelihood_id,
-            current_risk_impact_id=description.current_risk_impact_id,
-            created_by=description.created_by,
-            created_on=description.created_on,
-            modified_by=description.modified_by,
-            modified_on=description.modified_on,
-            is_deleted=description.is_deleted
-        )
-
-        db.add(hist_desc)
-
-        # RISK TREATMENT
-        if to_int(desc_data.risk_description_id) > 0:
-
-            db.query(RiskTreatment).filter(
-                RiskTreatment.risk_description_id == description.risk_description_id
-            ).delete()
-
+        # -----------------------------
+        # RISK TREATMENTS
+        # -----------------------------
 
         saved_treatments = []
-        for treatment in treatments:
 
-            new_treatment = RiskTreatment(
-                risk_register_id=risk.risk_register_id,
-                risk_description_id=description.risk_description_id,
-                risk_id=risk.risk_id,
+        if description is not None:
 
-                action_plan=treatment.action_plan,
-                action_owner_id=to_int(treatment.action_owner_id),
-                target_date=to_datetime(treatment.target_date),
-                progress=to_float(treatment.progress),
-                action_status_id=to_int(treatment.action_status_id),
-                next_followup_date=to_datetime(treatment.next_followup_date),
+            if desc_data and to_int(desc_data.risk_description_id) > 0:
+                db.query(RiskTreatment).filter(
+                    RiskTreatment.risk_description_id == description.risk_description_id
+                ).delete()
 
-                created_by=current_user["id"],
-                created_on=datetime.now(timezone.utc),
-                is_deleted=0
-            )
+            for treatment in treatments:
 
-            db.add(new_treatment)
-            db.flush()
-            
-            saved_treatments.append(new_treatment)
+                new_treatment = RiskTreatment(
+                    risk_register_id=risk.risk_register_id,
+                    risk_description_id=description.risk_description_id,
+                    risk_id=risk.risk_id,
+                    action_plan=treatment.action_plan,
+                    action_owner_id=to_int(treatment.action_owner_id),
+                    target_date=to_datetime(treatment.target_date),
+                    progress=to_float(treatment.progress),
+                    action_status_id=to_int(treatment.action_status_id),
+                    next_followup_date=to_datetime(treatment.next_followup_date),
+                    created_by=current_user["id"],
+                    created_on=datetime.now(timezone.utc),
+                    is_deleted=0
+                )
 
-            hist_treatment = RiskTreatmentHist(
-                risk_treatment_id=new_treatment.risk_treatment_id,
-                risk_description_id=new_treatment.risk_description_id,
-                risk_register_id=new_treatment.risk_register_id,
-                risk_id=new_treatment.risk_id,
-                action_plan=new_treatment.action_plan,
-                action_owner_id=new_treatment.action_owner_id,
-                target_date=new_treatment.target_date,
-                progress=new_treatment.progress,
-                action_status_id=new_treatment.action_status_id,
-                next_followup_date=new_treatment.next_followup_date,
-                created_by=new_treatment.created_by,
-                created_on=new_treatment.created_on,
-                is_deleted=new_treatment.is_deleted
-            )
+                db.add(new_treatment)
+                db.flush()
 
-            db.add(hist_treatment)
+                saved_treatments.append(new_treatment)
+
+                hist_treatment = RiskTreatmentHist(
+                    risk_treatment_id=new_treatment.risk_treatment_id,
+                    risk_description_id=new_treatment.risk_description_id,
+                    risk_register_id=new_treatment.risk_register_id,
+                    risk_id=new_treatment.risk_id,
+                    action_plan=new_treatment.action_plan,
+                    action_owner_id=new_treatment.action_owner_id,
+                    target_date=new_treatment.target_date,
+                    progress=new_treatment.progress,
+                    action_status_id=new_treatment.action_status_id,
+                    next_followup_date=new_treatment.next_followup_date,
+                    created_by=new_treatment.created_by,
+                    created_on=new_treatment.created_on,
+                    is_deleted=new_treatment.is_deleted
+                )
+
+                db.add(hist_treatment)
 
         db.commit()
 
         return {
             "risk_register": model_to_dict(risk),
-            "risk_description": model_to_dict(description),
+            "risk_description": model_to_dict(description) if description else None,
             "risk_treatments": [model_to_dict(t) for t in saved_treatments]
         }
 
@@ -577,5 +581,56 @@ def get_risk_data_excel(db):
         output.seek(0)
 
         return output
+    except Exception as e:
+        raise e
+    
+
+
+# Get Followups by reference_id
+def get_followups_by_reference_id(db, reference_id):
+    try:
+
+        followups = (
+            db.query(RiskActionFollowup)
+            .options(
+                joinedload(RiskActionFollowup.created_user)
+                .load_only(User.log_id),
+                
+                joinedload(RiskActionFollowup.status_master)
+                .load_only(Status.status_name)
+            )
+            .filter(
+                RiskActionFollowup.reference_id == reference_id
+            )
+            .all()
+        )
+
+        result = []
+
+        for followup in followups:
+
+            followup_dict = followup.__dict__.copy()
+
+            # remove SQLAlchemy internal state
+            followup_dict.pop("_sa_instance_state", None)
+
+            # add user name
+            followup_dict["created_by_name"] = (
+                followup.created_user.log_id if followup.created_user else None
+            )
+            
+            # add status name
+            followup_dict["status_name"] = (
+                followup.status_master.status_name if followup.status_master else None
+            )
+
+            # remove relationship object
+            followup_dict.pop("created_user", None)
+            followup_dict.pop("status_master", None)
+
+            result.append(followup_dict)
+
+        return result
+
     except Exception as e:
         raise e

@@ -326,3 +326,20 @@ def delete_treatment(treatment_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         return error_response(str(e), 400)
+    
+# Get Treatment history by treatment id
+
+@router.get("/history/{treatment_id}")
+def get_treatment_history(treatment_id: int, db: Session = Depends(get_db)):
+    try:
+        history_records = db.query(RiskTreatmentHist).filter(
+            RiskTreatmentHist.risk_treatment_id == treatment_id
+        ).all()
+
+        if not history_records:
+            raise HTTPException(status_code=404, detail="History not found")
+
+        return success_response(history_records)
+
+    except Exception as e:
+        return error_response(str(e), 400)

@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from app.core.database import Base
+from sqlalchemy.orm import relationship
 
 
 class RiskActionFollowup(Base):
@@ -25,3 +26,19 @@ class RiskActionFollowup(Base):
     created_on = Column(DateTime, server_default=func.now())
 
     created_by = Column(Integer, nullable=False, default=1)
+    
+    # Relationship
+    created_user = relationship(
+        "User",
+        primaryjoin="RiskActionFollowup.created_by == User.id",
+        foreign_keys=[created_by],
+        viewonly=True
+    )
+    
+    status_master  = relationship(
+        "Status",
+        primaryjoin="RiskActionFollowup.status == Status.id",
+        foreign_keys=[status],
+        viewonly=True
+    )
+    

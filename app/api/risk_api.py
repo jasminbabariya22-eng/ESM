@@ -11,7 +11,7 @@ from app.schemas.risk_schema import RiskSaveRequest
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id,get_risk_data_excel
+from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id,get_risk_data_excel, get_followups_by_reference_id
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -35,8 +35,11 @@ def save_risk_api(
         risk_description = result["risk_description"]
         treatments = result["risk_treatments"]
 
-        risk_description["treatments"] = treatments
-        risk_register["risk_descriptions"] = [risk_description]
+        if risk_description:
+            risk_description["treatments"] = treatments
+            risk_register["risk_descriptions"] = [risk_description]
+        else:
+            risk_register["risk_descriptions"] = []
 
         return success_response(
             data=[risk_register],
@@ -190,3 +193,26 @@ def export_risk_excel(
 
     except Exception as e:
         return error_response(message=str(e), status_code=400)
+    
+    
+    
+# -----------------------------
+# GET BY Refrence ID
+# -----------------------------
+
+@router.get("/refrence/{reference_id}")
+def get_reference_by_reference_id(
+    reference_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+
+    try:
+        reference = get_followups_by_reference_id(db, reference_id)
+        if not reference:
+            return error_response(message="Reference not found", status_code=404)
+        
+        return success_response(data=reference)
+    
+    except Exception as e:
+        return error_response(message=str(e),status_code=400)

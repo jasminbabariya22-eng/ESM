@@ -11,6 +11,10 @@ from app.schemas.risk_action_followup import (
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 
+from sqlalchemy.orm import joinedload
+from app.models.user import User
+from app.models.mst_status import Status
+
 router = APIRouter(prefix="/risk-followup", tags=["Risk Followup"], dependencies=[Depends(get_current_user)])
 
 
@@ -28,6 +32,24 @@ def build_followup_response(obj):
         "created_by": obj.created_by
     }
 
+
+def build_followup_response_for_create(obj):
+
+    return {
+        "followup_id": obj.followup_id,
+        "reference_id": obj.reference_id,
+        "module_name": obj.module_name,
+        "remark": obj.remark,
+        "progress": obj.progress,
+        "status": obj.status,
+        "status_name": obj.status_master.status_name if obj.status_master else None,
+        "next_followup_date": obj.next_followup_date,
+        "created_on": obj.created_on,
+        "created_by": obj.created_by,
+        "created_by_name": obj.created_user.log_id if obj.created_user else None
+    }
+    
+
 # -------------------------
 # CREATE
 # -------------------------
@@ -35,17 +57,34 @@ def build_followup_response(obj):
 @router.post("/")
 def create_followup(
     payload: RiskActionFollowupCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
+
         followup = RiskActionFollowup(**payload.dict())
+
+        followup.created_by = current_user["id"]
 
         db.add(followup)
         db.commit()
-        db.refresh(followup)
 
-        return success_response(build_followup_response(followup))
-    
+        # reload with relationships
+        followup = (
+            db.query(RiskActionFollowup)
+            .options(
+                joinedload(RiskActionFollowup.created_user)
+                .load_only(User.log_id),
+                
+                joinedload(RiskActionFollowup.status_master)
+                .load_only(Status.status_name)
+            )
+            .filter(RiskActionFollowup.followup_id == followup.followup_id)
+            .first()
+        )
+
+        return success_response(build_followup_response_for_create(followup))
+
     except Exception as e:
         db.rollback()
         return error_response(str(e), 400)

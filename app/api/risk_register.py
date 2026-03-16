@@ -10,7 +10,8 @@ from app.core.response import success_response, error_response
 from app.models.risk_register import RiskRegister
 from app.schemas.risk_register import (
     RiskRegisterCreate,
-    RiskRegisterUpdate
+    RiskRegisterUpdate,
+    RiskRegisterHybridResponse
 )
 
 from app.models.department import Department
@@ -25,27 +26,62 @@ router = APIRouter(
 def build_hybrid_response(risk):
     return {
         "risk_register_id": risk.risk_register_id,
-        "risk_id": risk.risk_id,                    
+        "risk_id": risk.risk_id,
         "risk_name": risk.risk_name,
 
         "dept_id": risk.dept_id,
         "department_name": risk.department.dept_name if risk.department else None,
 
         "risk_owner_id": risk.risk_owner_id,
-        "risk_owner_name": (
-            f"{risk.risk_owner.first_name} {risk.risk_owner.last_name}"
-            if risk.risk_owner else None
-        ),
+        "risk_owner_name": risk.risk_owner.log_id if risk.risk_owner else None,
+
+        "risk_created_by_name": risk.created_user.log_id if risk.created_user else None,
+
         "risk_co_owner_id": risk.risk_co_owner_id,
+        "risk_co_owner_name": risk.risk_co_owner.log_id if risk.risk_co_owner else None,
 
         "financial_year": risk.financial_year,
+
         "risk_status": risk.risk_status,
+        "risk_status_name": risk.status.status_name if risk.status else None,
+
         "risk_progress": risk.risk_progress,
+
+        # ---------------- Function Head ----------------
+        "risk_function_head_approval_status": risk.risk_function_head_approval_status,
+        "risk_function_head_approval_status_name": (
+            risk.function_head_status.status_name if risk.function_head_status else None
+        ),
+        "risk_function_head_approval_remark": risk.risk_function_head_approval_remark,
+        "risk_function_head_approval_on": risk.risk_function_head_approval_on,
+        "risk_function_head_approval_by": risk.risk_function_head_approval_by,
+
+        # ---------------- Risk Head ----------------
+        "risk_head_approval_status": risk.risk_head_approval_status,
+        "risk_head_approval_status_name": (
+            risk.risk_head_status.status_name if risk.risk_head_status else None
+        ),
+        "risk_head_approval_remark": risk.risk_head_approval_remark,
+        "risk_head_approved_on": risk.risk_head_approved_on,
+        "risk_head_approval_by": risk.risk_head_approval_by,
+
+        # ---------------- Risk Manager ----------------
+        "risk_manager_approval_status": risk.risk_manager_approval_status,
+        "risk_manager_approval_status_name": (
+            risk.risk_manager_status.status_name if risk.risk_manager_status else None
+        ),
+        "risk_manager_approval_remark": risk.risk_manager_approval_remark,
+        "risk_manager_approved_on": risk.risk_manager_approved_on,
+        "risk_manager_approval_by": risk.risk_manager_approval_by,
 
         "is_active": risk.is_active,
         "is_deleted": risk.is_deleted,
-        "created_on": risk.created_on
+
+        "created_on": risk.created_on,
+        "created_by": risk.created_by
     }
+    
+    
 
 # Generate unique risk_id based on department sequence
 def generate_risk_id(db: Session, dept_id: int):
@@ -64,6 +100,7 @@ def generate_risk_id(db: Session, dept_id: int):
     risk_id = f"{dept.dept_short_name}-{str(number).zfill(4)}"
 
     return risk_id
+
 
 # CREATE
 @router.post("/")
@@ -185,7 +222,10 @@ def get_Risk_by_register_id(risk_register_id: int, db: Session = Depends(get_db)
             RiskRegister.is_deleted == 0,
             RiskRegister.is_active == 0
         ).first()
-        
+
+        if not risk:
+            return error_response("Risk Register not found", 404)
+
         return success_response(build_hybrid_response(risk))
 
     except Exception as e:
