@@ -456,8 +456,8 @@ def get_risk_by_risk_id(db, risk_id):
                 for rt in rd.treatments:
                     treatments_list.append({
                         **to_dict(rt),
-                        "action_owner_name": rt.action_owner.log_id if rt.action_owner else None,
-                        "action_status_name": rt.status.status_name if rt.status else None
+                        "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                        "risk_status_name": rt.status.status_name if rt.status else None
                     })
                 
                 rd_dict = {
@@ -512,10 +512,10 @@ def get_risk_by_description_id(db, description_id):
             treatment_dict.pop("_sa_instance_state", None)
 
             # add status_name
-            treatment_dict["status_name"] = (
+            treatment_dict["risk_status_name"] = (
                 t.status.status_name if t.status else None
             )
-            treatment_dict["action_owner_name"] = (
+            treatment_dict["risk_owner_name"] = (
                 t.action_owner.log_id if t.action_owner else None
             )
 
@@ -615,12 +615,12 @@ def get_followups_by_reference_id(db, reference_id):
             followup_dict.pop("_sa_instance_state", None)
 
             # add user name
-            followup_dict["created_by_name"] = (
+            followup_dict["risk_owner_name"] = (
                 followup.created_user.log_id if followup.created_user else None
             )
             
             # add status name
-            followup_dict["status_name"] = (
+            followup_dict["risk_status_name"] = (
                 followup.status_master.status_name if followup.status_master else None
             )
 

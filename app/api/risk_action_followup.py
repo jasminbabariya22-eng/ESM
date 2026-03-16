@@ -42,11 +42,11 @@ def build_followup_response_for_create(obj):
         "remark": obj.remark,
         "progress": obj.progress,
         "status": obj.status,
-        "status_name": obj.status_master.status_name if obj.status_master else None,
+        "risk_status_name": obj.status_master.status_name if obj.status_master else None,
         "next_followup_date": obj.next_followup_date,
         "created_on": obj.created_on,
         "created_by": obj.created_by,
-        "created_by_name": obj.created_user.log_id if obj.created_user else None
+        "risk_owner_name": obj.created_user.log_id if obj.created_user else None
     }
     
 

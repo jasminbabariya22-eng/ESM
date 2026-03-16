@@ -35,7 +35,7 @@ def build_hybrid_response(risk):
         "risk_owner_id": risk.risk_owner_id,
         "risk_owner_name": risk.risk_owner.log_id if risk.risk_owner else None,
 
-        "risk_created_by_name": risk.created_user.log_id if risk.created_user else None,
+        # "risk_created_by_name": risk.created_user.log_id if risk.created_user else None,
 
         "risk_co_owner_id": risk.risk_co_owner_id,
         "risk_co_owner_name": risk.risk_co_owner.log_id if risk.risk_co_owner else None,
