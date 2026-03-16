@@ -482,54 +482,134 @@ def get_risk_by_risk_id(db, risk_id):
     
     
 # Risk Register by risk_description_id
+# def get_risk_by_description_id(db, description_id):
+#     try:
+
+#         risk_description = (
+#             db.query(RiskDescription)
+#             .options(
+                
+#                 joinedload(RiskDescription.treatments)
+#                 .joinedload(RiskTreatment.status)
+#                 .load_only(Status.status_name),
+
+#                 joinedload(RiskDescription.treatments)
+#                 .joinedload(RiskTreatment.action_owner)
+#                 .load_only(User.log_id)
+#                 )
+#             .filter(
+#                 RiskDescription.risk_description_id == description_id,
+#                 RiskDescription.is_deleted == 0
+#             )
+#             .first()
+#         )
+
+#         result = risk_description.__dict__.copy()
+
+#         treatments_list = []
+
+#         for t in risk_description.treatments:
+#             treatment_dict = t.__dict__.copy()
+
+#             # remove SQLAlchemy internal state
+#             treatment_dict.pop("_sa_instance_state", None)
+
+#             # add status_name
+#             treatment_dict["risk_status_name"] = (
+#                 t.status.status_name if t.status else None
+#             )
+#             treatment_dict["risk_owner_name"] = (
+#                 t.action_owner.log_id if t.action_owner else None
+#             )
+
+#             # remove nested status object
+#             treatment_dict.pop("status", None)
+#             treatment_dict.pop("action_owner", None)
+
+#             treatments_list.append(treatment_dict)
+
+#         result["treatments"] = treatments_list
+#         result.pop("_sa_instance_state", None)
+#         return result
+
+#     except Exception as e:
+#         raise e
+
+
+# Risk Register by risk_description_id
 def get_risk_by_description_id(db, description_id):
+
+    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+
     try:
 
-        risk_description = (
+        descriptions = (
             db.query(RiskDescription)
             .options(
-                
                 joinedload(RiskDescription.treatments)
-                .joinedload(RiskTreatment.status)
-                .load_only(Status.status_name),
+                .joinedload(RiskTreatment.action_owner),
 
                 joinedload(RiskDescription.treatments)
-                .joinedload(RiskTreatment.action_owner)
-                .load_only(User.log_id)
-                )
+                .joinedload(RiskTreatment.status),
+
+                joinedload(RiskDescription.risk_register)
+            )
             .filter(
                 RiskDescription.risk_description_id == description_id,
                 RiskDescription.is_deleted == 0
             )
-            .first()
+            .all()
         )
 
-        result = risk_description.__dict__.copy()
+        result = []
 
-        treatments_list = []
+        for rd in descriptions:
 
-        for t in risk_description.treatments:
-            treatment_dict = t.__dict__.copy()
+            likelihood = rd.inherent_risk_likelihood_id
+            impact = rd.inherent_risk_impact_id
+            current_likelihood = rd.current_risk_likelihood_id
+            current_impact = rd.current_risk_impact_id
 
-            # remove SQLAlchemy internal state
-            treatment_dict.pop("_sa_instance_state", None)
+            inherent_color_str = None
+            inherent_color_code = None
+            current_color_str = None
+            current_color_code = None
 
-            # add status_name
-            treatment_dict["risk_status_name"] = (
-                t.status.status_name if t.status else None
-            )
-            treatment_dict["risk_owner_name"] = (
-                t.action_owner.log_id if t.action_owner else None
-            )
+            if likelihood and impact:
+                inherent_color_str = get_color(likelihood * impact)
+                inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
 
-            # remove nested status object
-            treatment_dict.pop("status", None)
-            treatment_dict.pop("action_owner", None)
+            if current_likelihood and current_impact:
+                current_color_str = get_color(current_likelihood * current_impact)
+                current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
 
-            treatments_list.append(treatment_dict)
+            # Treatments
+            treatments_list = []
 
-        result["treatments"] = treatments_list
-        result.pop("_sa_instance_state", None)
+            for rt in rd.treatments:
+                treatments_list.append({
+                    **to_dict(rt),
+                    "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                    "risk_status_name": rt.status.status_name if rt.status else None
+                })
+
+            rd_dict = {
+                **to_dict(rd),
+                "inherent_color_str": inherent_color_str,
+                "inherent_color_code": inherent_color_code,
+                "current_color_str": current_color_str,
+                "current_color_code": current_color_code,
+                "treatments": treatments_list
+            }
+
+            # Risk Register info
+            risk_dict = {
+                **to_dict(rd.risk_register),
+                "risk_descriptions": [rd_dict]
+            }
+
+            result.append(risk_dict)
+
         return result
 
     except Exception as e:
@@ -538,6 +618,7 @@ def get_risk_by_description_id(db, description_id):
     
     
 # Download Risk data
+
 def calculate_row_height(text, column_width):
     if not text:
         return 15
