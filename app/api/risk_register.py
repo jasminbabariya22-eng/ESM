@@ -78,7 +78,8 @@ def build_hybrid_response(risk):
         "is_deleted": risk.is_deleted,
 
         "created_on": risk.created_on,
-        "created_by": risk.created_by
+        "created_by": risk.created_by,
+        "created_by_name" : risk.created_name.log_id if risk.created_name else None
     }
     
     

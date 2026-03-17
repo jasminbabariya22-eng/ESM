@@ -61,6 +61,11 @@ class RiskRegister(Base):
         viewonly=True
     )
     
+    created_name = relationship(
+        "User",
+        foreign_keys=[created_by]
+    )
+    
     risk_owner = relationship(
         "User",
         foreign_keys=[risk_owner_id]
