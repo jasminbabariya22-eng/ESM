@@ -319,13 +319,23 @@ def get_risk_by_user(db, user_id):
 
 
 # Risk LIST from Department id
-def to_dict(obj, model=None):
+def to_dict(obj, model=None,prefix=None):
+    def format_key(key):
+        return f"{prefix}{key}" if prefix else key
+    
+    # If object exists
     if obj is not None:
-        return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+        return {
+            format_key(c.key): getattr(obj, c.key)
+            for c in inspect(obj).mapper.column_attrs
+        }
+
     # If object is None → return all columns as None
     if model is not None:
-        return {c.key: None for c in inspect(model).mapper.column_attrs}
-    
+        return {
+            format_key(c.key): None
+            for c in inspect(model).mapper.column_attrs
+        }
     return {}
 
 def get_color(score):
@@ -482,7 +492,7 @@ def get_risk_by_dept(db, dept_id):
 
             result.append({
                 **to_dict(rr),
-                **to_dict(rd, RiskDescription),
+                **to_dict(rd, RiskDescription, prefix="rd_"),
                 "inherent_color_str": inherent_color_str,
                 "inherent_color_code" : inherent_color_code,
                 "current_color_str": current_color_str,
