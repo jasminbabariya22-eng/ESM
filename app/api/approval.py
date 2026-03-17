@@ -7,6 +7,8 @@ from app.core.response import success_response, error_response
 from app.schemas.risk_approval import RiskApprovalRequest
 from app.services.risk_approval import approve_risk
 
+from datetime import date
+
 router = APIRouter(prefix="/approval", tags=["Approval"], dependencies=[Depends(get_current_user)])
 
 
@@ -42,7 +44,8 @@ def approve_risk_api(
                 "risk_register_id": data.risk_register_id,
                 "approval_level": data.approval_level,
                 "approval_status_id": data.approval_status_id,
-                "risk_status_name": status_name,  # ✅ added
+                "risk_status_name": status_name,  
+                "risk_approval_on":date.today(),
                 "remark": data.remark
             }
         )
