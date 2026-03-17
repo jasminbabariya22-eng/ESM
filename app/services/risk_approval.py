@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from app.models.risk_register import RiskRegister
+from app.models.mst_status import Status
 
 
 def approve_risk(db, data, user_id):
@@ -12,31 +13,30 @@ def approve_risk(db, data, user_id):
     if not risk:
         raise Exception("Risk not found")
 
-    # FUNCTION HEAD APPROVAL
-    if data.approval_level == 1:
+    # Get status name
+    status_obj = db.query(Status).filter(
+        Status.id == data.approval_status_id,
+        Status.is_deleted == 0
+    ).first()
 
+    if not status_obj:
+        raise Exception("Invalid status id")
+
+    # ✅ NO VALIDATION — DIRECT UPDATE
+
+    if data.approval_level == 1:
         risk.risk_function_head_approval_status = data.approval_status_id
         risk.risk_function_head_approval_remark = data.remark
         risk.risk_function_head_approval_by = user_id
-        risk.risk_function_head_approval_on = datetime.now(timezone.now)
+        risk.risk_function_head_approval_on = datetime.now(timezone.utc)
 
-    # RISK HEAD APPROVAL
     elif data.approval_level == 2:
-
-        if risk.risk_function_head_approval_status != 2:
-            raise Exception("Function head approval required first")
-
         risk.risk_head_approval_status = data.approval_status_id
         risk.risk_head_approval_remark = data.remark
         risk.risk_head_approval_by = user_id
         risk.risk_head_approved_on = datetime.now(timezone.utc)
 
-    # RISK MANAGER APPROVAL
     elif data.approval_level == 3:
-
-        if risk.risk_head_approval_status != 2:
-            raise Exception("Risk head approval required first")
-
         risk.risk_manager_approval_status = data.approval_status_id
         risk.risk_manager_approval_remark = data.remark
         risk.risk_manager_approval_by = user_id
@@ -47,4 +47,4 @@ def approve_risk(db, data, user_id):
 
     db.commit()
 
-    return risk
+    return risk, status_obj.status_name

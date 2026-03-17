@@ -11,19 +11,41 @@ router = APIRouter(prefix="/approval", tags=["Approval"], dependencies=[Depends(
 
 
 # Get Approval for existing Risk
+# @router.post("/approve")
+# def approve_risk_api(
+#     data: RiskApprovalRequest,
+#     db: Session = Depends(get_db),
+#     current_user = Depends(get_current_user)
+# ):
+
+#     try:
+#         risk = approve_risk(db, data, current_user["id"])
+
+#         return success_response(
+#             data=data
+#         )
+        
+#     except Exception as e:
+#         return error_response(str(e), 400)
+
 @router.post("/approve")
 def approve_risk_api(
     data: RiskApprovalRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-
     try:
-        risk = approve_risk(db, data, current_user["id"])
+        risk, status_name = approve_risk(db, data, current_user["id"])
 
         return success_response(
-            data=data
+            data={
+                "risk_register_id": data.risk_register_id,
+                "approval_level": data.approval_level,
+                "approval_status_id": data.approval_status_id,
+                "risk_status_name": status_name,  # ✅ added
+                "remark": data.remark
+            }
         )
-        
+
     except Exception as e:
         return error_response(str(e), 400)
