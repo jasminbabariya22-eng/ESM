@@ -8,8 +8,8 @@ class Department(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     dept_name = Column(String(255))
-    assigned_to = Column(Integer)
-    assigned_on = Column(DateTime)
+    # assigned_to = Column(Integer)
+    # assigned_on = Column(DateTime)
     created_by = Column(Integer, default=1)
     created_on = Column(DateTime)
     modified_by = Column(Integer, default=1)
