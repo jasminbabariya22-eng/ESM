@@ -333,7 +333,7 @@ def get_color(score):
     else:
         return "#F44336"
 
-def get_risk_by_dept(db, dept_id):
+def get_risk_by_dept_old(db, dept_id):
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     try:
         query = db.query(
@@ -371,6 +371,10 @@ def get_risk_by_dept(db, dept_id):
             if rr.risk_owner:
                 risk_owner_name = rr.risk_owner.log_id
                 
+            risk_co_owner_name = None
+            if rr.risk_co_owner:
+                risk_co_owner_name = rr.risk_co_owner.log_id
+                
             risk_status_name = None
             if rt.status:
                 risk_status_name = rt.status.status_name
@@ -402,6 +406,83 @@ def get_risk_by_dept(db, dept_id):
                 "current_color_code" : current_color_code,
                 "risk_owner_name" : risk_owner_name,
                 "risk_status_name": risk_status_name
+            })
+
+        return result
+    except Exception as e:
+        raise e
+    
+    
+def get_risk_by_dept(db, dept_id):
+    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    try:
+        query = db.query(
+                    RiskRegister,
+                    RiskDescription
+                ).outerjoin(
+                    RiskDescription,
+                    RiskRegister.risk_register_id == RiskDescription.risk_register_id
+                )
+        query = query.filter(RiskRegister.is_deleted == 0)
+
+        if dept_id:
+            query = query.filter( RiskRegister.dept_id == dept_id )
+
+
+        records = query.order_by(
+                RiskRegister.risk_register_id,
+                RiskDescription.risk_description_id
+            ).all()    
+        
+
+        result = []
+        for rr, rd in records:
+            risk_owner_name = None
+            if rr.risk_owner:
+                risk_owner_name = rr.risk_owner.log_id
+            
+            risk_status_name = None
+            if rr.status:
+                risk_status_name = rr.status.status_name
+
+            likelihood = None
+            impact = None
+            current_likelihood = None
+            current_impact = None
+            inherent_color_str = None
+            inherent_color_code = None
+            current_color_str = None
+            current_color_code = None
+           
+            if rd is not None:
+                if rd.inherent_risk_likelihood_id:
+                    likelihood = rd.inherent_risk_likelihood_id
+                if rd.inherent_risk_impact_id:
+                    impact = rd.inherent_risk_impact_id
+
+                if rd.current_risk_likelihood_id:
+                    current_likelihood = rd.current_risk_likelihood_id
+                if rd.current_risk_impact_id:
+                    current_impact = rd.current_risk_impact_id
+
+
+                if likelihood and impact:
+                    inherent_color_str = get_color(likelihood*impact)
+                    inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+
+                if current_likelihood and current_impact:
+                    current_color_str = get_color(current_likelihood*current_impact)
+                    current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+
+            result.append({
+                **to_dict(rr),
+                **(to_dict(rd) if rd is not None else {}),
+                "inherent_color_str": inherent_color_str,
+                "inherent_color_code" : inherent_color_code,
+                "current_color_str": current_color_str,
+                "current_color_code" : current_color_code,
+                "risk_owner_name" : risk_owner_name,
+                "risk_status_name" : risk_status_name
             })
 
         return result
@@ -590,6 +671,7 @@ def get_risk_by_description_id(db, description_id):
                 treatments_list.append({
                     **to_dict(rt),
                     "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                    "risk_co_owner_name": rt.action_owner.log_id if rt.action_owner else None,
                     "risk_status_name": rt.status.status_name if rt.status else None
                 })
 

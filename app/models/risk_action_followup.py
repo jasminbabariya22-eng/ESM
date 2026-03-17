@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from app.core.database import Base
 from sqlalchemy.orm import relationship
+from sqlalchemy import LargeBinary
+from sqlalchemy import Text
 
 
 class RiskActionFollowup(Base):
@@ -26,6 +28,14 @@ class RiskActionFollowup(Base):
     created_on = Column(DateTime, server_default=func.now())
 
     created_by = Column(Integer, nullable=False, default=1)
+    
+    file_name = Column(Text)
+    
+    file_extension= Column(String(100))
+    
+    file_type = Column(String(100))
+    
+    file_data = Column(LargeBinary)
     
     # Relationship
     created_user = relationship(

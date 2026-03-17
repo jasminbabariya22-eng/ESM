@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from fastapi import UploadFile, File
 
 
 class RiskActionFollowupCreate(BaseModel):
@@ -11,6 +12,7 @@ class RiskActionFollowupCreate(BaseModel):
     progress: Optional[int]
     status: Optional[int]
     next_followup_date: Optional[datetime]
+
 
 
 class RiskActionFollowupUpdate(BaseModel):
