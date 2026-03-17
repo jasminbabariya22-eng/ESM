@@ -757,20 +757,8 @@ def get_risk_data_excel(db,dept_id):
             )
         if dept_id:
             query = query.filter(RiskRegister.dept_id == dept_id)
-        query = query.filter(RiskRegister.is_deleted == 0)
+        query = query.filter(RiskRegister.is_deleted == 0).order_by(RiskRegister.risk_register_id)
         risks = query.all()
-
-        # risks = (
-        #     db.query(RiskRegister)
-        #     .options(
-        #         joinedload(RiskRegister.risk_descriptions)
-        #         .joinedload(RiskDescription.treatments)
-        #     )
-        #     .filter(
-        #         RiskRegister.is_deleted == 0
-        #     )
-        #     .all()
-        # )
 
         department_rows  = {}
         merge_ranges = {}
@@ -793,13 +781,14 @@ def get_risk_data_excel(db,dept_id):
                 current_rows[dept_name] = 2
 
             start_row = current_rows[dept_name]
-            for desc in risk.risk_descriptions:
+            descriptions = risk.risk_descriptions if risk.risk_descriptions else [None]
+            for desc in descriptions:
 
                 first_desc = True
-                likelihood = desc.inherent_risk_likelihood_id
-                impact = desc.inherent_risk_impact_id
-                current_likelihood = desc.current_risk_likelihood_id
-                current_impact = desc.current_risk_impact_id
+                likelihood = desc.inherent_risk_likelihood_id if desc else None
+                impact = desc.inherent_risk_impact_id if desc else None
+                current_likelihood = desc.current_risk_likelihood_id if desc else None
+                current_impact = desc.current_risk_impact_id if desc else None
 
                 inherent_color_str = None
                 inherent_color_code = None
@@ -813,19 +802,20 @@ def get_risk_data_excel(db,dept_id):
                     current_color_str = get_color(current_likelihood*current_impact)
                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
 
-                for treatment in desc.treatments:
+                treatments = desc.treatments if desc and desc.treatments else [None]
+                for treatment in treatments:
 
                     department_rows[dept_name].append({
                         "Risk ID": risk.risk_id if first_risk else "",
                         "Risk Name" : risk.risk_name if first_risk else "",
-                        "Risk Description": desc.risk_description if first_desc else "",
+                        "Risk Description": desc.risk_description if desc and first_desc else "",
                         "Inherent Risk Level" : inherent_color_code if first_desc else "",
-                        "Current Mitigation": desc.mitigation if first_desc else "",
+                        "Current Mitigation": desc.mitigation if desc and first_desc else "",
                         "Current Risk Level" : current_color_code if first_desc else "",
                         "Risk Owner" : risk_owner_name if first_risk else "",
-                        "Action Owner" : treatment.action_owner.log_id if treatment.action_owner else "",
-                        "Risk Treatment": treatment.action_plan,
-                        "Target Date" :treatment.target_date.date() if treatment.target_date else ""
+                        "Action Owner" : treatment.action_owner.log_id if treatment and treatment.action_owner else "",
+                        "Risk Treatment": treatment.action_plan if treatment else "",
+                        "Target Date" :treatment.target_date.date() if treatment and treatment.target_date else ""
                         
                     })
 
