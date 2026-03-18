@@ -57,8 +57,10 @@ def to_datetime(val):
 def model_to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 
-
+# ---------
 # CREATE OR UPDATE RISK
+# ---------
+
 def create_update_risk(db: Session, data, current_user):
 
     try:
@@ -70,9 +72,7 @@ def create_update_risk(db: Session, data, current_user):
         desc_data = data.risk_description
         treatments = data.risk_treatments or []
 
-        # -----------------------------
         # CREATE OR UPDATE RISK REGISTER
-        # -----------------------------
 
         if to_int(register_data.risk_register_id) == 0:
 
@@ -116,9 +116,8 @@ def create_update_risk(db: Session, data, current_user):
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
 
-        # -----------------------------
+
         # HISTORY - RISK REGISTER
-        # -----------------------------
 
         hist_register = RiskRegisterHist(
             risk_register_id=risk.risk_register_id,
@@ -140,9 +139,8 @@ def create_update_risk(db: Session, data, current_user):
 
         db.add(hist_register)
 
-        # -----------------------------
-        # RISK DESCRIPTION (OPTIONAL)
-        # -----------------------------
+
+        # RISK DESCRIPTION
 
         description = None
 
@@ -174,6 +172,7 @@ def create_update_risk(db: Session, data, current_user):
                 db.add(description)
                 db.flush()
 
+            # Update Risk Description
             else:
 
                 description = db.query(RiskDescription).filter(
@@ -192,6 +191,7 @@ def create_update_risk(db: Session, data, current_user):
 
                 description.modified_by = current_user["id"]
                 description.modified_on = datetime.now(timezone.utc)
+
 
             # HISTORY DESCRIPTION
 
@@ -214,9 +214,8 @@ def create_update_risk(db: Session, data, current_user):
 
             db.add(hist_desc)
 
-        # -----------------------------
+        
         # RISK TREATMENTS
-        # -----------------------------
 
         saved_treatments = []
 
@@ -280,7 +279,7 @@ def create_update_risk(db: Session, data, current_user):
         raise e
 
 
-# Risk get by User
+# Risk get by User (Optinal API)
 def get_risk_by_user(db, user_id):
 
     risks = db.query(RiskRegister).filter(
@@ -318,7 +317,7 @@ def get_risk_by_user(db, user_id):
 
 
 
-# Risk LIST from Department id
+
 def to_dict(obj, model=None,prefix=None):
     def format_key(key):
         return f"{prefix}{key}" if prefix else key
@@ -349,29 +348,29 @@ def get_color(score):
     else:
         return "#F44336"
 
-def get_risk_by_dept_old(db, dept_id):
+
+#-----------
+# Get Risk by id (Assign id)
+#----------
+def get_risk_by_id(db, id):
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     try:
         query = db.query(
-                    RiskRegister,
-                    RiskDescription,
-                    RiskTreatment
-                ).join(
-                    RiskDescription,
-                    RiskRegister.risk_register_id == RiskDescription.risk_register_id
-                ).join(
-                    RiskTreatment,
-                    RiskDescription.risk_description_id == RiskTreatment.risk_description_id
-                )
-        if dept_id:
-            query = query.filter(
-                RiskRegister.dept_id == dept_id,
+                RiskRegister,
+                RiskDescription,
+                RiskTreatment
+            ).join(
+                RiskDescription,
+                RiskRegister.risk_register_id == RiskDescription.risk_register_id
+            ).join(
+                RiskTreatment,
+                RiskDescription.risk_description_id == RiskTreatment.risk_description_id
+            ).filter(
                 RiskRegister.is_deleted == 0
             )
-        else:
-            query = query.filter(
-                RiskRegister.is_deleted == 0
-            )
+            
+        if id:
+            query = query.filter(RiskTreatment.action_owner_id == id)
 
         records = query.order_by(
                 RiskRegister.risk_register_id,
@@ -418,9 +417,12 @@ def get_risk_by_dept_old(db, dept_id):
                 **to_dict(rt),
                 "inherent_color_str": inherent_color_str,
                 "inherent_color_code" : inherent_color_code,
+                
                 "current_color_str": current_color_str,
                 "current_color_code" : current_color_code,
+                
                 "risk_owner_name" : risk_owner_name,
+                "risk_co_owner_name" : risk_co_owner_name,
                 "risk_status_name": risk_status_name
             })
 
@@ -429,7 +431,10 @@ def get_risk_by_dept_old(db, dept_id):
         raise e
     
     
-def get_risk_by_dept(db, dept_id):
+#-----------
+# Risk LIST from Department id
+#----------
+def get_risk_by_dept(db, dept_id):  
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     try:
         query = db.query(
@@ -439,6 +444,7 @@ def get_risk_by_dept(db, dept_id):
                     RiskDescription,
                     RiskRegister.risk_register_id == RiskDescription.risk_register_id
                 )
+                
         query = query.filter(RiskRegister.is_deleted == 0)
 
         if dept_id:
@@ -506,7 +512,10 @@ def get_risk_by_dept(db, dept_id):
         raise e
 
 
+#-----------
 # Risk Register by risk_id
+#------------
+
 def get_risk_by_risk_id(db, risk_id):
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     try:
@@ -557,6 +566,7 @@ def get_risk_by_risk_id(db, risk_id):
                     treatments_list.append({
                         **to_dict(rt),
                         "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                        "risk_co_owner_name": rt.action_owner.log_id if rt.action_owner else None,
                         "risk_status_name": rt.status.status_name if rt.status else None
                     })
                 
@@ -633,7 +643,10 @@ def get_risk_by_risk_id(db, risk_id):
 #         raise e
 
 
+#----------
 # Risk Register by risk_description_id
+#----------
+
 def get_risk_by_description_id(db, description_id):
 
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
@@ -714,8 +727,9 @@ def get_risk_by_description_id(db, description_id):
         raise e
     
     
-    
-# Download Risk data
+#---------    
+# Download Risk data in Excel format
+#----------
 
 def calculate_row_height(text, column_width):
     if not text:
@@ -782,6 +796,7 @@ def get_risk_data_excel(db,dept_id):
 
             start_row = current_rows[dept_name]
             descriptions = risk.risk_descriptions if risk.risk_descriptions else [None]
+            
             for desc in descriptions:
 
                 first_desc = True
@@ -947,10 +962,133 @@ def get_risk_data_excel(db,dept_id):
         return output
     except Exception as e:
         raise e
+
+
+# def fetch_risk_data(db, dept_id):
+#     query = db.query(RiskRegister).options(
+#         joinedload(RiskRegister.risk_descriptions)
+#         .joinedload(RiskDescription.treatments)
+#     )
+
+#     if dept_id:
+#         query = query.filter(RiskRegister.dept_id == dept_id)
+
+#     query = query.filter(
+#         RiskRegister.is_deleted == 0,
+#         RiskRegister.dept_id > 0
+#     ).order_by(RiskRegister.risk_register_id)
+
+#     return query.all()
+
+# def calculate_risk_levels(desc, impact_map):
+#     def get_code_and_color(likelihood, impact):
+#         if not likelihood or not impact:
+#             return None, None
+
+#         code = f"{likelihood}{impact_map.get(impact)}"
+#         color = get_color(likelihood * impact)
+
+#         return code, color
+
+#     inherent_code, inherent_color = get_code_and_color(
+#         getattr(desc, "inherent_risk_likelihood_id", None),
+#         getattr(desc, "inherent_risk_impact_id", None)
+#     )
+
+#     current_code, current_color = get_code_and_color(
+#         getattr(desc, "current_risk_likelihood_id", None),
+#         getattr(desc, "current_risk_impact_id", None)
+#     )
+
+#     return {
+#         "inherent_code": inherent_code,
+#         "inherent_color": inherent_color,
+#         "current_code": current_code,
+#         "current_color": current_color
+#     }
     
 
+# def format_excel(department_rows, merge_ranges):
+#     output = io.BytesIO()
 
+#     green_value = {"1A", "2A", "3A", "1B", "2B","1C"}
+#     yellow_value = {"4A", "5A", "3B", "3C", "2D","2C","1D","1E"}
+#     amber_value = {"2E", "3E", "3D", "4C", "4B","5B"}
+#     red_value = {"4E", "5E", "4D", "5D", "5C"}
+
+#     with pd.ExcelWriter(output, engine="openpyxl") as writer:
+
+#         for dept_name, rows in department_rows.items():
+#             df = pd.DataFrame(rows)
+#             sheet_name = dept_name[:31]
+#             df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+#             worksheet = writer.sheets[sheet_name]
+
+#             # 🎨 Color logic
+#             for row in range(2, len(df)+2):
+#                 for col in ["D", "F"]:
+#                     cell = worksheet[f"{col}{row}"]
+
+#                     if cell.value in green_value:
+#                         cell.fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
+#                     elif cell.value in amber_value:
+#                         cell.fill = PatternFill(start_color="FF9800", end_color="FF9800", fill_type="solid")
+#                     elif cell.value in yellow_value:
+#                         cell.fill = PatternFill(start_color="FFEB3B", end_color="FFEB3B", fill_type="solid")
+#                     elif cell.value in red_value:
+#                         cell.fill = PatternFill(start_color="F44336", end_color="F44336", fill_type="solid")
+
+#     output.seek(0)
+#     return output
+
+# def get_risk_data_excel(db, dept_id):
+#     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+
+#     risks = fetch_risk_data(db, dept_id)
+
+#     department_rows = {}
+#     merge_ranges = {}
+#     current_rows = {}
+
+#     for risk in risks:
+#         dept_name = risk.department.dept_short_name if risk.department else "UNKNOWN"
+
+#         if dept_name not in department_rows:
+#             department_rows[dept_name] = []
+#             merge_ranges[dept_name] = []
+#             current_rows[dept_name] = 2
+
+#         start_row = current_rows[dept_name]
+
+#         descriptions = risk.risk_descriptions or [None]
+
+#         for desc in descriptions:
+#             risk_levels = calculate_risk_levels(desc, impact_map)
+
+#             treatments = desc.treatments if desc and desc.treatments else [None]
+
+#             for treatment in treatments:
+#                 department_rows[dept_name].append({
+#                     "Risk ID": risk.risk_id,
+#                     "Risk Name": risk.risk_name,
+#                     "Risk Description": getattr(desc, "risk_description", ""),
+#                     "Inherent Risk Level": risk_levels["inherent_code"],
+#                     "Current Risk Level": risk_levels["current_code"],
+#                     "Risk Owner": risk.risk_owner.log_id if risk.risk_owner else ""
+#                 })
+
+#                 current_rows[dept_name] += 1
+
+#         merge_ranges[dept_name].append((start_row, current_rows[dept_name] - 1))
+
+#     return format_excel(department_rows, merge_ranges)
+    
+
+#---------
 # Get Followups by reference_id
+#---------
+
 def get_followups_by_reference_id(db, reference_id):
     try:
 
