@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
-from fastapi import UploadFile, File, Depends
-from fastapi import Form
 from typing import Optional
+from datetime import datetime, timezone
+from fastapi.responses import Response
 
 from app.core.database import get_db
 from app.models.risk_action_followup import RiskActionFollowup
@@ -34,6 +34,29 @@ def build_followup_response(obj):
         "created_on": obj.created_on,
         "created_by": obj.created_by
     }
+    
+def build_followup_response(obj):
+    return {
+        "followup_id": obj.followup_id,
+        "reference_id": obj.reference_id,
+        "module_name": obj.module_name,
+        "remark": obj.remark,
+        "progress": obj.progress,
+        "status": obj.status,
+        "risk_status_name": obj.status_master.status_name if obj.status_master else None,
+        "next_followup_date": obj.next_followup_date,
+        "created_on": obj.created_on,
+        "created_by": obj.created_by,
+        "risk_owner_name": obj.created_user.log_id if obj.created_user else None,
+
+        
+        "file_name": obj.file_name,
+        "file_extension": obj.file_extension,
+        "file_type": obj.file_type,
+        "has_file": True if obj.file_data else False,
+
+        "file_download_url": f"/risk-followup/{obj.followup_id}/download-file" if obj.file_data else None
+    }
 
 
 def build_followup_response_for_create(obj):
@@ -50,7 +73,6 @@ def build_followup_response_for_create(obj):
         "created_by": obj.created_by,
         "risk_owner_name": obj.created_user.log_id if obj.created_user else None,
 
-        # 👇 NEW
         "file_name": obj.file_name,
         "file_extension": obj.file_extension,
         "file_type": obj.file_type
@@ -58,8 +80,10 @@ def build_followup_response_for_create(obj):
     
 
 # -------------------------
-# CREATE
+# CREATE Followup and file upload
 # -------------------------
+
+# Seperate API
 
 # @router.post("/")
 # def create_followup(
@@ -130,49 +154,52 @@ def build_followup_response_for_create(obj):
 #         return error_response(str(e), 400)
 
 
+# Combined API
 
-from pydantic import BaseModel, ValidationError
-from typing import Optional
-from datetime import datetime
-import json
-@router.post("/create-with-file")
+@router.post("/")
 async def create_followup_with_file(
-    file: UploadFile = File(...),  # File is required
     reference_id: int = Form(...),
-    module_name: Optional[str] = Form(None),
     remark: str = Form(...),
+
+    module_name: Optional[str] = Form(None),
     progress: Optional[int] = Form(None),
     status: Optional[int] = Form(None),
     next_followup_date: Optional[datetime] = Form(None),
+
+    file: UploadFile = File(None),   
+
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        # Create payload from form fields
-        payload = RiskActionFollowupCreate(
+        if not reference_id or not remark:
+            return error_response("Reference ID and Remark are required", 400)
+        
+        if not next_followup_date:
+            next_followup_date = datetime.now(timezone.utc)
+        
+        followup = RiskActionFollowup(
             reference_id=reference_id,
             module_name=module_name,
             remark=remark,
             progress=progress,
             status=status,
-            next_followup_date=next_followup_date
+            next_followup_date=next_followup_date,
+            created_by=current_user["id"]
         )
-        
-        # Create followup
-        followup = RiskActionFollowup(**payload.dict())
-        followup.created_by = current_user["id"]
-        
-        # Handle file
+
         if file and file.filename:
+            content = await file.read()
+
             followup.file_name = file.filename
-            followup.file_extension = file.filename.split(".")[-1] if "." in file.filename else None
+            followup.file_extension = file.filename.rsplit(".", 1)[-1] if "." in file.filename else None
             followup.file_type = file.content_type
-            followup.file_data = await file.read()
-        
+            followup.file_data = content
+
         db.add(followup)
         db.commit()
-        
-        # Reload with relationships
+        db.refresh(followup)  
+
         followup = (
             db.query(RiskActionFollowup)
             .options(
@@ -182,12 +209,13 @@ async def create_followup_with_file(
             .filter(RiskActionFollowup.followup_id == followup.followup_id)
             .first()
         )
-        
+
         return success_response(build_followup_response_for_create(followup))
-        
+
     except Exception as e:
         db.rollback()
         return error_response(str(e), 400)
+    
     
     
 # -------------------------
@@ -212,33 +240,106 @@ def get_all_followups(db: Session = Depends(get_db)):
 
 @router.get("/{followup_id}")
 def get_followup(followup_id: int, db: Session = Depends(get_db)):
-    
     try:
-        data = db.query(RiskActionFollowup).filter(
-            RiskActionFollowup.followup_id == followup_id
-        ).first()
+        data = (
+            db.query(RiskActionFollowup)
+            .options(
+                joinedload(RiskActionFollowup.created_user)
+                .load_only(User.log_id),
+                
+                joinedload(RiskActionFollowup.status_master)
+                .load_only(Status.status_name)
+            )
+            .filter(RiskActionFollowup.followup_id == followup_id)
+            .first()
+        )
 
         if not data:
             raise HTTPException(status_code=404, detail="Followup not found")
 
         return success_response(build_followup_response(data))
-    
+
     except Exception as e:
         return error_response(str(e), 400)
+
+  
+ ## Download File
+ 
+@router.get("/download-file/{followup_id}")
+def download_file(followup_id: int, db: Session = Depends(get_db)):
+    followup = db.query(RiskActionFollowup).filter(
+        RiskActionFollowup.followup_id == followup_id
+    ).first()
+
+    if not followup or not followup.file_data:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return Response(
+        content=followup.file_data,
+        media_type=followup.file_type,
+        headers={
+            "Content-Disposition": f"attachment; filename={followup.file_name}"
+        }
+    )     
     
+
+## Combined API (If you want to return either a file or JSON based on whether a file exists)
+
+# from fastapi.responses import Response, JSONResponse
+
+# @router.get("/{followup_id}")
+# def get_followup(followup_id: int, db: Session = Depends(get_db)):
+#     try:
+#         data = (
+#             db.query(RiskActionFollowup)
+#             .options(
+#                 joinedload(RiskActionFollowup.created_user).load_only(User.log_id),
+#                 joinedload(RiskActionFollowup.status_master).load_only(Status.status_name)
+#             )
+#             .filter(RiskActionFollowup.followup_id == followup_id)
+#             .first()
+#         )
+
+#         if not data:
+#             raise HTTPException(status_code=404, detail="Followup not found")
+
+#         # If file exists → return file
+#         if data.file_data:
+#             return Response(
+#                 content=data.file_data,
+#                 media_type=data.file_type,
+#                 headers={
+#                     "Content-Disposition": f"attachment; filename={data.file_name}"
+#                 }
+#             )
+
+#         # Otherwise → return JSON
+#         return JSONResponse(
+#             content=success_response(build_followup_response(data))
+#         )
+
+#     except Exception as e:
+#         return error_response(str(e), 400)
+
+
+
+#---------------------
 # Get by reference id (Based on Treatmnent ID or Risk Register ID or Risk Description ID)
+#--------------------
+
 @router.get("/reference_id/{reference_id}")
 def get_followup_by_reference_id(reference_id: int, db: Session = Depends(get_db)):
     
     try:
         data = db.query(RiskActionFollowup).filter(
             RiskActionFollowup.reference_id == reference_id
-        ).first()
+        ).all()
 
         if not data:
             raise HTTPException(status_code=404, detail="Followup not found")
-
-        return success_response(build_followup_response(data))
+    
+        response_list = [build_followup_response(d) for d in data]
+        return success_response(response_list)
     
     except Exception as e:
         return error_response(str(e), 400)

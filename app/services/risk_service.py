@@ -757,7 +757,7 @@ def get_risk_data_excel(db,dept_id):
             )
         if dept_id:
             query = query.filter(RiskRegister.dept_id == dept_id)
-        query = query.filter(RiskRegister.is_deleted == 0).order_by(RiskRegister.risk_register_id)
+        query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.dept_id > 0).order_by(RiskRegister.risk_register_id)
         risks = query.all()
 
         department_rows  = {}
@@ -831,7 +831,7 @@ def get_risk_data_excel(db,dept_id):
         output = io.BytesIO()
         wrap_alignment = Alignment(
             wrap_text=True,
-            vertical="top"
+            vertical="center"
         )
 
         merge_alignment = Alignment(
