@@ -518,10 +518,15 @@ def get_risk_by_dept(db, dept_id):
 
 def get_risk_by_risk_id(db, risk_id):
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+
     try:
         risks = (
             db.query(RiskRegister)
             .options(
+                joinedload(RiskRegister.risk_owner),
+                joinedload(RiskRegister.risk_co_owner),
+                joinedload(RiskRegister.status),
+
                 joinedload(RiskRegister.risk_descriptions)
                 .joinedload(RiskDescription.treatments)
                 .joinedload(RiskTreatment.action_owner),
@@ -538,10 +543,20 @@ def get_risk_by_risk_id(db, risk_id):
         )
 
         result = []
+
         for rr in risks:
+
             risk_dict = to_dict(rr)
+
+            # ✅ Add at RiskRegister level
+            risk_dict["risk_owner_name"] = rr.risk_owner.log_id if rr.risk_owner else None
+            risk_dict["risk_co_owner_name"] = rr.risk_co_owner.log_id if rr.risk_co_owner else None
+            risk_dict["risk_status_name"] = rr.status.status_name if rr.status else None
+
             risk_desc_list = []
+
             for rd in rr.risk_descriptions:
+
                 likelihood = rd.inherent_risk_likelihood_id
                 impact = rd.inherent_risk_impact_id
                 current_likelihood = rd.current_risk_likelihood_id
@@ -555,21 +570,21 @@ def get_risk_by_risk_id(db, risk_id):
                 if likelihood and impact:
                     inherent_color_str = get_color(likelihood*impact)
                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+
                 if current_likelihood and current_impact:
                     current_color_str = get_color(current_likelihood*current_impact)
                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
 
-
-                # treatments array
+                # treatments
                 treatments_list = []
+
                 for rt in rd.treatments:
                     treatments_list.append({
                         **to_dict(rt),
-                        "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
-                        "risk_co_owner_name": rt.action_owner.log_id if rt.action_owner else None,
-                        "risk_status_name": rt.status.status_name if rt.status else None
+                        "action_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                        "treatment_status_name": rt.status.status_name if rt.status else None
                     })
-                
+
                 rd_dict = {
                     **to_dict(rd),
                     "inherent_color_str": inherent_color_str,
@@ -578,12 +593,14 @@ def get_risk_by_risk_id(db, risk_id):
                     "current_color_code": current_color_code,
                     "treatments": treatments_list
                 }
+
                 risk_desc_list.append(rd_dict)
-            risk_dict["risk_descriptions"] = risk_desc_list    
+
+            risk_dict["risk_descriptions"] = risk_desc_list
             result.append(risk_dict)
 
         return result
-    
+
     except Exception as e:
         raise e
     

@@ -103,6 +103,7 @@ def get_risks_by_id(
         return success_response(data=risks)
     except Exception as e:
         return error_response(message=str(e),status_code=400)
+    
 
 # -----------------------------
 # GET BY DEPARTMENT ID

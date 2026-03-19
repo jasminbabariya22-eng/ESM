@@ -1,0 +1,106 @@
+-------------------------------------------------------------------------Database (Table)------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ers.mst_user_role
+(
+    id serial primary key NOT NULL,
+    name character varying(200) NOT NULL UNIQUE,
+    description character varying(2000),
+    created_on timestamp without time zone NOT NULL,
+    created_by integer NOT NULL DEFAULT 1,
+    modified_on timestamp without time zone,
+    modified_by integer,
+    is_deleted smallint DEFAULT 0
+    
+);
+
+----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ers.mst_department
+(
+    id serial primary key,
+    dept_name character varying(255) not null UNIQUE,
+    dept_short_name character varying(10);
+    --assigned_to integer,
+    --assigned_on timestamp without time zone,
+    created_by integer DEFAULT 1,
+    created_on timestamp without time zone,
+    modified_by integer DEFAULT 1,
+    modified_on timestamp without time zone,
+    is_deleted smallint DEFAULT 0,
+    description text ,
+    last_risk_number integer
+);
+
+-------------------------------------------------
+CREATE TABLE IF NOT EXISTS ers.mst_users
+(
+    id serial primary key NOT NULL,
+    log_id varchar NOT NULL UNIQUE,
+    password varchar NOT NULL,
+    first_name varchar NOT NULL,
+    last_name varchar NOT NULL,
+    email varchar NOT NULL UNIQUE,
+    photo varchar,
+    contact_no varchar(20),
+    country_code integer,
+    std_code integer,
+    country varchar NOT NULL,
+    address varchar NOT NULL,
+    user_city varchar,
+    created_by integer,
+    created_on timestamp without time zone NOT NULL,
+    modified_by integer,
+    modified_on timestamp without time zone,
+    dept_id integer  NOT NULL,
+    role_id integer  NOT NULL,
+    user_type_id integer DEFAULT 0,
+    status varchar NOT NULL,
+    is_deleted smallint  
+ );
+
+-------------------------------------------------
+CREATE TABLE IF NOT EXISTS ers.mst_user_type
+(
+    id serial primary key NOT NULL,
+    name character varying(50) NOT NULL UNIQUE,
+    description character varying(100),
+    created_by integer DEFAULT 1,
+    created_on timestamp without time zone,
+    modified_by integer,
+    modified_on timestamp without time zone,
+    is_deleted integer
+);
+
+
+-----------------------------------------------
+
+-----------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ers.mst_status
+(
+    id serial primary key,
+    status_name character varying(200) NOT NULL,
+    created_by integer DEFAULT 1,
+    created_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    modified_by integer DEFAULT 1,
+    modified_on timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    is_deleted integer DEFAULT 0,
+    type text COLLATE pg_catalog."default"   
+);
+
+
+
+
+-----------------------------------------------
+
+
+INSERT INTO ers.mst_department
+(dept_name, description, created_on, is_deleted)
+VALUES
+('IT', 'Information Technology', NOW(), 0),
+('HR', 'Human Resources', NOW(), 0),
+('Finance', 'Finance Department', NOW(), 0);
+
+
+
