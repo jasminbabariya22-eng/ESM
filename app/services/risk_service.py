@@ -527,6 +527,14 @@ def get_risk_by_risk_id(db, risk_id):
                 joinedload(RiskRegister.risk_co_owner),
                 joinedload(RiskRegister.status),
 
+                joinedload(RiskRegister.function_head_status),
+                joinedload(RiskRegister.risk_head_status),
+                joinedload(RiskRegister.risk_manager_status),
+
+                joinedload(RiskRegister.risk_function_head_approval_by_name),
+                joinedload(RiskRegister.risk_head_approval_by_name),
+                joinedload(RiskRegister.risk_manager_approval_by_name),
+
                 joinedload(RiskRegister.risk_descriptions)
                 .joinedload(RiskDescription.treatments)
                 .joinedload(RiskTreatment.action_owner),
@@ -548,10 +556,36 @@ def get_risk_by_risk_id(db, risk_id):
 
             risk_dict = to_dict(rr)
 
+            # ---------- Owner & Status ----------
             risk_dict["rd_risk_owner_name"] = rr.risk_owner.log_id if rr.risk_owner else None
             risk_dict["rd_risk_co_owner_name"] = rr.risk_co_owner.log_id if rr.risk_co_owner else None
             risk_dict["rd_risk_status_name"] = rr.status.status_name if rr.status else None
 
+            # ---------- Function Head ----------
+            risk_dict["risk_function_head_approval_status_name"] = (
+                rr.function_head_status.status_name if rr.function_head_status else None
+            )
+            risk_dict["risk_function_head_approval_by_name"] = (
+                rr.risk_function_head_approval_by_name.log_id if rr.risk_function_head_approval_by_name else None
+            )
+
+            # ---------- Risk Head ----------
+            risk_dict["risk_head_approval_status_name"] = (
+                rr.risk_head_status.status_name if rr.risk_head_status else None
+            )
+            risk_dict["risk_head_approval_by_name"] = (
+                rr.risk_head_approval_by_name.log_id if rr.risk_head_approval_by_name else None
+            )
+
+            # ---------- Risk Manager ----------
+            risk_dict["risk_manager_approval_status_name"] = (
+                rr.risk_manager_status.status_name if rr.risk_manager_status else None
+            )
+            risk_dict["risk_manager_approval_by_name"] = (
+                rr.risk_manager_approval_by_name.log_id if rr.risk_manager_approval_by_name else None
+            )
+
+            # ---------- Risk Descriptions ----------
             risk_desc_list = []
 
             for rd in rr.risk_descriptions:
@@ -567,14 +601,14 @@ def get_risk_by_risk_id(db, risk_id):
                 current_color_code = None
 
                 if likelihood and impact:
-                    inherent_color_str = get_color(likelihood*impact)
+                    inherent_color_str = get_color(likelihood * impact)
                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
 
                 if current_likelihood and current_impact:
-                    current_color_str = get_color(current_likelihood*current_impact)
+                    current_color_str = get_color(current_likelihood * current_impact)
                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
 
-                # treatments
+                # ---------- Treatments ----------
                 treatments_list = []
 
                 for rt in rd.treatments:

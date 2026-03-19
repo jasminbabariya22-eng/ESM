@@ -44,7 +44,7 @@ def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=List[DepartmentResponse])
 def get_departments(db: Session = Depends(get_db)):
     
-    departments = db.query(Department).filter(Department.is_deleted == 0).all()
+    departments = db.query(Department).filter(Department.is_deleted == 0).order_by(Department.id.asc()).all()
     response = []
 
     for dept in departments:
