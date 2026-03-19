@@ -548,10 +548,9 @@ def get_risk_by_risk_id(db, risk_id):
 
             risk_dict = to_dict(rr)
 
-            # ✅ Add at RiskRegister level
-            risk_dict["risk_owner_name"] = rr.risk_owner.log_id if rr.risk_owner else None
-            risk_dict["risk_co_owner_name"] = rr.risk_co_owner.log_id if rr.risk_co_owner else None
-            risk_dict["risk_status_name"] = rr.status.status_name if rr.status else None
+            risk_dict["rd_risk_owner_name"] = rr.risk_owner.log_id if rr.risk_owner else None
+            risk_dict["rd_risk_co_owner_name"] = rr.risk_co_owner.log_id if rr.risk_co_owner else None
+            risk_dict["rd_risk_status_name"] = rr.status.status_name if rr.status else None
 
             risk_desc_list = []
 
@@ -581,8 +580,9 @@ def get_risk_by_risk_id(db, risk_id):
                 for rt in rd.treatments:
                     treatments_list.append({
                         **to_dict(rt),
-                        "action_owner_name": rt.action_owner.log_id if rt.action_owner else None,
-                        "treatment_status_name": rt.status.status_name if rt.status else None
+                        "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                        "risk_co_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                        "risk_status_name": rt.status.status_name if rt.status else None
                     })
 
                 rd_dict = {
