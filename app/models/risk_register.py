@@ -24,17 +24,17 @@ class RiskRegister(Base):
     risk_function_head_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
     risk_function_head_approval_remark = Column(String(500))
     risk_function_head_approval_on = Column(DateTime)
-    risk_function_head_approval_by = Column(Integer)
+    risk_function_head_approval_by = Column(Integer, ForeignKey("ers.mst_users.id"))
 
     risk_head_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
     risk_head_approved_on = Column(DateTime)
     risk_head_approval_remark = Column(String(500))
-    risk_head_approval_by = Column(Integer)
+    risk_head_approval_by = Column(Integer, ForeignKey("ers.mst_users.id"))
     
     risk_manager_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
     risk_manager_approved_on = Column(DateTime)
     risk_manager_approval_remark = Column(String(500))
-    risk_manager_approval_by = Column(Integer)
+    risk_manager_approval_by = Column(Integer, ForeignKey("ers.mst_users.id"))
 
     created_by = Column(Integer, ForeignKey("ers.mst_users.id"), nullable=False, default=1)
     created_on = Column(DateTime)
@@ -85,13 +85,25 @@ class RiskRegister(Base):
         "Status",
         foreign_keys=[risk_function_head_approval_status]
     )
+    risk_function_head_approval_by_name = relationship(
+        "User",
+        foreign_keys=[risk_function_head_approval_by]
+    )
 
     risk_head_status = relationship(
         "Status",
         foreign_keys=[risk_head_approval_status]
     )
+    risk_head_approval_by_name = relationship(
+        "User",
+        foreign_keys=[risk_head_approval_by]
+    )
     
     risk_manager_status = relationship(
     "Status",
     foreign_keys=[risk_manager_approval_status]
-)
+    )
+    risk_manager_approval_by_name = relationship(
+        "User",
+        foreign_keys=[risk_manager_approval_by]
+    )

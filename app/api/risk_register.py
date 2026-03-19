@@ -55,6 +55,7 @@ def build_hybrid_response(risk):
         "risk_function_head_approval_remark": risk.risk_function_head_approval_remark,
         "risk_function_head_approval_on": risk.risk_function_head_approval_on,
         "risk_function_head_approval_by": risk.risk_function_head_approval_by,
+        "risk_function_head_approval_by_name": risk.risk_function_head_approval_by_name.log_id if risk.risk_function_head_approval_by_name else None,
 
         # ---------------- Risk Head ----------------
         "risk_head_approval_status": risk.risk_head_approval_status,
@@ -64,6 +65,7 @@ def build_hybrid_response(risk):
         "risk_head_approval_remark": risk.risk_head_approval_remark,
         "risk_head_approved_on": risk.risk_head_approved_on,
         "risk_head_approval_by": risk.risk_head_approval_by,
+        "risk_head_approval_by_name": risk.risk_head_approval_by_name.log_id if risk.risk_head_approval_by_name else None,
 
         # ---------------- Risk Manager ----------------
         "risk_manager_approval_status": risk.risk_manager_approval_status,
@@ -73,6 +75,7 @@ def build_hybrid_response(risk):
         "risk_manager_approval_remark": risk.risk_manager_approval_remark,
         "risk_manager_approved_on": risk.risk_manager_approved_on,
         "risk_manager_approval_by": risk.risk_manager_approval_by,
+        "risk_manager_approval_by_name": risk.risk_manager_approval_by_name.log_id if risk.risk_manager_approval_by_name else None,
 
         "is_active": risk.is_active,
         "is_deleted": risk.is_deleted,
