@@ -1,7 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime, timezone
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import joinedload
+from sqlalchemy import func
 import pandas as pd
 import io
 
@@ -56,6 +56,19 @@ def to_datetime(val):
 
 def model_to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+
+
+# Get Status ID
+def get_status_id(db: Session, status_name: str):
+    status = db.query(Status).filter(
+        Status.status_name == status_name,
+        Status.is_deleted == 0
+    ).first()
+
+    if not status:
+        raise Exception(f"Status '{status_name}' not found in mst_status")
+
+    return status.id
 
 # ---------
 # CREATE OR UPDATE RISK
@@ -247,6 +260,12 @@ def create_update_risk(db: Session, data, current_user):
                 db.flush()
 
                 saved_treatments.append(new_treatment)
+                
+                
+                # AUTO UPDATE RISK STATUS → IN PROGRESS
+                if len(saved_treatments) > 0:
+                    in_progress_status = get_status_id(db, "In Progress")
+                    risk.risk_status = in_progress_status
 
                 hist_treatment = RiskTreatmentHist(
                     risk_treatment_id=new_treatment.risk_treatment_id,
@@ -265,6 +284,18 @@ def create_update_risk(db: Session, data, current_user):
                 )
 
                 db.add(hist_treatment)
+
+        
+        # AUTO CALCULATE RISK PROGRESS
+        
+        avg_progress = db.query(
+            func.avg(RiskTreatment.progress)
+        ).filter(
+            RiskTreatment.risk_register_id == risk.risk_register_id,
+            RiskTreatment.is_deleted == 0
+        ).scalar()
+
+        risk.risk_progress = round(avg_progress or 0, 2)
 
         db.commit()
 

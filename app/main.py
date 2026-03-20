@@ -37,6 +37,8 @@ from app.api.risk_api import router as risk_router
 from app.api.risk_action_followup import router as risk_action_followup_router
 from app.api.approval import router as approval_router
 
+from app.api.risk_dashboard_api import router as risk_dashboard_router
+
 app = FastAPI()
 
 # Authenticate and get current user
@@ -51,7 +53,8 @@ app.include_router(user_type_router)
 # Full Risk Register APIs
 app.include_router(risk_router)
 
-# Risk Excel Download API
+# Dashboard
+app.include_router(risk_dashboard_router)
 
 
 # Approval and Status APIs
