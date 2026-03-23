@@ -28,3 +28,34 @@ class StatusWisePieResponse(BaseModel):
 class DeptartmentwiseprogressResponse(BaseModel):
     department: int
     progress: float
+    
+class DepartmentWiseStatusStackedResponse(BaseModel):
+    department: str
+
+    New: int
+    In_Progress: int
+    pending : int
+    Approved: int
+    Rejected: int
+    
+class TopRiskResponse(BaseModel):
+    risk_register_id: int
+    risk_id: str
+    risk_name: str
+    risk_description_id: int
+    likelihood: int
+    impact: int
+    risk_score: int
+    
+
+class RiskPercentageResponse(BaseModel):
+    category: str
+    percentage: float
+    
+    
+class RiskHeatmapResponse(BaseModel):
+    likelihood: int
+    impact: int
+    count: int
+    color: str
+    code: str

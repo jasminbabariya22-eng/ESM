@@ -187,3 +187,13 @@ CREATE TABLE IF NOT EXISTS ers.risk_action_followup (
 
 
 
+
+-------------------------------------------------------------
+Date:- 23/03/2026
+
+-- Insert data with both columns having values between 1 and 5
+
+UPDATE ers.risk_description
+SET 
+    current_risk_likelihood_id = FLOOR(RANDOM() * 5 + 1)::int,
+    current_risk_impact_id = FLOOR(RANDOM() * 5 + 1)::int;

@@ -18,7 +18,8 @@ router = APIRouter(prefix="/risk-dashboard", tags=["Risk Dashboard"])
 def get_dashboard_summary(
     start_date: str = Query(..., description="Start Date (YYYY-MM-DD)"),
     end_date: str = Query(..., description="End Date (YYYY-MM-DD)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
 
@@ -41,7 +42,8 @@ def get_dashboard_summary(
 def get_department_wise_risk(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
         start_date = datetime.fromisoformat(start_date)
@@ -62,7 +64,8 @@ def get_department_wise_risk(
 def get_employee_wise_risk(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
         start_date = datetime.fromisoformat(start_date)
@@ -84,7 +87,8 @@ def get_employee_wise_risk(
 def get_status_wise_pie(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
         start_date = datetime.fromisoformat(start_date)
@@ -99,11 +103,12 @@ def get_status_wise_pie(
     
     
 # Dept wise progress
-@router.get("/department-wise-progress-HBar", response_model=DeptartmentwiseprogressResponse)
+@router.get("/department-wise-progress-HBar", response_model=List[DeptartmentwiseprogressResponse])
 def get_department_wise_progress(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
         start_date = datetime.fromisoformat(start_date)
@@ -111,6 +116,87 @@ def get_department_wise_progress(
 
         return success_response(
             department_wise_progress(db, start_date, end_date)
+        )
+
+    except ValueError as e:
+        return error_response(str(e), 400)
+    
+    
+# Dept wise Stacked Bar Chart for Status
+@router.get("/department-wise-status-stackedBar", response_model=List[DepartmentWiseStatusStackedResponse])
+def get_department_wise_status(
+    start_date: str,
+    end_date: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        start_date = datetime.fromisoformat(start_date)
+        end_date = datetime.fromisoformat(end_date)
+
+        return success_response(
+            department_wise_status(db, start_date, end_date)
+        )
+
+    except ValueError as e:
+        return error_response(str(e), 400)
+    
+    
+# Top 10 Risk based on Likelihood and impact
+@router.get("/top-10-risk", response_model=List[TopRiskResponse])
+def get_top_10_risk(
+    start_date: str,
+    end_date: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        start_date = datetime.fromisoformat(start_date)
+        end_date = datetime.fromisoformat(end_date)
+
+        return success_response(
+            top_10_risk(db, start_date, end_date)
+        )
+
+    except ValueError as e:
+        return error_response(str(e), 400)
+
+
+# Based on Risk_Score categorized(Circular chart)
+@router.get("/risk-percentage", response_model=List[RiskPercentageResponse])
+def get_risk_percentage(
+    start_date: str,
+    end_date: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        start_date = datetime.fromisoformat(start_date)
+        end_date = datetime.fromisoformat(end_date)
+
+        return success_response(
+            risk_percentage_chart(db, start_date, end_date)
+        )
+
+    except ValueError as e:
+        return error_response(str(e), 400)
+    
+    
+# Total of Risk Rating
+
+@router.get("/heatmap", response_model=RiskHeatmapResponse)
+def get_risk_heatmap(
+    start_date: str,
+    end_date: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        start_date = datetime.fromisoformat(start_date)
+        end_date = datetime.fromisoformat(end_date)
+
+        return success_response(
+            risk_heatmap(db, start_date, end_date)
         )
 
     except ValueError as e:

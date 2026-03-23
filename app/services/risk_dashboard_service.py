@@ -1,12 +1,14 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract
+from sqlalchemy import func, case
 from app.models.mst_status import Status
 from datetime import datetime, timedelta
 
 from app.models.risk_register import RiskRegister
+from app.models.risk_description import RiskDescription
 from app.models.department import Department
 from app.models.user import User
 from app.models.mst_status import Status
+from app.services.risk_service import get_color
 
 # KPI
 def get_dashboard_summary_service(db: Session, start_date: datetime, end_date: datetime):
@@ -158,3 +160,184 @@ def department_wise_progress(db: Session, start_date, end_date):
         }
         for row in results
     ]
+    
+    
+# Dept wise stacked Bar Chart for Status
+
+def department_wise_status(db: Session, start_date, end_date):
+
+    results = db.query(
+        Department.dept_name.label("department"),
+
+        func.count(case((Status.status_name == "New", 1))).label("New"),
+
+        func.count(case((Status.status_name == "In Progress", 1))).label("in_progress"),
+
+        func.count(case((Status.status_name == "Pending", 1))).label("Pending"),
+
+        func.count(case((Status.status_name == "Approved", 1))).label("Approved"),
+
+        func.count(case((Status.status_name == "Rejected", 1))).label("Rejected"),
+
+    ).select_from(RiskRegister).join(Department, RiskRegister.dept_id == Department.id
+                                     
+    ).join(Status, RiskRegister.risk_status == Status.id
+           
+    ).filter(
+        RiskRegister.is_deleted == 0,
+        Department.is_deleted == 0,
+        Status.is_deleted == 0,
+        RiskRegister.created_on >= start_date,
+        RiskRegister.created_on <= end_date
+    ).group_by(
+        Department.dept_name
+    ).order_by(
+        Department.dept_name
+    ).all()
+
+    return [
+        {
+            "department": row.department,
+            "New": row.New or 0,
+            "In_Progress": row.in_progress or 0,
+            "Pending": row.Pending or 0,
+            "Approved": row.Approved or 0,
+            "Rejected": row.Rejected or 0
+        }
+        for row in results
+    ]
+    
+    
+# Top 10 Risk based on Likelihood and Impact
+
+from sqlalchemy import desc
+
+def top_10_risk(db: Session, start_date, end_date):
+
+    results = db.query(
+        RiskRegister.risk_register_id,
+        RiskRegister.risk_id,
+        RiskRegister.risk_name,
+
+        RiskDescription.risk_description_id,
+        RiskDescription.current_risk_likelihood_id.label("likelihood"),
+        RiskDescription.current_risk_impact_id.label("impact"),
+
+        (
+            RiskDescription.current_risk_likelihood_id *
+            RiskDescription.current_risk_impact_id
+        ).label("risk_score")
+
+    ).join(
+        RiskDescription,
+        RiskRegister.risk_register_id == RiskDescription.risk_register_id
+    ).filter(
+        RiskRegister.is_deleted == 0,
+        RiskDescription.is_deleted == 0,
+        RiskRegister.created_on >= start_date,
+        RiskRegister.created_on <= end_date
+    ).order_by(
+        desc("risk_score")
+    ).limit(10).all()
+
+    return [
+        {
+            "risk_register_id": row.risk_register_id,
+            "risk_id": row.risk_id,
+            "risk_name": row.risk_name,
+            "risk_description_id": row.risk_description_id,
+            "likelihood": row.likelihood,
+            "impact": row.impact,
+            "risk_score": row.risk_score
+        }
+        for row in results
+    ]
+    
+    
+
+# Based on Risk_Score categorized(Circular chart)
+
+def risk_percentage_chart(db: Session, start_date, end_date):
+
+    results = db.query(
+
+        case(
+            (
+                (RiskDescription.current_risk_likelihood_id *
+                 RiskDescription.current_risk_impact_id) <= 4,
+                "Low Risk"
+            ),
+            (
+                (RiskDescription.current_risk_likelihood_id *
+                 RiskDescription.current_risk_impact_id) <= 9,
+                "Medium Risk"
+            ),
+            (
+                (RiskDescription.current_risk_likelihood_id *
+                 RiskDescription.current_risk_impact_id) <= 16,
+                "Critical Risk"
+            ),
+            else_="High Risk"
+        ).label("category"),
+
+        func.count().label("total")
+
+    ).join(
+        RiskRegister,
+        RiskRegister.risk_register_id == RiskDescription.risk_register_id
+    ).filter(
+        RiskRegister.is_deleted == 0,
+        RiskDescription.is_deleted == 0,
+        RiskRegister.created_on >= start_date,
+        RiskRegister.created_on <= end_date
+    ).group_by("category").all()
+
+
+    # total risks count
+    total_risks = sum(row.total for row in results)
+
+    return [
+        {
+            "category": row.category,
+            "percentage": round((row.total / total_risks) * 100, 2)
+        }
+        for row in results
+    ]
+    
+    
+    
+# Total of Risk Rating
+
+def risk_heatmap(db: Session, start_date, end_date):
+
+    results = db.query(
+        RiskDescription.current_risk_likelihood_id.label("likelihood"),
+        RiskDescription.current_risk_impact_id.label("impact"),
+        func.count().label("total")
+    ).join(
+        RiskRegister,
+        RiskRegister.risk_register_id == RiskDescription.risk_register_id
+    ).filter(
+        RiskRegister.is_deleted == 0,
+        RiskDescription.is_deleted == 0,
+        RiskRegister.created_on >= start_date,
+        RiskRegister.created_on <= end_date
+    ).group_by(
+        RiskDescription.current_risk_likelihood_id,
+        RiskDescription.current_risk_impact_id
+    ).all()
+    
+    
+    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    
+    return [
+        {
+            "likelihood": row.likelihood,
+            "impact": row.impact,
+            "count": row.total,
+            "color": get_color(row.likelihood * row.impact),
+            "code": f"{row.likelihood}{impact_map.get(row.impact)}"
+        }
+        for row in results
+    ]
+    
