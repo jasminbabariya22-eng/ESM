@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, SmallInteger
+from sqlalchemy import Column, Integer, String, DateTime, Float, SmallInteger, Text
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -12,7 +12,7 @@ class RiskTreatmentHist(Base):
     risk_register_id = Column(Integer)
     risk_id = Column(String(10))
 
-    action_plan = Column(String(200), nullable=False)
+    action_plan = Column(Text, nullable=False)
     action_owner_id = Column(Integer, nullable=False)
 
     target_date = Column(DateTime)

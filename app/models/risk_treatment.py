@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, SmallInteger, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, SmallInteger, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -22,7 +22,7 @@ class RiskTreatment(Base):
 
     risk_id = Column(String(10))
 
-    action_plan = Column(String(200), nullable=False)
+    action_plan = Column(Text, nullable=False)
     action_owner_id = Column(
         Integer,
         ForeignKey("ers.mst_users.id"),
