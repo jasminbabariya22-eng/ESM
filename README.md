@@ -114,4 +114,3 @@ uvicorn app.main:app --reload
 - The repository contains generated `__pycache__` artifacts under `app/`; these are usually excluded in source control via `.gitignore`.
 
 ---
-If you want, I can also generate a second markdown file focused only on **endpoint catalog** (method/path/purpose grouped by module).
