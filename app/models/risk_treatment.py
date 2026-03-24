@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String, Float, SmallInteger, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-
+from app.core.config import settings
 
 class RiskTreatment(Base):
     __tablename__ = "risk_treatment"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     risk_treatment_id = Column(Integer, primary_key=True, index=True)
 

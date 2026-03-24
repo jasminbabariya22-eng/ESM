@@ -3,11 +3,13 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 from app.models.mst_status import Status
+from app.core.config import settings
+
 
 
 class RiskRegister(Base):
     __tablename__ = "risk_register"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     risk_register_id = Column(Integer, primary_key=True)
 

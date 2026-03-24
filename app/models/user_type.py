@@ -1,9 +1,10 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from app.core.database import Base
+from app.core.config import settings
 
 class UserType(Base):
     __tablename__ = "mst_user_type"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)

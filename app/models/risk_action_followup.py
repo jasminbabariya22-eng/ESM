@@ -4,12 +4,13 @@ from app.core.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import LargeBinary
 from sqlalchemy import Text
+from app.core.config import settings
 
 
 class RiskActionFollowup(Base):
 
     __tablename__ = "risk_action_followup"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     followup_id = Column(Integer, primary_key=True, index=True)
 

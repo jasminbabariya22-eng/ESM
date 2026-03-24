@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.sql import func
 from app.core.database import Base
-
+from app.core.config import settings
 
 class Status(Base):
     __tablename__ = "mst_status"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     id = Column(Integer, primary_key=True, index=True)
 

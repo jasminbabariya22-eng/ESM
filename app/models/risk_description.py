@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, SmallInteger, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from app.core.config import settings
 
 
 class RiskDescription(Base):
     __tablename__ = "risk_description"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     risk_description_id = Column(Integer, primary_key=True, index=True)
 

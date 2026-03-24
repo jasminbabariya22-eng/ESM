@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 from app.core.database import Base
+from app.core.config import settings
 
 
 class RiskDescriptionHist(Base):
     __tablename__ = "risk_description_hist"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     risk_description_id = Column(Integer, primary_key=True, index=True)
 

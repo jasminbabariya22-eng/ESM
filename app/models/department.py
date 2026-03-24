@@ -1,10 +1,11 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, SmallInteger
 from app.core.database import Base
 from sqlalchemy.orm import relationship
+from app.core.config import settings
 
 class Department(Base):
     __tablename__ = "mst_department"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     id = Column(Integer, primary_key=True, index=True)
     dept_name = Column(String(255))

@@ -2,11 +2,12 @@ from sqlalchemy import Column, Integer, String, SmallInteger, DateTime, ForeignK
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
+from app.core.config import settings
 
 
 class User(Base):
     __tablename__ = "mst_users"
-    __table_args__ = {"schema": "ers"}
+    __table_args__ = {"schema": settings.DB_SCHEMA}
 
     id = Column(Integer, primary_key=True, index=True)
 
