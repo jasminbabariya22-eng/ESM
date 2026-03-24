@@ -33,14 +33,14 @@ class User(Base):
     modified_by = Column(Integer)
     modified_on = Column(DateTime)
 
-    dept_id = Column(Integer, ForeignKey("ers.mst_department.id"), nullable=False)
-    role_id = Column(Integer, ForeignKey("ers.mst_user_role.id"), nullable=False)
-    user_type_id = Column(Integer, ForeignKey("ers.mst_user_type.id"), default=0)
+    dept_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_department.id"), nullable=False)
+    role_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_user_role.id"), nullable=False)
+    user_type_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_user_type.id"), default=0)
 
     status = Column(String, nullable=False)
     is_deleted = Column(SmallInteger, default=0)
 
     # Relationships
-    department = relationship("Department", backref="users")
-    role = relationship("UserRole", backref="users")
-    user_type = relationship("UserType", backref="users")
+    department = relationship("Department", back_populates="users")
+    role = relationship("UserRole", back_populates="users")
+    user_type = relationship("UserType", back_populates="users")

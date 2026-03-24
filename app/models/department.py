@@ -22,3 +22,4 @@ class Department(Base):
     
     # Relationship
     risks = relationship("RiskRegister", back_populates="department")
+    users = relationship("User", back_populates="department")

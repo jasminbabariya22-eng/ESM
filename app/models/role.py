@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, SmallInteger
 from app.core.database import Base
 from app.core.config import settings
-
+from sqlalchemy.orm import relationship
 
 class UserRole(Base):
     __tablename__ = "mst_user_role"
@@ -15,3 +15,5 @@ class UserRole(Base):
     modified_on = Column(DateTime)
     modified_by = Column(Integer)
     is_deleted = Column(SmallInteger, default=0)
+    
+    users = relationship("User", back_populates="role")

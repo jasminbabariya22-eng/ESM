@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from app.core.database import Base
 from app.core.config import settings
+from sqlalchemy.orm import relationship
 
 class UserType(Base):
     __tablename__ = "mst_user_type"
@@ -14,3 +15,5 @@ class UserType(Base):
     modified_by = Column(Integer)
     modified_on = Column(DateTime)
     is_deleted = Column(Integer)
+    
+    users = relationship("User", back_populates="user_type")

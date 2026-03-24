@@ -12,7 +12,7 @@ class RiskDescription(Base):
 
     risk_register_id = Column(
         Integer,
-        ForeignKey("ers.risk_register.risk_register_id"),
+        ForeignKey(f"{settings.DB_SCHEMA}.risk_register.risk_register_id"),
         nullable=False
     )
 

@@ -16,29 +16,29 @@ class RiskRegister(Base):
     risk_id = Column(String(10), nullable=False)
     risk_name = Column(String(50), nullable=False)
 
-    dept_id = Column(Integer, ForeignKey("ers.mst_department.id"), nullable=False)
-    risk_owner_id = Column(Integer, ForeignKey("ers.mst_users.id"), nullable=False)
+    dept_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_department.id"), nullable=False)
+    risk_owner_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_users.id"), nullable=False)
 
     financial_year = Column(String(10))
-    risk_status = Column(Integer, ForeignKey("ers.mst_status.id"))
+    risk_status = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
     risk_progress = Column(Float)
 
-    risk_function_head_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
+    risk_function_head_approval_status = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
     risk_function_head_approval_remark = Column(String(500))
     risk_function_head_approval_on = Column(DateTime)
-    risk_function_head_approval_by = Column(Integer, ForeignKey("ers.mst_users.id"))
+    risk_function_head_approval_by = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_users.id"))
 
-    risk_head_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
+    risk_head_approval_status = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
     risk_head_approved_on = Column(DateTime)
     risk_head_approval_remark = Column(String(500))
-    risk_head_approval_by = Column(Integer, ForeignKey("ers.mst_users.id"))
+    risk_head_approval_by = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_users.id"))
     
-    risk_manager_approval_status = Column(Integer, ForeignKey("ers.mst_status.id"))
+    risk_manager_approval_status = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
     risk_manager_approved_on = Column(DateTime)
     risk_manager_approval_remark = Column(String(500))
-    risk_manager_approval_by = Column(Integer, ForeignKey("ers.mst_users.id"))
+    risk_manager_approval_by = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_users.id"))
 
-    created_by = Column(Integer, ForeignKey("ers.mst_users.id"), nullable=False, default=1)
+    created_by = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_users.id"), nullable=False, default=1)
     created_on = Column(DateTime)
     modified_by = Column(Integer)
     modified_on = Column(DateTime)
@@ -46,7 +46,7 @@ class RiskRegister(Base):
     is_active = Column(SmallInteger, default=0)
     is_deleted = Column(SmallInteger, default=0)
     
-    risk_co_owner_id = Column(Integer, ForeignKey("ers.mst_users.id"), default = 0)
+    risk_co_owner_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_users.id"), default = 0)
 
     # Relationships
     department = relationship("Department", back_populates="risks")
