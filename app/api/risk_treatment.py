@@ -76,13 +76,13 @@ def create_risk_treatment(
 
         # Insert into risk_treatment
         new_risk_treatment = RiskTreatment(
-            risk_Description = payload.risk_description_id,
+            risk_description_id = payload.risk_description_id,
             risk_register_id = risk_register,
             risk_id = risk_id,
             
             action_plan = payload.action_plan,
-            acttion_owner_id = payload.action_owner_id,    # may be change
-            targeted_date = payload.target_date,
+            action_owner_id = payload.action_owner_id,    # may be change
+            target_date = payload.target_date,
             progress = payload.progress,
             action_status_id = payload.action_status_id,
             next_followup_date = payload.next_followup_date,
@@ -106,7 +106,7 @@ def create_risk_treatment(
             action_plan=new_risk_treatment.action_plan,
             action_owner_id=new_risk_treatment.action_owner_id,
             
-            targeted_date=new_risk_treatment.targeted_date,
+            target_date=new_risk_treatment.target_date,
             progress=new_risk_treatment.progress,
             
             action_status_id=new_risk_treatment.action_status_id,
@@ -253,7 +253,7 @@ def update_Risk_treatment(
             action_plan=risk_tretment.action_plan,
             action_owner_id=risk_tretment.action_owner_id,
             
-            targeted_date=risk_tretment.targeted_date,
+            target_date=risk_tretment.target_date,
             progress=risk_tretment.progress,
             
             action_status_id=risk_tretment.action_status_id,

@@ -994,10 +994,10 @@ def get_risk_data_excel(db,dept_id):
 
                         worksheet.merge_cells(f"A{start}:A{end}")  # Risk ID
                         worksheet.merge_cells(f"B{start}:B{end}")  # Risk Name
-                        worksheet.merge_cells(f"C{start}:C{end}")  # Risk Description
-                        worksheet.merge_cells(f"D{start}:D{end}")  # Inherent Risk Level
-                        worksheet.merge_cells(f"E{start}:E{end}")  # Current Mitigation
-                        worksheet.merge_cells(f"F{start}:F{end}")  # Current Risk Level
+                        # worksheet.merge_cells(f"C{start}:C{end}")  # Risk Description
+                        # worksheet.merge_cells(f"D{start}:D{end}")  # Inherent Risk Level
+                        # worksheet.merge_cells(f"E{start}:E{end}")  # Current Mitigation
+                        # worksheet.merge_cells(f"F{start}:F{end}")  # Current Risk Level
                         worksheet.merge_cells(f"G{start}:G{end}")  # Risk Owner
                     
                     worksheet[f"A{start}"].alignment = merge_alignment
@@ -1197,6 +1197,7 @@ def get_followups_by_reference_id(db, reference_id):
 
             # remove SQLAlchemy internal state
             followup_dict.pop("_sa_instance_state", None)
+            followup_dict.pop("file_data", None)
 
             # add user name
             followup_dict["risk_owner_name"] = (
