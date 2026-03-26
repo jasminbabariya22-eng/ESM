@@ -1,4 +1,4 @@
-# ESM Repository Guide
+# ERM Repository Guide
 
 This document explains the codebase at a practical level: what it is, how it is structured, and how to run it locally.
 
