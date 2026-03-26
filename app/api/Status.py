@@ -116,7 +116,8 @@ def get_status_by_id(status_id: int, db: Session = Depends(get_db)):
 
         return success_response({
             "id": status.id,
-            "status_name": status.status_name
+            "status_name": status.status_name,
+            "type": status.type
         })
 
     except Exception as e:
@@ -137,7 +138,8 @@ def get_status_by_status_name(status_name: str, db: Session = Depends(get_db)):
 
         return success_response({
             "id": status.id,
-            "status_name": status.status_name
+            "status_name": status.status_name,
+            "type": status.type
         })
 
     except Exception as e:

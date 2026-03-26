@@ -48,3 +48,4 @@ class RiskTreatment(Base):
     risk_register = relationship("RiskRegister")
     action_owner = relationship("User", foreign_keys=[action_owner_id])
     status = relationship("Status")
+    

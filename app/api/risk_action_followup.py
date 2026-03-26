@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from typing import Optional
 from datetime import datetime, timezone
 from fastapi.responses import Response
@@ -17,6 +18,8 @@ from app.core.response import success_response, error_response
 
 from app.models.user import User
 from app.models.mst_status import Status
+from app.models.risk_treatment import RiskTreatment
+from app.models.risk_register import RiskRegister
 
 router = APIRouter(prefix="/risk-followup", tags=["Risk Followup"], dependencies=[Depends(get_current_user)])
 
@@ -78,6 +81,34 @@ def build_followup_response_for_create(obj):
         "file_type": obj.file_type
     }
     
+    
+def update_risk_progress_from_followup(db, treatment_id, progress):
+
+    treatment = db.query(RiskTreatment).filter(
+        RiskTreatment.risk_treatment_id == treatment_id
+    ).first()
+
+    if not treatment:
+        return
+
+    # update treatment progress
+    treatment.progress = progress
+
+    # get risk_register_id from treatment
+    risk_id = treatment.risk_register_id
+
+    # calculate average progress of all treatments under that risk
+    avg_progress = db.query(func.avg(RiskTreatment.progress)).filter(
+        RiskTreatment.risk_register_id == risk_id
+    ).scalar()
+
+    # update risk register progress
+    risk = db.query(RiskRegister).filter(
+        RiskRegister.risk_register_id == risk_id
+    ).first()
+
+    if risk:
+        risk.risk_progress = round(avg_progress or 0, 2)
 
 # -------------------------
 # CREATE Followup and file upload
@@ -199,6 +230,10 @@ async def create_followup_with_file(
         db.add(followup)
         db.commit()
         db.refresh(followup)  
+        
+        if progress is not None:
+            update_risk_progress_from_followup(db, reference_id, progress)
+            db.commit()
 
         followup = (
             db.query(RiskActionFollowup)
@@ -366,6 +401,10 @@ def update_followup(
         for key, value in payload.dict(exclude_unset=True).items():
             setattr(followup, key, value)
 
+
+        if payload.progress is not None:
+            update_risk_progress_from_followup(db, followup.reference_id, payload.progress)
+    
         db.commit()
 
         return success_response({
