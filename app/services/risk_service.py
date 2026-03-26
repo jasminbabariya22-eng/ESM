@@ -925,11 +925,10 @@ def get_risk_data_excel(db, dept_id):
                         "Current Risk Level": current_color_code if first_desc else "",
 
                         "Risk Owner": risk_owner_name if current_rows[dept_name] == risk_start_row else "",
-
+                        "Action Plan": treatment.action_plan if treatment else "",
                         "Action Owner": treatment.action_owner.log_id if treatment and treatment.action_owner else "",
-                        "Risk Treatment": treatment.action_plan if treatment else "",
-                        "Target Date": treatment.target_date.date() if treatment and treatment.target_date else ""
-
+                        "Target Date": treatment.target_date.date() if treatment and treatment.target_date else "",
+                        "Action Status": treatment.status.status_name if treatment and treatment.status else ""
                     })
 
                     first_desc = False
@@ -997,16 +996,17 @@ def get_risk_data_excel(db, dept_id):
 
                 # Column Width
                 column_widths = {
-                    "A":15,
-                    "B":20,
-                    "C":50,
-                    "D":10,
-                    "E":70,
-                    "F":10,
-                    "G":15,
-                    "H":15,
-                    "I":70,
-                    "J":15
+                    "A": 15,   # Risk ID (A)
+                    "B" :20, # Risk Name (B)
+                    "C": 50,   # Risk Description (C)
+                    "D": 10,   # Inherent Risk Level (D)
+                    "E": 70,    # Mitigation (E)
+                    "F": 10, # Current risk level (F)
+                    "G": 15, # Risk Owner (G)
+                    "H": 70, # Treatment (H)
+                    "I": 15, # Action Owner (I)
+                    "J": 15,  # Target Date (J)
+                    "K":15 # Status
                 }
 
                 for col, width in column_widths.items():
@@ -1045,15 +1045,15 @@ def get_risk_data_excel(db, dept_id):
 
                     worksheet[f"C{row}"].alignment = wrap_alignment
                     worksheet[f"E{row}"].alignment = wrap_alignment
-                    worksheet[f"I{row}"].alignment = wrap_alignment
+                    worksheet[f"H{row}"].alignment = wrap_alignment
 
                     desc = worksheet[f"C{row}"].value
                     mitigation = worksheet[f"E{row}"].value
-                    treatment = worksheet[f"I{row}"].value
+                    treatment = worksheet[f"H{row}"].value
 
                     height_desc = calculate_row_height(desc, column_widths["C"])
                     height_mit = calculate_row_height(mitigation, column_widths["E"])
-                    height_treat = calculate_row_height(treatment, column_widths["I"])
+                    height_treat = calculate_row_height(treatment, column_widths["H"])
 
                     worksheet.row_dimensions[row].height = max(
                         height_desc,
