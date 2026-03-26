@@ -23,8 +23,8 @@ class User(Base):
     country_code = Column(Integer)
     std_code = Column(Integer)
 
-    country = Column(String, nullable=False)
-    address = Column(String, nullable=False)
+    country = Column(String)
+    address = Column(String)
     user_city = Column(String)
 
     created_by = Column(Integer)

@@ -10,7 +10,7 @@ class RiskRegisterHist(Base):
     risk_register_id = Column(Integer, primary_key=True)
 
     risk_id = Column(String(10), nullable=False)
-    risk_name = Column(String(50), nullable=False)
+    risk_name = Column(String(250), nullable=False)
 
     dept_id = Column(Integer, nullable=False)
     risk_owner_id = Column(Integer, nullable=False)

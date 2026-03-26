@@ -10,14 +10,14 @@ class UserCreate(BaseModel):
     last_name: str
     email: EmailStr
 
-    photo: Optional[str] = None
-    contact_no: Optional[str] = None
-    country_code: Optional[int] = None
-    std_code: Optional[int] = None
+    # photo: Optional[str] = None
+    # contact_no: Optional[str] = None
+    # country_code: Optional[int] = None
+    # std_code: Optional[int] = None
 
-    country: str
-    address: str
-    user_city: Optional[str] = None
+    # country: Optional[str] = None
+    # address: Optional[str] = None
+    # user_city: Optional[str] = None
 
     dept_id: int
     role_id: int
@@ -58,7 +58,7 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
-    country: str
+    country: Optional[str]
     status: str
     role_id: Optional[int]
     dept_id: Optional[int]
