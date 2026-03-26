@@ -82,33 +82,40 @@ def build_followup_response_for_create(obj):
     }
     
     
-# def update_risk_progress_from_followup(db, treatment_id, progress):
+def update_risk_progress_from_followup(db, treatment_id):
 
-#     treatment = db.query(RiskTreatment).filter(
-#         RiskTreatment.risk_treatment_id == treatment_id
-#     ).first()
+    # 1. calculate avg progress from followup table
+    avg_progress = db.query(func.avg(RiskActionFollowup.progress)).filter(
+        RiskActionFollowup.reference_id == treatment_id
+    ).scalar()
 
-#     if not treatment:
-#         return
+    if avg_progress is None:
+        return
 
-#     # update treatment progress
-#     treatment.progress = progress
+    # update treatment progress
+    treatment = db.query(RiskTreatment).filter(
+        RiskTreatment.risk_treatment_id == treatment_id
+    ).first()
 
-#     # get risk_register_id from treatment
-#     risk_id = treatment.risk_register_id
+    if not treatment:
+        return
 
-#     # calculate average progress of all treatments under that risk
-#     avg_progress = db.query(func.avg(RiskTreatment.progress)).filter(
-#         RiskTreatment.risk_register_id == risk_id
-#     ).scalar()
+    treatment.progress = round(avg_progress, 2)
 
-#     # update risk register progress
-#     risk = db.query(RiskRegister).filter(
-#         RiskRegister.risk_register_id == risk_id
-#     ).first()
+    risk_id = treatment.risk_register_id                  # get risk_register_id
 
-#     if risk:
-#         risk.risk_progress = round(avg_progress or 0, 2)
+    
+    risk_avg = db.query(func.avg(RiskTreatment.progress)).filter(
+        RiskTreatment.risk_register_id == risk_id
+    ).scalar()
+
+    risk = db.query(RiskRegister).filter(                             # update risk register progress
+        RiskRegister.risk_register_id == risk_id
+    ).first()
+
+    if risk:
+        risk.risk_progress = round(risk_avg or 0, 2)
+        risk.risk_progress = round(avg_progress or 0, 2)
 
 # -------------------------
 # CREATE Followup and file upload
@@ -231,9 +238,9 @@ async def create_followup_with_file(
         db.commit()
         db.refresh(followup)  
         
-        # if progress is not None:
-        #     update_risk_progress_from_followup(db, reference_id, progress)
-        #     db.commit()
+        if progress is not None:
+            update_risk_progress_from_followup(db, reference_id)
+            db.commit()
 
         followup = (
             db.query(RiskActionFollowup)
@@ -402,8 +409,8 @@ def update_followup(
             setattr(followup, key, value)
 
 
-        # if payload.progress is not None:
-        #     update_risk_progress_from_followup(db, followup.reference_id, payload.progress)
+        if payload.progress is not None:
+            update_risk_progress_from_followup(db, followup.reference_id)
     
         db.commit()
 
