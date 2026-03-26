@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from app.core.database import Base
 from sqlalchemy.orm import relationship
@@ -14,11 +14,7 @@ class RiskActionFollowup(Base):
 
     followup_id = Column(Integer, primary_key=True, index=True)
 
-    reference_id = Column(
-    Integer,
-    ForeignKey("ers.risk_treatment.id"),
-    nullable=False
-)
+    reference_id = Column(Integer, nullable=False)
 
     module_name = Column(String(50))
 
@@ -56,10 +52,4 @@ class RiskActionFollowup(Base):
         foreign_keys=[status],
         viewonly=True
     )
-    
-    risk_treatment = relationship(
-    "RiskTreatment",
-    primaryjoin="RiskActionFollowup.reference_id == RiskTreatment.id",
-    foreign_keys=[reference_id]
-)
     
