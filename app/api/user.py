@@ -96,6 +96,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
             "email": user.email,
             "country": user.country,
             "status": user.status,
+            "address": user.address,
 
             "department_id": user.dept_id,
             "department_name": user.department.dept_name if user.department else None,
@@ -181,6 +182,7 @@ def update_user(
             "email": user.email,
             "country": user.country,
             "status": user.status,
+            "address": user.address,
             "dept_id": user.dept_id,
             "role_id": user.role_id,
             "user_type_id": user.user_type_id,
@@ -217,6 +219,7 @@ def get_users(db: Session = Depends(get_db)):
                 "email": user.email,
                 "country": user.country,
                 "status": user.status,
+                "address": user.address,
 
                 "department_id": user.dept_id,
                 "department_name": user.department.dept_name if user.department else None,
