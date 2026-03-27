@@ -104,3 +104,17 @@ VALUES
 
 
 
+---------------------27/03/2026----------------------
+##Table Role Map
+
+CREATE TABLE IF NOT EXISTS ers.user_role_map
+(
+    map_id serial primary key,
+    role_id integer NOT NULL,
+    menu_id integer NOT NULL,
+    allow_create boolean NOT NULL DEFAULT false,
+    allow_read boolean NOT NULL DEFAULT false,
+    allow_update boolean NOT NULL DEFAULT false,
+    allow_delete boolean NOT NULL DEFAULT false
+
+)
