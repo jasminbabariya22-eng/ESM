@@ -28,10 +28,10 @@ def create_user(
         user_data = user.dict()
 
         # convert empty string to null
-        if user_data.get("contact_no") == "string":
+        if user_data.get("contact_no") == "string" or user_data.get("contact_no") == "":
             user_data["contact_no"] = None
 
-        if user_data.get("address") == "string":
+        if user_data.get("address") == "string" or user_data.get("address") == "":
             user_data["address"] = None
 
         db_user = User(
