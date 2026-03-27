@@ -11,12 +11,12 @@ class UserCreate(BaseModel):
     email: EmailStr
 
     # photo: Optional[str] = None
-    # contact_no: Optional[str] = None
+    contact_no: Optional[str] = None
     # country_code: Optional[int] = None
     # std_code: Optional[int] = None
 
     # country: Optional[str] = None
-    # address: Optional[str] = None
+    address: Optional[str] = None
     # user_city: Optional[str] = None
 
     dept_id: int

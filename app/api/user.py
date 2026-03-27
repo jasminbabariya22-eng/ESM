@@ -25,9 +25,18 @@ def create_user(
     current_user: dict = Depends(get_current_user)
 ):
     try:
+        user_data = user.dict()
+
+        # convert empty string to null
+        if user_data.get("contact_no") == "string":
+            user_data["contact_no"] = None
+
+        if user_data.get("address") == "string":
+            user_data["address"] = None
+
         db_user = User(
-            **user.dict(),
-            created_by=current_user["id"],   # Auto from token
+            **user_data,
+            created_by=current_user["id"],
             created_on=datetime.utcnow(),
             is_deleted=0
         )
@@ -44,6 +53,7 @@ def create_user(
             "last_name": db_user.last_name,
             "email": db_user.email,
             "country": db_user.country,
+            "address": db_user.address,
             "status": db_user.status,
             "dept_id": db_user.dept_id,
             "role_id": db_user.role_id,
