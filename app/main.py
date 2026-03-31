@@ -39,8 +39,8 @@ from app.api.approval import router as approval_router
 
 from app.api.risk_dashboard_api import router as risk_dashboard_router
 
-from app.api.user_role_map import router as user_role_map_router
-from app.api.menu_mst import router as menu_map_router
+# from app.api.user_role_map import router as user_role_map_router
+# from app.api.menu_mst import router as menu_map_router
 
 app = FastAPI()
 
@@ -60,8 +60,8 @@ app.include_router(risk_router)
 app.include_router(risk_dashboard_router)
 
 # Menu and role_map
-app.include_router(menu_map_router)
-app.include_router(user_role_map_router)
+# app.include_router(menu_map_router)
+# app.include_router(user_role_map_router)
 
 
 # Approval and Status APIs
@@ -130,8 +130,6 @@ async def log_requests(request: Request, call_next):
         headers=dict(response.headers),
         media_type=response.media_type,
     )
-    
-
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
