@@ -412,20 +412,25 @@ def get_risk_by_id(db, id):
 
         #result = [ {**to_dict(rr), **to_dict(rd), **to_dict(rt)} for rr, rd, rt in records ]
         result = []
+
         for rr, rd, rt in records:
-            risk_owner_name = None
-            if rr.risk_owner:
-                risk_owner_name = rr.risk_owner.log_id
-                
-            risk_co_owner_name = None
-            if rr.risk_co_owner:
-                risk_co_owner_name = rr.risk_co_owner.log_id
-                
-            risk_status_name = None
-            if rt.status:
-                risk_status_name = rt.status.status_name
-            
-            
+
+            all_approved = (
+                rr.function_head_status 
+                and rr.function_head_status.status_name == "Approved"
+                and rr.risk_head_status 
+                and rr.risk_head_status.status_name == "Approved"
+                and rr.risk_manager_status 
+                and rr.risk_manager_status.status_name == "Approved"
+            )
+
+            if not all_approved:
+                continue
+
+            risk_owner_name = rr.risk_owner.log_id if rr.risk_owner else None
+            risk_co_owner_name = rr.risk_co_owner.log_id if rr.risk_co_owner else None
+            risk_status_name = rt.status.status_name if rt.status else None
+
             likelihood = rd.inherent_risk_likelihood_id
             impact = rd.inherent_risk_impact_id
             current_likelihood = rd.current_risk_likelihood_id
@@ -447,13 +452,11 @@ def get_risk_by_id(db, id):
                 **to_dict(rd),
                 **to_dict(rt),
                 "inherent_color_str": inherent_color_str,
-                "inherent_color_code" : inherent_color_code,
-                
+                "inherent_color_code": inherent_color_code,
                 "current_color_str": current_color_str,
-                "current_color_code" : current_color_code,
-                
-                "risk_owner_name" : risk_owner_name,
-                "risk_co_owner_name" : risk_co_owner_name,
+                "current_color_code": current_color_code,
+                "risk_owner_name": risk_owner_name,
+                "risk_co_owner_name": risk_co_owner_name,
                 "risk_status_name": risk_status_name
             })
 
@@ -638,6 +641,7 @@ def get_risk_by_risk_id(db, risk_id):
                 if current_likelihood and current_impact:
                     current_color_str = get_color(current_likelihood * current_impact)
                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+
 
                 # ---------- Treatments ----------
                 treatments_list = []
