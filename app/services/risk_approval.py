@@ -18,8 +18,10 @@ def approve_risk(db, data, user_id):
         # Convert 7 / 8 to Approved / Rejected
     if data.approval_status_id == 7:
         status_name_required = "Approved"
+        status_req_id = 1
     elif data.approval_status_id == 8:
         status_name_required = "Rejected"
+        status_req_id = -1
     else:
         raise Exception("Invalid approval status. Use 7 for Approved and 8 for Rejected")
 
@@ -36,19 +38,19 @@ def approve_risk(db, data, user_id):
 
 
     if data.approval_level == 1:
-        risk.risk_function_head_approval_status = data.approval_status_id
+        risk.risk_function_head_approval_status = status_req_id
         risk.risk_function_head_approval_remark = data.remark
         risk.risk_function_head_approval_by = user_id
         risk.risk_function_head_approval_on = datetime.now(timezone.utc)
 
     elif data.approval_level == 2:
-        risk.risk_head_approval_status = data.approval_status_id
+        risk.risk_head_approval_status = status_req_id
         risk.risk_head_approval_remark = data.remark
         risk.risk_head_approval_by = user_id
         risk.risk_head_approved_on = datetime.now(timezone.utc)
 
     elif data.approval_level == 3:
-        risk.risk_manager_approval_status = data.approval_status_id
+        risk.risk_manager_approval_status = status_req_id
         risk.risk_manager_approval_remark = data.remark
         risk.risk_manager_approval_by = user_id
         risk.risk_manager_approved_on = datetime.now(timezone.utc)
@@ -81,4 +83,4 @@ def approve_risk(db, data, user_id):
 
     db.commit()
 
-    return risk, status_obj.id, status_obj.status_name
+    return risk, status_obj.status_name, status_obj.id
