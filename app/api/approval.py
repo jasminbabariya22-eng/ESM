@@ -38,9 +38,8 @@ def approve_risk_api(
     current_user = Depends(get_current_user)
 ):
     try:
-        risk, status_name = approve_risk(db, data, current_user["id"])
+        risk, status_id, status_name = approve_risk(db, data, current_user["id"])
 
-        # ✅ Fetch user login_id
         user_obj = db.query(User).filter(
             User.id == current_user["id"]
         ).first()
@@ -52,8 +51,9 @@ def approve_risk_api(
                 "risk_register_id": data.risk_register_id,
                 "approval_level": data.approval_level,
                 "approval_status_id": data.approval_status_id,
+                "risk_status_id": status_id,     # actual ID from mst_status table
                 "risk_status_name": status_name,
-                "approval_by_name": approval_by_name,   # ✅ added
+                "approval_by_name": approval_by_name,
                 "risk_approval_on": date.today(),
                 "remark": data.remark
             }

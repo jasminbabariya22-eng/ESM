@@ -15,40 +15,46 @@ def approve_risk(db, data, user_id):
     if not risk:
         raise Exception("Risk not found")
 
-    # Convert status to 1 or -1
-    if data.approval_status_id == 1:
-        final_status = 1
-        status_name = "Approved"
-    elif data.approval_status_id == 2:
-        final_status = -1
-        status_name = "Rejected"
+        # Convert 7 / 8 to Approved / Rejected
+    if data.approval_status_id == 7:
+        status_name_required = "Approved"
+    elif data.approval_status_id == 8:
+        status_name_required = "Rejected"
     else:
-        raise Exception("Invalid approval status")
+        raise Exception("Invalid approval status. Use 7 for Approved and 8 for Rejected")
+
+    # Get status name
+    status_obj = db.query(Status).filter(
+        Status.status_name == status_name_required,
+        Status.is_deleted == 0
+    ).first()
+    
+
+    if not status_obj:
+        raise Exception("Invalid status id")
+    
+
 
     if data.approval_level == 1:
-        risk.risk_function_head_approval_status = final_status
+        risk.risk_function_head_approval_status = data.approval_status_id
         risk.risk_function_head_approval_remark = data.remark
         risk.risk_function_head_approval_by = user_id
         risk.risk_function_head_approval_on = datetime.now(timezone.utc)
 
     elif data.approval_level == 2:
-        risk.risk_head_approval_status = final_status
+        risk.risk_head_approval_status = data.approval_status_id
         risk.risk_head_approval_remark = data.remark
         risk.risk_head_approval_by = user_id
         risk.risk_head_approved_on = datetime.now(timezone.utc)
 
     elif data.approval_level == 3:
-        risk.risk_manager_approval_status = final_status
+        risk.risk_manager_approval_status = data.approval_status_id
         risk.risk_manager_approval_remark = data.remark
         risk.risk_manager_approval_by = user_id
         risk.risk_manager_approved_on = datetime.now(timezone.utc)
 
     else:
         raise Exception("Invalid approval level")
-
-    db.commit()
-
-    return risk, status_name
 
         # ---------------- Status logic ----------------
 
@@ -73,6 +79,6 @@ def approve_risk(db, data, user_id):
     # elif approved_id in [fh, rh, rm]:
     #     risk.risk_status = pending_id
 
-    # db.commit()
+    db.commit()
 
-    # return risk, status_obj.status_name
+    return risk, status_obj.id, status_obj.status_name

@@ -624,10 +624,10 @@ def get_risk_by_risk_id(db, risk_id):
             rh = rr.risk_head_approval_status
             rm = rr.risk_manager_approval_status
 
-            if fh == 1 and rh == 1 and rm == 1:
+            if fh == 7 and rh == 7 and rm == 7:
                 final_status = "Approved"
 
-            elif fh == -1 or rh == -1 or rm == -1:
+            elif fh == 8 or rh == 8 or rm == 8:
                 final_status = "Rejected"
 
             else:
