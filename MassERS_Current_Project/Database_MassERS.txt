@@ -124,3 +124,48 @@ CREATE TABLE IF NOT EXISTS ers.menu_mst
     is_deleted integer DEFAULT 0
 
 )
+
+
+----------------------31/03/26-------------------
+CREATE TABLE IF NOT EXISTS ers.email_job_mst
+(
+    email_job_id integer NOT NULL DEFAULT nextval('ers.email_job_mst_email_job_id_seq'::regclass),
+    email_server_id integer NOT NULL,
+    email_module character varying(50) COLLATE pg_catalog."default",
+    email_to character varying(500) COLLATE pg_catalog."default" NOT NULL,
+    email_cc character varying(500) COLLATE pg_catalog."default",
+    email_bcc character varying(500) COLLATE pg_catalog."default",
+    email_subject character varying(500) COLLATE pg_catalog."default" NOT NULL,
+    email_type character varying(50) COLLATE pg_catalog."default",
+    email_body text COLLATE pg_catalog."default",
+    email_attachment_count integer,
+    total_attempts integer DEFAULT 3,
+    send_attempts integer DEFAULT 0,
+    attempt_delay integer DEFAULT 5000,
+    next_attempt_at timestamp without time zone,
+    send_status character varying(20) COLLATE pg_catalog."default",
+    created_on timestamp without time zone DEFAULT now(),
+    created_by integer DEFAULT 1,
+    is_deleted integer DEFAULT 0,
+    CONSTRAINT email_job_mst_pkey PRIMARY KEY (email_job_id)
+)
+
+
+
+------------------------------------31/03/2026--------------------
+CREATE TABLE IF NOT EXISTS ers.email_server
+(
+    email_server_id integer NOT NULL DEFAULT nextval('ers.email_server_email_server_id_seq'::regclass),
+    outgoing_server_type character varying(20) COLLATE pg_catalog."default",
+    outgoing_server_ip character varying(100) COLLATE pg_catalog."default",
+    outgoing_email_user character varying(250) COLLATE pg_catalog."default",
+    outgoing_email_password character varying(100) COLLATE pg_catalog."default",
+    outgoing_email_encryption integer DEFAULT 0,
+    outgoing_email_port integer,
+    created_on timestamp without time zone,
+    created_by integer,
+    modified_on timestamp without time zone,
+    modified_by integer,
+    is_deleted integer DEFAULT 0,
+    CONSTRAINT email_server_pkey PRIMARY KEY (email_server_id)
+)

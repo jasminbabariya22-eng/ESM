@@ -619,6 +619,21 @@ def get_risk_by_risk_id(db, risk_id):
                 rr.risk_manager_approval_by_name.log_id if rr.risk_manager_approval_by_name else None
             )
 
+            # ---------- Final Approval Status ----------
+            fh = rr.risk_function_head_approval_status
+            rh = rr.risk_head_approval_status
+            rm = rr.risk_manager_approval_status
+
+            if fh == 1 and rh == 1 and rm == 1:
+                final_status = "Approved"
+
+            elif fh == -1 or rh == -1 or rm == -1:
+                final_status = "Rejected"
+
+            else:
+                final_status = "Pending for Approval"
+
+            risk_dict["approval_status"] = final_status
             # ---------- Risk Descriptions ----------
             risk_desc_list = []
 
