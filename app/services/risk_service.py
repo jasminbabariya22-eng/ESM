@@ -596,9 +596,9 @@ def get_risk_by_risk_id(db, risk_id):
             risk_dict["rd_risk_status_name"] = rr.status.status_name if rr.status else None
 
             # ---------- Function Head ----------
-            if rr.risk_function_head_approval_status == 7:
+            if rr.risk_function_head_approval_status == 1:
                 fh_status = "Approved"
-            elif rr.risk_function_head_approval_status == 8:
+            elif rr.risk_function_head_approval_status == -1:
                 fh_status = "Rejected"
             else:
                 fh_status = None
@@ -612,9 +612,9 @@ def get_risk_by_risk_id(db, risk_id):
             )
 
             # ---------- Risk Head ----------
-            if rr.risk_head_approval_status == 7:
+            if rr.risk_head_approval_status == 1:
                 rh_status = "Approved"
-            elif rr.risk_head_approval_status == 8:
+            elif rr.risk_head_approval_status == -1:
                 rh_status = "Rejected"
             else:
                 rh_status = None
@@ -627,9 +627,9 @@ def get_risk_by_risk_id(db, risk_id):
             )
 
             # ---------- Risk Manager ----------
-            if rr.risk_manager_approval_status == 7:
+            if rr.risk_manager_approval_status == 1:
                 rm_status = "Approved"
-            elif rr.risk_manager_approval_status == 8:
+            elif rr.risk_manager_approval_status == -1:
                 rm_status = "Rejected"
             else:
                 rm_status = None
