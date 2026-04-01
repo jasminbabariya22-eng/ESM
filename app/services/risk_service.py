@@ -596,25 +596,47 @@ def get_risk_by_risk_id(db, risk_id):
             risk_dict["rd_risk_status_name"] = rr.status.status_name if rr.status else None
 
             # ---------- Function Head ----------
-            risk_dict["risk_function_head_approval_status_name"] = (
-                rr.function_head_status.status_name if rr.function_head_status else None
-            )
+            if rr.risk_function_head_approval_status == 7:
+                fh_status = "Approved"
+            elif rr.risk_function_head_approval_status == 8:
+                fh_status = "Rejected"
+            else:
+                fh_status = None
+
+            risk_dict["risk_function_head_approval_status_name"] = fh_status
+            
+            
+            
             risk_dict["risk_function_head_approval_by_name"] = (
                 rr.risk_function_head_approval_by_name.log_id if rr.risk_function_head_approval_by_name else None
             )
 
             # ---------- Risk Head ----------
-            risk_dict["risk_head_approval_status_name"] = (
-                rr.risk_head_status.status_name if rr.risk_head_status else None
-            )
+            if rr.risk_head_approval_status == 7:
+                rh_status = "Approved"
+            elif rr.risk_head_approval_status == 8:
+                rh_status = "Rejected"
+            else:
+                rh_status = None
+
+            risk_dict["risk_head_approval_status_name"] = rh_status
+            
+            
             risk_dict["risk_head_approval_by_name"] = (
                 rr.risk_head_approval_by_name.log_id if rr.risk_head_approval_by_name else None
             )
 
             # ---------- Risk Manager ----------
-            risk_dict["risk_manager_approval_status_name"] = (
-                rr.risk_manager_status.status_name if rr.risk_manager_status else None
-            )
+            if rr.risk_manager_approval_status == 7:
+                rm_status = "Approved"
+            elif rr.risk_manager_approval_status == 8:
+                rm_status = "Rejected"
+            else:
+                rm_status = None
+
+            risk_dict["risk_manager_approval_status_name"] = rm_status
+            
+            
             risk_dict["risk_manager_approval_by_name"] = (
                 rr.risk_manager_approval_by_name.log_id if rr.risk_manager_approval_by_name else None
             )
