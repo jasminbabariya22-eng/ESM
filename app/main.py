@@ -42,6 +42,8 @@ from app.api.risk_dashboard_api import router as risk_dashboard_router
 # from app.api.user_role_map import router as user_role_map_router
 # from app.api.menu_mst import router as menu_map_router
 
+from app.api.email_job_api import router as email_job_router
+
 app = FastAPI()
 
 # Authenticate and get current user
@@ -62,6 +64,9 @@ app.include_router(risk_dashboard_router)
 # Menu and role_map
 # app.include_router(menu_map_router)
 # app.include_router(user_role_map_router)
+
+# Email Job API
+app.include_router(email_job_router)
 
 
 # Approval and Status APIs
