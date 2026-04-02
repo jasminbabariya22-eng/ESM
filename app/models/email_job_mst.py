@@ -5,7 +5,7 @@ from app.core.config import settings
 
 
 class EmailJobMst(Base):
-    __tablename__ = "email_job_mst"
+    __tablename__ = "mst_email_job"
     __table_args__ = {"schema": settings.DB_SCHEMA}
 
     email_job_id = Column(Integer, primary_key=True, index=True)
