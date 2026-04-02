@@ -397,7 +397,10 @@ def get_risk_by_id(db, id):
                 RiskTreatment,
                 RiskDescription.risk_description_id == RiskTreatment.risk_description_id
             ).filter(
-                RiskRegister.is_deleted == 0
+                RiskRegister.is_deleted == 0,
+                RiskRegister.risk_function_head_approval_status == 1,
+                RiskRegister.risk_head_approval_status == 1,
+                RiskRegister.risk_manager_approval_status == 1
             )
             
         if id:
@@ -415,17 +418,23 @@ def get_risk_by_id(db, id):
 
         for rr, rd, rt in records:
 
-            all_approved = (
-                rr.function_head_status 
-                and rr.function_head_status.status_name == "Approved"
-                and rr.risk_head_status 
-                and rr.risk_head_status.status_name == "Approved"
-                and rr.risk_manager_status 
-                and rr.risk_manager_status.status_name == "Approved"
-            )
+            # all_approved = (
+            #     rr.function_head_status 
+            #     and rr.function_head_status.status_name == "Approved"
+            #     and rr.risk_head_status 
+            #     and rr.risk_head_status.status_name == "Approved"
+            #     and rr.risk_manager_status 
+            #     and rr.risk_manager_status.status_name == "Approved"
+            # )
+            
+            # all_approved = (
+            #     rr.risk_function_head_approval_status == 1 and
+            #     rr.risk_head_approval_status == 1 and
+            #     rr.risk_manager_approval_status == 1
+            # )
 
-            if not all_approved:
-                continue
+            # if not all_approved:
+            #     continue
 
             risk_owner_name = rr.risk_owner.log_id if rr.risk_owner else None
             risk_co_owner_name = rr.risk_co_owner.log_id if rr.risk_co_owner else None
@@ -655,6 +664,7 @@ def get_risk_by_risk_id(db, risk_id):
                 final_status = "Pending for Approval"
 
             risk_dict["approval_status"] = final_status
+            
             # ---------- Risk Descriptions ----------
             risk_desc_list = []
 
