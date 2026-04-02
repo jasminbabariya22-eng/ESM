@@ -115,6 +115,8 @@ CREATE TABLE IF NOT EXISTS ers.user_role_map
 
 )
 
+
+
 ------------------------------------27/03/2026-----------
 
 CREATE TABLE IF NOT EXISTS ers.menu_mst
@@ -125,6 +127,17 @@ CREATE TABLE IF NOT EXISTS ers.menu_mst
 
 )
 
+------02/04/2026--------
+ALTER TABLE ers.menu_mst 
+RENAME TO mst_menu;
+
+CREATE TABLE IF NOT EXISTS ers.mst_menu
+(
+    menu_id integer NOT NULL DEFAULT nextval('ers.menu_mst_menu_id_seq'::regclass),
+    menu_name character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    is_deleted integer DEFAULT 0,
+    CONSTRAINT menu_mst_pkey PRIMARY KEY (menu_id)
+)
 
 ----------------------31/03/26-------------------
 CREATE TABLE IF NOT EXISTS ers.email_job_mst

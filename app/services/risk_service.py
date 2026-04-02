@@ -606,7 +606,6 @@ def get_risk_by_risk_id(db, risk_id):
             risk_dict["risk_function_head_approval_status_name"] = fh_status
             
             
-            
             risk_dict["risk_function_head_approval_by_name"] = (
                 rr.risk_function_head_approval_by_name.log_id if rr.risk_function_head_approval_by_name else None
             )

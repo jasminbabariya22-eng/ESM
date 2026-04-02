@@ -4,7 +4,7 @@ from app.core.config import settings
 
 
 class Menu(Base):
-    __tablename__ = "menu_mst"
+    __tablename__ = "mst_menu"
     __table_args__ = {"schema": settings.DB_SCHEMA}
 
     menu_id = Column(Integer, primary_key=True, index=True)
