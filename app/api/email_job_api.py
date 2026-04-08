@@ -27,6 +27,7 @@ def create_email_job(
             email_to=email_to,
             email_subject=email_subject,
             email_body=email_body,
+            email_type = "HTML",
             send_status="New",
             next_attempt_at=datetime.now(),
             created_on=datetime.now(),
@@ -46,4 +47,5 @@ def create_email_job(
             "email_job_id": job.email_job_id})
         
     except Exception as e:
+        db.rollback()
         return error_response(str(e), 400)

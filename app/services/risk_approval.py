@@ -4,6 +4,13 @@ from app.models.mst_status import Status
 
 from app.services.risk_service import *
 
+from app.services.email_event_service import (
+    send_function_head_approval_email,
+    send_risk_head_email,
+    send_risk_manager_email,
+    send_treatment_email_after_approval
+)
+
 
 def approve_risk(db, data, user_id):
 
@@ -79,5 +86,21 @@ def approve_risk(db, data, user_id):
     #     risk.risk_status = pending_id
 
     db.commit()
+
+    # ---------------- EMAIL TRIGGER ----------------
+    try:
+        if data.approval_level == 1:
+            send_function_head_approval_email(db, risk.risk_register_id)
+
+        elif data.approval_level == 2:
+            send_risk_head_email(db, risk.risk_register_id)
+
+        elif data.approval_level == 3:
+            send_risk_manager_email(db, risk.risk_register_id)
+    
+    except Exception as e:
+        print("Email trigger failed:", e)
+        
+    send_treatment_email_after_approval(db, risk.risk_register_id)
 
     return risk, "", ""

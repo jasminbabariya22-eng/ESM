@@ -163,7 +163,9 @@ CREATE TABLE IF NOT EXISTS ers.email_job_mst
     CONSTRAINT email_job_mst_pkey PRIMARY KEY (email_job_id)
 )
 
-
+------02/04/2026--------
+ALTER TABLE ers.email_job_mst 
+RENAME TO mst_email_job;
 
 ------------------------------------31/03/2026--------------------
 CREATE TABLE IF NOT EXISTS ers.email_server

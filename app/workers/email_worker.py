@@ -1,11 +1,13 @@
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from app.core.config import settings
 
 from app.core.database import SessionLocal
 from app.services.email_sender import send_email
 
+SCHEMA = settings.DB_SCHEMA
 
 print("======================================")
 print(" Email Worker Started Successfully ")
@@ -20,9 +22,9 @@ def email_worker():
         db: Session = SessionLocal()
 
         try:
-            jobs = db.execute(text("""
+            jobs = db.execute(text(f"""
                 SELECT *
-                FROM ers.email_job_mst
+                FROM {SCHEMA}.mst_email_job
                 WHERE
                     is_deleted = 0
                     AND (
@@ -38,13 +40,17 @@ def email_worker():
             if not jobs:
                 print(f"[{datetime.now()}] No pending emails...")
                 db.close()
-                time.sleep(10)
+                time.sleep(10)                                          # Sleep before next check
                 continue
 
             print(f"[{datetime.now()}] Found {len(jobs)} pending email(s)")
 
             for job in jobs:
-                print(f"Sending Email Job ID: {job.email_job_id}")
+                print(f"\n==============================")
+                print(f"Processing Job ID: {job.email_job_id}")
+                print(f"TO: {job.email_to}")
+                print(f"CC: {job.email_cc}")
+                print(f"==============================")
 
                 success = send_email(db, job)
 
@@ -53,8 +59,8 @@ def email_worker():
                 if success:
                     print(" Email sent successfully")
 
-                    db.execute(text("""
-                        UPDATE ers.email_job_mst
+                    db.execute(text(f"""
+                        UPDATE {SCHEMA}.mst_email_job
                         SET send_status = 'SUCCESS',
                             send_attempts = :attempt
                         WHERE email_job_id = :id
@@ -64,16 +70,16 @@ def email_worker():
                     print(" Email failed")
 
                     if new_attempt >= job.total_attempts:
-                        db.execute(text("""
-                            UPDATE ers.email_job_mst
+                        db.execute(text(f"""
+                            UPDATE {SCHEMA}.mst_email_job
                             SET send_status = 'FAILED_FINAL',
                                 send_attempts = :attempt
                             WHERE email_job_id = :id
                         """), {"attempt": new_attempt, "id": job.email_job_id})
 
                     else:
-                        db.execute(text("""
-                            UPDATE ers.email_job_mst
+                        db.execute(text(f"""
+                            UPDATE {SCHEMA}.mst_email_job
                             SET send_status = 'FAILED',
                                 send_attempts = :attempt,
                                 next_attempt_at = NOW() + (:delay || ' milliseconds')::interval
@@ -88,6 +94,7 @@ def email_worker():
 
         except Exception as e:
             print("Worker error:", e)
+            db.rollback()
 
         finally:
             db.close()

@@ -21,6 +21,7 @@ from app.models.risk_treatment_hist import RiskTreatmentHist
 from app.models.mst_status import Status
 from app.models.user import User
 
+from app.services.email_event_service import send_risk_created_email
 
 # Generate Risk ID
 def generate_risk_id(db: Session, dept_id: int):
@@ -298,6 +299,7 @@ def create_update_risk(db: Session, data, current_user):
         risk.risk_progress = round(avg_progress or 0, 2)
 
         db.commit()
+        send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
 
         return {
             "risk_register": model_to_dict(risk),

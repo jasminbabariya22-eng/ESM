@@ -3,6 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+import traceback
 
 
 def send_email(db: Session, job):
@@ -61,5 +62,8 @@ def send_email(db: Session, job):
         return True
 
     except Exception as e:
-        print("Email send error:", e)
+        print("Email send error:")
+        traceback.print_exc()
         return False
+    
+    
