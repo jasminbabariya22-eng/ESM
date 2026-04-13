@@ -30,7 +30,7 @@ def get_financial_year():
         financial_year = f"{start_year}-{end_year}"
 
         return success_response(
-            data={"financial_year": financial_year, "current_data": today.strftime("%Y-%m-%d")}
+            data={"financial_year": financial_year, "current_date": today.strftime("%Y-%m-%d")}
         )
 
     except Exception as e:
