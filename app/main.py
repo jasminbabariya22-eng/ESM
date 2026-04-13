@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.models.user import User
+# from app.models.user import User
 from app.api.auth import router as auth_router
 from app.api.user import router as user_router
 #from app.schemas.user import UserResponse
@@ -11,7 +11,7 @@ from typing import List
 from fastapi import Request
 from app.core.logger import logger
 import time
-import json
+# import json
 from starlette.responses import Response
 from fastapi.responses import JSONResponse
 
@@ -44,13 +44,15 @@ from app.api.menu_mst import router as menu_map_router
 
 from app.api.email_job_api import router as email_job_router
 
+from app.api.finnacial_year import router as financial_year_router
+
 app = FastAPI()
 
 # Authenticate and get current user
 app.include_router(auth_router)
-app.include_router(user_router)
 
 # Include Master Data APIs
+app.include_router(user_router)
 app.include_router(dept_router)
 app.include_router(role_router)
 app.include_router(user_type_router)
@@ -68,17 +70,19 @@ app.include_router(user_role_map_router)
 # Email Job API
 app.include_router(email_job_router)
 
-
 # Approval and Status APIs
 app.include_router(status_router)
 app.include_router(risk_action_followup_router)
 app.include_router(approval_router)
 
-
 # Risk Register APIs
 app.include_router(risk_registery_router)
 app.include_router(risk_description_router)
 app.include_router(risk_treatment_router)
+
+# Financial Year API
+app.include_router(financial_year_router)
+
 
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
