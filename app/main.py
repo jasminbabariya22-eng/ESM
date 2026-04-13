@@ -44,7 +44,7 @@ from app.api.menu_mst import router as menu_map_router
 
 from app.api.email_job_api import router as email_job_router
 
-from app.api.finnacial_year import router as financial_year_router
+from app.api.financial_year import router as financial_year_router
 
 app = FastAPI()
 
