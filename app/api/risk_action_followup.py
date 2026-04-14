@@ -85,9 +85,9 @@ def build_followup_response_for_create(obj):
 def parse_progress_range(value: str):
     value = value.strip()
 
-    if value == "0%":
+    if value == "0" or value == "0%":
         return 0, 0
-    if value == "100%":
+    if value == "100" or value == "100%":
         return 100, 100
 
     if "-" in value:
@@ -97,15 +97,11 @@ def parse_progress_range(value: str):
     return None, None
 
 
-def update_risk_progress_from_followup(db, treatment_id):
-
-    print(f"🔥 Updating progress for treatment_id: {treatment_id}")
-
-    followups = db.query(RiskActionFollowup).filter(
+def update_risk_progress_from_followup(db, treatment_id: int):
+    # Fetch only required column (optimized)
+    followups = db.query(RiskActionFollowup.progress).filter(
         RiskActionFollowup.reference_id == treatment_id
     ).all()
-
-    print(f"Total followups found: {len(followups)}")
 
     if not followups:
         return
@@ -113,13 +109,11 @@ def update_risk_progress_from_followup(db, treatment_id):
     lower_values = []
     upper_values = []
 
-    for f in followups:
-        if not f.progress:
+    for (progress,) in followups:   # tuple unpack
+        if not progress:
             continue
 
-        print(f"Processing progress: {f.progress}")
-
-        low, high = parse_progress_range(f.progress)
+        low, high = parse_progress_range(progress)
 
         if low is not None and high is not None:
             lower_values.append(low)
@@ -131,29 +125,25 @@ def update_risk_progress_from_followup(db, treatment_id):
     avg_lower = sum(lower_values) / len(lower_values)
     avg_upper = sum(upper_values) / len(upper_values)
 
-    final_progress = (avg_lower + avg_upper) / 2
+    final_progress_range = f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
 
-    print(f"✅ Final Progress: {final_progress}")
-
-    # Update Treatment
+    # ---------------- Treatment ----------------
     treatment = db.query(RiskTreatment).filter(
         RiskTreatment.risk_treatment_id == treatment_id
     ).first()
 
     if not treatment:
-        print("❌ Treatment not found")
         return
 
-    treatment.progress = round(final_progress, 2)
+    treatment.progress = final_progress_range
 
-    # Update Risk
+    # ---------------- Risk ----------------
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == treatment.risk_register_id
     ).first()
 
     if risk:
-        risk.risk_progress = round(final_progress, 2)
-        print(f"✅ Risk Updated: {risk.risk_progress}")
+        risk.risk_progress = final_progress_range
 
 # -------------------------
 # CREATE Followup and file upload

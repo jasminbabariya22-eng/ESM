@@ -39,10 +39,10 @@ class RiskRegisterHist(Base):
     risk_manager_approval_by = Column(Integer)
 
     created_by = Column(Integer)
-    created_on = Column(DateTime)
+    created_on = Column(DateTime, primary_key=True)
 
     modified_by = Column(Integer)
-    modified_on = Column(DateTime)
+    modified_on = Column(DateTime, primary_key=True)
 
     is_active = Column(SmallInteger)
     is_deleted = Column(SmallInteger)

@@ -107,7 +107,7 @@ def get_risk_history(
         data = db.query(RiskRegisterHist).filter(
             RiskRegisterHist.risk_register_id == risk_register_id
         ).order_by(
-            RiskRegisterHist.modified_on.desc()   # latest first
+            RiskRegisterHist.modified_on.desc()                         # latest first
         ).all()
 
         if not data:

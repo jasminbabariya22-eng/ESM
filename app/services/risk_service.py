@@ -100,7 +100,7 @@ def create_update_risk(db: Session, data, current_user):
                 risk_co_owner_id=to_int(register_data.risk_co_owner_id),
                 financial_year=register_data.financial_year,
                 risk_status=to_int(register_data.risk_status),
-                risk_progress=to_float(register_data.risk_progress),
+                risk_progress=register_data.risk_progress,
                 created_by=current_user["id"],
                 created_on=datetime.now(timezone.utc),
                 is_active=0,
@@ -125,7 +125,7 @@ def create_update_risk(db: Session, data, current_user):
             risk.risk_co_owner_id = to_int(register_data.risk_co_owner_id)
             risk.financial_year = register_data.financial_year
             risk.risk_status = to_int(register_data.risk_status)
-            risk.risk_progress = to_float(register_data.risk_progress)
+            risk.risk_progress = register_data.risk_progress
 
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
@@ -249,7 +249,7 @@ def create_update_risk(db: Session, data, current_user):
                     action_plan=treatment.action_plan,
                     action_owner_id=to_int(treatment.action_owner_id),
                     target_date=to_datetime(treatment.target_date),
-                    progress=treatment.progress,
+                    progress=treatment.progress or "0-0%",
                     action_status_id=to_int(treatment.action_status_id),
                     next_followup_date=to_datetime(treatment.next_followup_date),
                     created_by=current_user["id"],
@@ -296,7 +296,7 @@ def create_update_risk(db: Session, data, current_user):
         #     RiskTreatment.is_deleted == 0
         # ).scalar()
 
-        risk.risk_progress = str(0)
+        # risk.risk_progress = "0-0%"
 
         db.commit()
         send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update

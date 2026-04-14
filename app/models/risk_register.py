@@ -21,7 +21,7 @@ class RiskRegister(Base):
 
     financial_year = Column(String(10))
     risk_status = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
-    risk_progress = Column(Float)
+    risk_progress = Column(String(10))
 
     risk_function_head_approval_status = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
     risk_function_head_approval_remark = Column(String(500))
