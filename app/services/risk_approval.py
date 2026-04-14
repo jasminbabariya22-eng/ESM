@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from app.models.risk_register import RiskRegister
 from app.models.mst_status import Status
 
+from app.models.risk_register_hist import RiskRegisterHist
 from app.services.risk_service import *
 
 from app.services.email_event_service import (
@@ -80,6 +81,49 @@ def approve_risk(db, data, user_id):
         risk.risk_status = pending_id
     else:
         risk.risk_status = new_id
+        
+    hist = RiskRegisterHist(                ## add in history table
+        risk_register_id=risk.risk_register_id,
+
+        risk_id=risk.risk_id,
+        risk_name=risk.risk_name,
+
+        dept_id=risk.dept_id,
+        risk_owner_id=risk.risk_owner_id,
+        risk_co_owner_id=risk.risk_co_owner_id,
+
+        # target_date=risk.target_date,
+        financial_year=risk.financial_year,
+
+        risk_status=risk.risk_status,
+        risk_progress=risk.risk_progress,
+
+        risk_function_head_approval_status=risk.risk_function_head_approval_status,
+        risk_function_head_approval_remark=risk.risk_function_head_approval_remark,
+        risk_function_head_approval_on=risk.risk_function_head_approval_on,
+        risk_function_head_approval_by=risk.risk_function_head_approval_by,
+
+        risk_head_approval_status=risk.risk_head_approval_status,
+        risk_head_approved_on=risk.risk_head_approved_on,
+        risk_head_approval_remark=risk.risk_head_approval_remark,
+        risk_head_approval_by=risk.risk_head_approval_by,
+
+        risk_manager_approval_status=risk.risk_manager_approval_status,
+        risk_manager_approved_on=risk.risk_manager_approved_on,
+        risk_manager_approval_remark=risk.risk_manager_approval_remark,
+        risk_manager_approval_by=risk.risk_manager_approval_by,
+
+        created_by=risk.created_by,
+        created_on=risk.created_on,
+
+        modified_by=user_id,
+        modified_on=datetime.now(timezone.utc),
+
+        is_active=risk.is_active,
+        is_deleted=risk.is_deleted
+    )
+
+    db.add(hist)
 
     db.commit()
 

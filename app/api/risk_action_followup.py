@@ -82,49 +82,76 @@ def build_followup_response_for_create(obj):
     }
     
     
+def parse_progress_range(value: str):
+    value = value.strip()
+
+    if value == "0%":
+        return 0, 0
+    if value == "100%":
+        return 100, 100
+
+    if "-" in value:
+        parts = value.replace("%", "").split("-")
+        return float(parts[0]), float(parts[1])
+
+    return None, None
+
+
 def update_risk_progress_from_followup(db, treatment_id):
+
+    print(f"🔥 Updating progress for treatment_id: {treatment_id}")
 
     followups = db.query(RiskActionFollowup).filter(
         RiskActionFollowup.reference_id == treatment_id
     ).all()
 
     if not followups:
+        print("❌ No followups found")
         return
 
-    PROGRESS_MAP = {
-        "0-25%": 12.5,
-        "25-50%": 37.5,
-        "50-75%": 62.5,
-        "75-100%": 87.5,
-        "100%": 100
-    }
+    lower_values = []
+    upper_values = []
 
-    values = [
-        PROGRESS_MAP.get(f.progress, 0)
-        for f in followups if f.progress
-    ]
+    for f in followups:
+        if not f.progress:
+            continue
 
-    if not values:
+        low, high = parse_progress_range(f.progress)
+
+        if low is not None and high is not None:
+            lower_values.append(low)
+            upper_values.append(high)
+
+    if not lower_values:
+        print("❌ No valid progress values")
         return
 
-    avg_progress = sum(values) / len(values)
+    avg_lower = sum(lower_values) / len(lower_values)
+    avg_upper = sum(upper_values) / len(upper_values)
 
-    # Update treatment
+    final_progress = (avg_lower + avg_upper) / 2
+
+    print(f"✅ Final Progress: {final_progress}")
+
+    # ---------------- Treatment ----------------
     treatment = db.query(RiskTreatment).filter(
         RiskTreatment.risk_treatment_id == treatment_id
     ).first()
 
     if not treatment:
+        print(f"❌ Treatment not found: {treatment_id}")
         return
 
-    treatment.progress = round(avg_progress, 2)
+    treatment.progress = round(final_progress, 2)
 
+    # ---------------- Risk Register ----------------
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == treatment.risk_register_id
     ).first()
 
     if risk:
-        risk.risk_progress = round(avg_progress, 2)
+        risk.risk_progress = round(final_progress, 2)
+        print(f"✅ Risk Updated: {risk.risk_progress}")
 
 # -------------------------
 # CREATE Followup and file upload
@@ -203,28 +230,34 @@ def update_risk_progress_from_followup(db, treatment_id):
 
 # Combined API
 
+# -------------------------
+# CREATE FOLLOWUP
+# -------------------------
 @router.post("/")
-async def create_followup_with_file(
+async def create_followup(
     reference_id: int = Form(...),
     remark: str = Form(...),
-
     module_name: Optional[str] = Form(None),
     progress: Optional[str] = Form(None),
     status: Optional[int] = Form(None),
     next_followup_date: Optional[datetime] = Form(None),
-
-    file: UploadFile = File(None),   
+    file: UploadFile = File(None),
 
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        if not reference_id or not remark:
-            return error_response("Reference ID and Remark are required", 400)
-        
         if not next_followup_date:
             next_followup_date = datetime.now(timezone.utc)
-        
+
+        # ✅ VALIDATION (IMPORTANT)
+        treatment = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_treatment_id == reference_id
+        ).first()
+
+        if not treatment:
+            return error_response("Invalid reference_id (must be treatment_id)", 400)
+
         followup = RiskActionFollowup(
             reference_id=reference_id,
             module_name=module_name,
@@ -235,21 +268,22 @@ async def create_followup_with_file(
             created_by=current_user["id"]
         )
 
+        # File handling
         if file and file.filename:
             content = await file.read()
-
             followup.file_name = file.filename
-            followup.file_extension = file.filename.rsplit(".", 1)[-1] if "." in file.filename else None
+            followup.file_extension = file.filename.rsplit(".", 1)[-1]
             followup.file_type = file.content_type
             followup.file_data = content
 
         db.add(followup)
-        db.commit()
-        db.refresh(followup)  
-        
-        if progress is not None:
+        db.flush()   
+
+        if progress:
             update_risk_progress_from_followup(db, reference_id)
-            db.commit()
+
+        db.commit()
+        db.refresh(followup)
 
         followup = (
             db.query(RiskActionFollowup)
@@ -261,7 +295,7 @@ async def create_followup_with_file(
             .first()
         )
 
-        return success_response(build_followup_response_for_create(followup))
+        return success_response(build_followup_response(followup))
 
     except Exception as e:
         db.rollback()
