@@ -64,26 +64,22 @@ def approve_risk(db, data, user_id):
 
         # ---------------- Status logic ----------------
 
-    # def get_status_id(name):
-    #     s = db.query(Status).filter(Status.status_name == name, Status.is_deleted == 0).first()
-    #     return s.id if s else None
+    def get_status_id(name):
+        s = db.query(Status).filter(Status.status_name == name, Status.is_deleted == 0).first()
+        return s.id if s else None
 
-    # approved_id = get_status_id("Approved")
-    # rejected_id = get_status_id("Rejected")
-    # pending_id  = get_status_id("Pending")
+    function_head = risk.risk_function_head_approval_status
+    risk_head = risk.risk_head_approval_status
+    risk_manager = risk.risk_manager_approval_status
 
-    # fh = risk.risk_function_head_approval_status
-    # rh = risk.risk_head_approval_status
-    # rm = risk.risk_manager_approval_status
+    pending_id = get_status_id("Pending for Action")
+    new_id = get_status_id("New")
 
-    # if rejected_id in [fh, rh, rm]:
-    #     risk.risk_status = rejected_id
-
-    # elif fh == approved_id and rh == approved_id and rm == approved_id:
-    #     risk.risk_status = approved_id
-
-    # elif approved_id in [fh, rh, rm]:
-    #     risk.risk_status = pending_id
+    # MAIN LOGIC
+    if -1 in [function_head, risk_head, risk_manager]:
+        risk.risk_status = pending_id
+    else:
+        risk.risk_status = new_id
 
     db.commit()
 

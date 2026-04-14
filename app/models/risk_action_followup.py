@@ -20,7 +20,7 @@ class RiskActionFollowup(Base):
 
     remark = Column(String(500), nullable=False)
 
-    progress = Column(Integer)
+    progress = Column(String(10))
 
     status = Column(Integer)
 

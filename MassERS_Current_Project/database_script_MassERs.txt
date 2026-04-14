@@ -186,7 +186,24 @@ CREATE TABLE IF NOT EXISTS ers.risk_action_followup (
   );
 
 
-
+----------------update 14-0-2025------------------------update progress in int to varchar---------
+CREATE TABLE IF NOT EXISTS ers.risk_action_followup
+(
+    followup_id integer NOT NULL DEFAULT nextval('ers.risk_action_followup_followup_id_seq'::regclass),
+    reference_id integer NOT NULL,
+    module_name character varying(50) COLLATE pg_catalog."default",
+    remark character varying(500) COLLATE pg_catalog."default" NOT NULL,
+    progress character varying(10) COLLATE pg_catalog."default",
+    status integer,
+    next_followup_date timestamp without time zone,
+    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    created_by integer NOT NULL DEFAULT 1,
+    file_name text COLLATE pg_catalog."default",
+    file_extension character varying(100) COLLATE pg_catalog."default",
+    file_type character varying(100) COLLATE pg_catalog."default",
+    file_data bytea,
+    CONSTRAINT risk_action_followup_pkey PRIMARY KEY (followup_id)
+)
 
 -------------------------------------------------------------
 Date:- 23/03/2026

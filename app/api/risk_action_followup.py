@@ -24,19 +24,19 @@ from app.models.risk_register import RiskRegister
 router = APIRouter(prefix="/risk-followup", tags=["Risk Followup"], dependencies=[Depends(get_current_user)])
 
 
-def build_followup_response(obj):
+# def build_followup_response(obj):
 
-    return {
-        "followup_id": obj.followup_id,
-        "reference_id": obj.reference_id,
-        "module_name": obj.module_name,
-        "remark": obj.remark,
-        "progress": obj.progress,
-        "status": obj.status,
-        "next_followup_date": obj.next_followup_date,
-        "created_on": obj.created_on,
-        "created_by": obj.created_by
-    }
+#     return {
+#         "followup_id": obj.followup_id,
+#         "reference_id": obj.reference_id,
+#         "module_name": obj.module_name,
+#         "remark": obj.remark,
+#         "progress": obj.progress,
+#         "status": obj.status,
+#         "next_followup_date": obj.next_followup_date,
+#         "created_on": obj.created_on,
+#         "created_by": obj.created_by
+#     }
     
 def build_followup_response(obj):
     return {
@@ -84,15 +84,32 @@ def build_followup_response_for_create(obj):
     
 def update_risk_progress_from_followup(db, treatment_id):
 
-    # 1. calculate avg progress from followup table
-    avg_progress = db.query(func.avg(RiskActionFollowup.progress)).filter(
+    followups = db.query(RiskActionFollowup).filter(
         RiskActionFollowup.reference_id == treatment_id
-    ).scalar()
+    ).all()
 
-    if avg_progress is None:
+    if not followups:
         return
 
-    # update treatment progress
+    PROGRESS_MAP = {
+        "0-25%": 12.5,
+        "25-50%": 37.5,
+        "50-75%": 62.5,
+        "75-100%": 87.5,
+        "100%": 100
+    }
+
+    values = [
+        PROGRESS_MAP.get(f.progress, 0)
+        for f in followups if f.progress
+    ]
+
+    if not values:
+        return
+
+    avg_progress = sum(values) / len(values)
+
+    # Update treatment
     treatment = db.query(RiskTreatment).filter(
         RiskTreatment.risk_treatment_id == treatment_id
     ).first()
@@ -102,20 +119,12 @@ def update_risk_progress_from_followup(db, treatment_id):
 
     treatment.progress = round(avg_progress, 2)
 
-    risk_id = treatment.risk_register_id                  # get risk_register_id
-
-    
-    risk_avg = db.query(func.avg(RiskTreatment.progress)).filter(
-        RiskTreatment.risk_register_id == risk_id
-    ).scalar()
-
-    risk = db.query(RiskRegister).filter(                             # update risk register progress
-        RiskRegister.risk_register_id == risk_id
+    risk = db.query(RiskRegister).filter(
+        RiskRegister.risk_register_id == treatment.risk_register_id
     ).first()
 
     if risk:
-        risk.risk_progress = round(risk_avg or 0, 2)
-        risk.risk_progress = round(avg_progress or 0, 2)
+        risk.risk_progress = round(avg_progress, 2)
 
 # -------------------------
 # CREATE Followup and file upload
@@ -174,7 +183,7 @@ def update_risk_progress_from_followup(db, treatment_id):
 #         if not followup:
 #             return error_response("Followup not found", 404)
 
-#         # ✅ Save file
+#         # Save file
 #         followup.file_name = file.filename
 #         followup.file_extension = file.filename.split(".")[-1] if "." in file.filename else None
 #         followup.file_type = file.content_type
@@ -200,7 +209,7 @@ async def create_followup_with_file(
     remark: str = Form(...),
 
     module_name: Optional[str] = Form(None),
-    progress: Optional[int] = Form(None),
+    progress: Optional[str] = Form(None),
     status: Optional[int] = Form(None),
     next_followup_date: Optional[datetime] = Form(None),
 

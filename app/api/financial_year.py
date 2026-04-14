@@ -9,8 +9,8 @@ from app.core.response import success_response, error_response
 
 router = APIRouter(
     prefix="/financial-year",
-    tags=["Financial Year"]
-    # dependencies=[Depends(get_current_user)]
+    tags=["Financial Year"],
+    dependencies=[Depends(get_current_user)]
 )
 
 @router.get("/")

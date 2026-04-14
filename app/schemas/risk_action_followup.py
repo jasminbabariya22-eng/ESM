@@ -9,7 +9,7 @@ class RiskActionFollowupCreate(BaseModel):
     reference_id: int
     module_name: Optional[str]
     remark: str
-    progress: Optional[int]
+    progress: Optional[str]
     status: Optional[int]
     next_followup_date: Optional[datetime]
 
@@ -18,7 +18,7 @@ class RiskActionFollowupCreate(BaseModel):
 class RiskActionFollowupUpdate(BaseModel):
 
     remark: Optional[str]
-    progress: Optional[int]
+    progress: Optional[str]
     status: Optional[int]
     next_followup_date: Optional[datetime]
 
@@ -29,7 +29,7 @@ class RiskActionFollowupResponse(BaseModel):
     reference_id: int
     module_name: Optional[str]
     remark: str
-    progress: Optional[int]
+    progress: Optional[str]
     status: Optional[int]
     next_followup_date: Optional[datetime]
     created_on: datetime
