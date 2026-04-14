@@ -105,8 +105,9 @@ def update_risk_progress_from_followup(db, treatment_id):
         RiskActionFollowup.reference_id == treatment_id
     ).all()
 
+    print(f"Total followups found: {len(followups)}")
+
     if not followups:
-        print("❌ No followups found")
         return
 
     lower_values = []
@@ -116,6 +117,8 @@ def update_risk_progress_from_followup(db, treatment_id):
         if not f.progress:
             continue
 
+        print(f"Processing progress: {f.progress}")
+
         low, high = parse_progress_range(f.progress)
 
         if low is not None and high is not None:
@@ -123,7 +126,6 @@ def update_risk_progress_from_followup(db, treatment_id):
             upper_values.append(high)
 
     if not lower_values:
-        print("❌ No valid progress values")
         return
 
     avg_lower = sum(lower_values) / len(lower_values)
@@ -133,18 +135,18 @@ def update_risk_progress_from_followup(db, treatment_id):
 
     print(f"✅ Final Progress: {final_progress}")
 
-    # ---------------- Treatment ----------------
+    # Update Treatment
     treatment = db.query(RiskTreatment).filter(
         RiskTreatment.risk_treatment_id == treatment_id
     ).first()
 
     if not treatment:
-        print(f"❌ Treatment not found: {treatment_id}")
+        print("❌ Treatment not found")
         return
 
     treatment.progress = round(final_progress, 2)
 
-    # ---------------- Risk Register ----------------
+    # Update Risk
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == treatment.risk_register_id
     ).first()

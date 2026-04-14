@@ -249,7 +249,7 @@ def create_update_risk(db: Session, data, current_user):
                     action_plan=treatment.action_plan,
                     action_owner_id=to_int(treatment.action_owner_id),
                     target_date=to_datetime(treatment.target_date),
-                    progress=to_float(treatment.progress),
+                    progress=treatment.progress,
                     action_status_id=to_int(treatment.action_status_id),
                     next_followup_date=to_datetime(treatment.next_followup_date),
                     created_by=current_user["id"],
@@ -289,14 +289,14 @@ def create_update_risk(db: Session, data, current_user):
         
         # AUTO CALCULATE RISK PROGRESS
         
-        avg_progress = db.query(
-            func.avg(RiskTreatment.progress)
-        ).filter(
-            RiskTreatment.risk_register_id == risk.risk_register_id,
-            RiskTreatment.is_deleted == 0
-        ).scalar()
+        # avg_progress = db.query(
+        #     func.avg(RiskTreatment.progress)
+        # ).filter(
+        #     RiskTreatment.risk_register_id == risk.risk_register_id,
+        #     RiskTreatment.is_deleted == 0
+        # ).scalar()
 
-        risk.risk_progress = round(avg_progress or 0, 2)
+        risk.risk_progress = str(0)
 
         db.commit()
         send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update

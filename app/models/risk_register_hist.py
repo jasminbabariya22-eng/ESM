@@ -21,7 +21,7 @@ class RiskRegisterHist(Base):
     financial_year = Column(String(10))
 
     risk_status = Column(Integer)
-    risk_progress = Column(Float)
+    risk_progress = Column(String(10))
 
     risk_function_head_approval_status = Column(Integer)
     risk_function_head_approval_remark = Column(String(500))

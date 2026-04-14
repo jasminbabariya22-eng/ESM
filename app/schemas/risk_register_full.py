@@ -43,7 +43,7 @@ class RiskRegisterHybridResponse(BaseModel):
 
     financial_year: Optional[str] = None
     risk_status: Optional[int] = None
-    risk_progress: Optional[float] = None
+    risk_progress: Optional[str] = None
 
     risk_function_head_approval_status: Optional[int] = None
     risk_function_head_approval_remark: Optional[str] = None
