@@ -30,6 +30,13 @@ def build_history_response(row):
         "risk_head_approval_by": row.risk_head_approval_by,
 
         "risk_manager_status": row.risk_manager_approval_status,
+        "risk_manager_remark": row.risk_manager_approval_remark,
+        "risk_manager_approved_on": row.risk_manager_approved_on,
+        "risk_manager_approval_by": row.risk_manager_approval_by,
+
+        "created_by": row.created_by,
+        "created_on": row.created_on,
+        
         "modified_by": row.modified_by,
         "modified_on": row.modified_on
     }
@@ -97,14 +104,16 @@ def get_risk_history(
 ):
 
     try:
-        history = db.query(RiskRegisterHist).filter(
+        data = db.query(RiskRegisterHist).filter(
             RiskRegisterHist.risk_register_id == risk_register_id
+        ).order_by(
+            RiskRegisterHist.modified_on.desc()   # latest first
         ).all()
 
-        if not history:
-            raise HTTPException(status_code=404, detail="Risk history not found")
+        if not data:
+            raise HTTPException(status_code=404, detail="No history found")
 
-        return success_response(data=history)
+        return success_response([build_history_response(r) for r in data])
 
     except Exception as e:
         return error_response(str(e), 400)

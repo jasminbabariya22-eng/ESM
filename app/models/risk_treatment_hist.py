@@ -17,7 +17,7 @@ class RiskTreatmentHist(Base):
     action_owner_id = Column(Integer, nullable=False)
 
     target_date = Column(DateTime)
-    progress = Column(Float)
+    progress = Column(String(10))
     action_status_id = Column(Integer)
 
     next_followup_date = Column(DateTime)

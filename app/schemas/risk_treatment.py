@@ -12,13 +12,13 @@ class RiskTreatmentCreate(BaseModel):
     action_owner_id: int
 
     target_date: Optional[datetime] = None
-    progress: Optional[float] = None
+    progress: Optional[str] = None
     action_status_id: Optional[int] = None
     next_followup_date: Optional[datetime] = None
     
 class RiskTreatmentUpdate(BaseModel):
     action_plan: Optional[str] = None
-    progress: Optional[float] = None
+    progress: Optional[str] = None
     action_status_id: Optional[int] = None
     target_date: Optional[datetime] = None
     next_followup_date: Optional[datetime] = None
@@ -35,7 +35,7 @@ class RiskTreatmentHybridResponse(BaseModel):
     action_owner_name: Optional[str]
 
     target_date: Optional[datetime]
-    progress: Optional[float]
+    progress: Optional[str]
     action_status_id: Optional[int]
     next_followup_date: Optional[datetime]
 

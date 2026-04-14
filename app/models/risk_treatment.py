@@ -30,7 +30,7 @@ class RiskTreatment(Base):
     )
 
     target_date = Column(DateTime)
-    progress = Column(Float)
+    progress = Column(String(10))
     action_status_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
 
     next_followup_date = Column(DateTime)

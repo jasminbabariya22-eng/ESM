@@ -141,6 +141,28 @@ CREATE TABLE IF NOT EXISTS ers.risk_treatment (
   );
 
 
+------update 14-04-2026 ----- update progress CONSTRAINT
+CREATE TABLE IF NOT EXISTS ers.risk_treatment
+(
+    risk_treatment_id integer NOT NULL DEFAULT nextval('ers.risk_treatment_risk_treatment_id_seq'::regclass),
+    risk_description_id integer NOT NULL,
+    risk_register_id integer,
+    risk_id character varying(10) COLLATE pg_catalog."default",
+    action_plan text COLLATE pg_catalog."default" NOT NULL,
+    action_owner_id integer NOT NULL,
+    target_date timestamp without time zone,
+    progress character varying(10) COLLATE pg_catalog."default",
+    action_status_id integer,
+    next_followup_date timestamp without time zone,
+    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    created_by integer NOT NULL DEFAULT 1,
+    modified_on timestamp without time zone,
+    modified_by integer,
+    is_deleted smallint DEFAULT 0,
+    CONSTRAINT risk_treatment_pkey PRIMARY KEY (risk_treatment_id)
+)
+
+
 ---------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS ers.risk_treatment_hist (
