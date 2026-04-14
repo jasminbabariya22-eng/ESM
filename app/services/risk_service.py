@@ -129,6 +129,31 @@ def create_update_risk(db: Session, data, current_user):
 
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
+            
+            pending_status_id = get_status_id(db, "Pending for Action")
+
+        if risk.risk_status == pending_status_id:
+            
+            # RESET IN MAIN TABLE
+            risk.risk_function_head_approval_status = None
+            risk.risk_function_head_approval_remark = None
+            risk.risk_function_head_approval_on = None
+            risk.risk_function_head_approval_by = None
+
+            risk.risk_head_approval_status = None
+            risk.risk_head_approval_remark = None
+            risk.risk_head_approved_on = None
+            risk.risk_head_approval_by = None
+
+            risk.risk_manager_approval_status = None
+            risk.risk_manager_approval_remark = None
+            risk.risk_manager_approved_on = None
+            risk.risk_manager_approval_by = None
+
+            reset_approvals = True
+        else:
+            reset_approvals = False
+                        
 
 
         # HISTORY - RISK REGISTER
@@ -143,6 +168,23 @@ def create_update_risk(db: Session, data, current_user):
             financial_year=risk.financial_year,
             risk_status=risk.risk_status,
             risk_progress=risk.risk_progress,
+
+            # 🔥 RESET APPROVALS IN HISTORY
+            risk_function_head_approval_status=None if reset_approvals else risk.risk_function_head_approval_status,
+            risk_function_head_approval_remark=None if reset_approvals else risk.risk_function_head_approval_remark,
+            risk_function_head_approval_on=None if reset_approvals else risk.risk_function_head_approval_on,
+            risk_function_head_approval_by=None if reset_approvals else risk.risk_function_head_approval_by,
+
+            risk_head_approval_status=None if reset_approvals else risk.risk_head_approval_status,
+            risk_head_approved_on=None if reset_approvals else risk.risk_head_approved_on,
+            risk_head_approval_remark=None if reset_approvals else risk.risk_head_approval_remark,
+            risk_head_approval_by=None if reset_approvals else risk.risk_head_approval_by,
+
+            risk_manager_approval_status=None if reset_approvals else risk.risk_manager_approval_status,
+            risk_manager_approved_on=None if reset_approvals else risk.risk_manager_approved_on,
+            risk_manager_approval_remark=None if reset_approvals else risk.risk_manager_approval_remark,
+            risk_manager_approval_by=None if reset_approvals else risk.risk_manager_approval_by,
+
             created_by=risk.created_by,
             created_on=risk.created_on,
             modified_by=risk.modified_by,
@@ -264,9 +306,9 @@ def create_update_risk(db: Session, data, current_user):
                 
                 
                 # AUTO UPDATE RISK STATUS → IN PROGRESS
-                if len(saved_treatments) > 0:
-                    in_progress_status = get_status_id(db, "In Progress")
-                    risk.risk_status = in_progress_status
+                # if len(saved_treatments) > 0:
+                #     in_progress_status = get_status_id(db, "In Progress")
+                #     risk.risk_status = in_progress_status
 
                 hist_treatment = RiskTreatmentHist(
                     risk_treatment_id=new_treatment.risk_treatment_id,

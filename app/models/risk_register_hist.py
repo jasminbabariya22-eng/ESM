@@ -1,6 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, SmallInteger, DateTime
 from app.core.database import Base
 from app.core.config import settings
+from sqlalchemy.orm import relationship, foreign
+from app.models.mst_status import Status
+from app.models.user import User
 
 
 class RiskRegisterHist(Base):
@@ -46,3 +49,58 @@ class RiskRegisterHist(Base):
 
     is_active = Column(SmallInteger)
     is_deleted = Column(SmallInteger)
+
+    # ================= RELATIONSHIPS =================
+
+    # 🔹 Risk Status
+    status = relationship(
+        "Status",
+        primaryjoin="foreign(RiskRegisterHist.risk_status) == Status.id",
+        viewonly=True
+    )
+
+    # 🔹 Function Head
+    function_head_status = relationship(
+        "Status",
+        primaryjoin="foreign(RiskRegisterHist.risk_function_head_approval_status) == Status.id",
+        viewonly=True
+    )
+
+    function_head_user = relationship(
+        "User",
+        primaryjoin="foreign(RiskRegisterHist.risk_function_head_approval_by) == User.id",
+        viewonly=True
+    )
+
+    # 🔹 Risk Head
+    risk_head_status_rel = relationship(
+        "Status",
+        primaryjoin="foreign(RiskRegisterHist.risk_head_approval_status) == Status.id",
+        viewonly=True
+    )
+
+    risk_head_user = relationship(
+        "User",
+        primaryjoin="foreign(RiskRegisterHist.risk_head_approval_by) == User.id",
+        viewonly=True
+    )
+
+    # 🔹 Risk Manager
+    risk_manager_status_rel = relationship(
+        "Status",
+        primaryjoin="foreign(RiskRegisterHist.risk_manager_approval_status) == Status.id",
+        viewonly=True
+    )
+
+    risk_manager_user = relationship(
+        "User",
+        primaryjoin="foreign(RiskRegisterHist.risk_manager_approval_by) == User.id",
+        viewonly=True
+    )
+
+    # 🔹 Created By
+    created_user = relationship(
+        "User",
+        primaryjoin="foreign(RiskRegisterHist.created_by) == User.id",
+        viewonly=True
+    )
