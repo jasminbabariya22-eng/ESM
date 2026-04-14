@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
@@ -95,19 +96,24 @@ def approve_risk_api(
     
     
 # get by risk_register_id in History table
-@router.get("/history/{risk_register_id}")
 
+@router.get("/history/{risk_register_id}")
 def get_risk_history(
     risk_register_id: int,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-
     try:
         data = db.query(RiskRegisterHist).filter(
-            RiskRegisterHist.risk_register_id == risk_register_id
+            RiskRegisterHist.risk_register_id == risk_register_id,
+            or_(
+                RiskRegisterHist.risk_function_head_approval_status != None,
+                RiskRegisterHist.risk_head_approval_status != None,
+                RiskRegisterHist.risk_manager_approval_status != None
+            )
         ).order_by(
-            RiskRegisterHist.modified_on.desc()                         # latest first
+            RiskRegisterHist.modified_on.desc(),
+            RiskRegisterHist.created_on.desc()
         ).all()
 
         if not data:
