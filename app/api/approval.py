@@ -14,54 +14,29 @@ from app.models.risk_register_hist import RiskRegisterHist
 
 
 
-# def build_history_response(row):
-#     return {
-#         "risk_register_id": row.risk_register_id,
-#         "risk_id": row.risk_id,
-#         "risk_status": row.risk_status,
-#         "risk_status_name": row.status.status_name if row.status else None,
-#         "risk_progress": row.risk_progress,
-        
-#         # ---------------- Function Head ----------------
-#         "risk_function_head_approval_status": row.risk_function_head_approval_status,
-#         "risk_function_head_approval_status_name": (
-#             row.function_head_status.status_name if row.function_head_status else None
-#         ),
-#         "risk_function_head_approval_remark": row.risk_function_head_approval_remark,
-#         "risk_function_head_approval_on": row.risk_function_head_approval_on,
-#         "risk_function_head_approval_by": row.risk_function_head_approval_by,
-#         "risk_function_head_approval_by_name": row.risk_function_head_approval_by_name.log_id if row.risk_function_head_approval_by_name else None,
-
-#         # ---------------- Risk Head ----------------
-#         "risk_head_approval_status": row.risk_head_approval_status,
-#         "risk_head_approval_status_name": (
-#             row.risk_head_status.status_name if row.risk_head_status else None
-#         ),
-#         "risk_head_approval_remark": row.risk_head_approval_remark,
-#         "risk_head_approved_on": row.risk_head_approved_on,
-#         "risk_head_approval_by": row.risk_head_approval_by,
-#         "risk_head_approval_by_name": row.risk_head_approval_by_name.log_id if row.risk_head_approval_by_name else None,
-
-#         # ---------------- Risk Manager ----------------
-#         "risk_manager_approval_status": row.risk_manager_approval_status,
-#         "risk_manager_approval_status_name": (
-#             row.risk_manager_status.status_name if row.risk_manager_status else None
-#         ),
-#         "risk_manager_approval_remark": row.risk_manager_approval_remark,
-#         "risk_manager_approved_on": row.risk_manager_approved_on,
-#         "risk_manager_approval_by": row.risk_manager_approval_by,
-#         "risk_manager_approval_by_name": row.risk_manager_approval_by_name.log_id if row.risk_manager_approval_by_name else None,
-
-
-#         "created_by": row.created_by,
-#         "created_on": row.created_on,
-#         "created_by_name" : row.created_name.log_id if row.created_name else None,
-
-#         "modified_by": row.modified_by,
-#         "modified_on": row.modified_on
-#     }
-
 def build_history_response(row):
+    
+    if row.risk_function_head_approval_status == 1:
+        function_head_status_name = "Approved"
+    elif row.risk_function_head_approval_status == -1:
+        function_head_status_name = "Rejected"
+    else:
+        function_head_status_name = None
+        
+    if row.risk_head_approval_status == 1:
+        risk_head_status_name = "Approved"
+    elif row.risk_head_approval_status == -1:
+        risk_head_status_name = "Rejected"
+    else:
+        risk_head_status_name = None
+
+    if row.risk_manager_approval_status == 1:
+        risk_manager_status_name = "Approved"
+    elif row.risk_manager_approval_status == -1:
+        risk_manager_status_name = "Rejected"
+    else:
+        risk_manager_status_name = None
+
     return {
         "risk_register_id": row.risk_register_id,
         "risk_id": row.risk_id,
@@ -71,9 +46,7 @@ def build_history_response(row):
 
         # ---------------- Function Head ----------------
         "risk_function_head_approval_status": row.risk_function_head_approval_status,
-        "risk_function_head_approval_status_name": (
-            row.function_head_status.status_name if row.function_head_status else None
-        ),
+        "risk_function_head_approval_status_name":function_head_status_name,
         "risk_function_head_approval_remark": row.risk_function_head_approval_remark,
         "risk_function_head_approval_on": row.risk_function_head_approval_on,
         "risk_function_head_approval_by": row.risk_function_head_approval_by,
@@ -83,9 +56,7 @@ def build_history_response(row):
 
         # ---------------- Risk Head ----------------
         "risk_head_approval_status": row.risk_head_approval_status,
-        "risk_head_approval_status_name": (
-            row.risk_head_status_rel.status_name if row.risk_head_status_rel else None
-        ),
+        "risk_head_approval_status_name":risk_head_status_name,
         "risk_head_approval_remark": row.risk_head_approval_remark,
         "risk_head_approved_on": row.risk_head_approved_on,
         "risk_head_approval_by": row.risk_head_approval_by,
@@ -95,9 +66,7 @@ def build_history_response(row):
 
         # ---------------- Risk Manager ----------------
         "risk_manager_approval_status": row.risk_manager_approval_status,
-        "risk_manager_approval_status_name": (
-            row.risk_manager_status_rel.status_name if row.risk_manager_status_rel else None
-        ),
+        "risk_manager_approval_status_name": risk_manager_status_name,
         "risk_manager_approval_remark": row.risk_manager_approval_remark,
         "risk_manager_approved_on": row.risk_manager_approved_on,
         "risk_manager_approval_by": row.risk_manager_approval_by,

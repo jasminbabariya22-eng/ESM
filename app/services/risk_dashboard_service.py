@@ -15,7 +15,6 @@ def get_dashboard_summary_service(db: Session, start_date: datetime, end_date: d
     result = db.query(
         func.count(RiskRegister.risk_register_id).label("total"),
         
-        
         func.count().filter(Status.status_name == "New").label("New"),
         func.count().filter(Status.status_name == "Open").label("Open"),  
         func.count().filter(Status.status_name == "In Progress").label("in_progress"),
@@ -341,3 +340,42 @@ def risk_heatmap(db: Session, start_date, end_date):
         for row in results
     ]
     
+
+# Count with Heatmap
+
+def risk_transition_heatmap(db: Session, start_date, end_date):
+
+    results = db.query(
+        RiskDescription.inherent_risk_likelihood_id.label("inh_likelihood"),
+        RiskDescription.inherent_risk_impact_id.label("inh_impact"),
+
+        RiskDescription.current_risk_likelihood_id.label("cur_likelihood"),
+        RiskDescription.current_risk_impact_id.label("cur_impact"),
+
+        func.count().label("total")
+
+    ).join(
+        RiskRegister,
+        RiskRegister.risk_register_id == RiskDescription.risk_register_id
+    ).filter(
+        RiskRegister.is_deleted == 0,
+        RiskDescription.is_deleted == 0,
+        RiskRegister.created_on >= start_date,
+        RiskRegister.created_on <= end_date
+    ).group_by(
+        RiskDescription.inherent_risk_likelihood_id,
+        RiskDescription.inherent_risk_impact_id,
+        RiskDescription.current_risk_likelihood_id,
+        RiskDescription.current_risk_impact_id
+    ).all()
+
+    impact_map = {1: "A", 2: "B", 3: "C", 4: "D", 5: "E"}
+
+    return [
+        {
+            "count": row.total,
+            "inherent_code": f"{row.inh_likelihood}{impact_map.get(row.inh_impact)}",
+            "current_code": f"{row.cur_likelihood}{impact_map.get(row.cur_impact)}"
+        }
+        for row in results
+    ]

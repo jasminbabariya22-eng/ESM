@@ -201,3 +201,24 @@ def get_risk_heatmap(
 
     except ValueError as e:
         return error_response(str(e), 400)
+
+
+# Count with Risk Rating
+
+@router.get("/risk-transition-heatmap")
+def get_risk_transition_heatmap(
+    start_date: str,
+    end_date: str,
+    db: Session = Depends(get_db)
+    # current_user: dict = Depends(get_current_user)
+):
+    try:
+        start_date = datetime.fromisoformat(start_date)
+        end_date = datetime.fromisoformat(end_date)
+
+        return success_response(
+            risk_transition_heatmap(db, start_date, end_date)
+        )
+
+    except Exception as e:
+        return error_response(str(e), 400)
