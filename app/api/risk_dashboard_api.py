@@ -209,8 +209,8 @@ def get_risk_heatmap(
 def get_risk_transition_heatmap(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db)
-    # current_user: dict = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
         start_date = datetime.fromisoformat(start_date)
