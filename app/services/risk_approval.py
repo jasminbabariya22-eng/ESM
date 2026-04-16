@@ -47,18 +47,20 @@ def approve_risk(db, data, user_id):
         risk.risk_function_head_approval_remark = data.remark
         risk.risk_function_head_approval_by = user_id
         risk.risk_function_head_approval_on = datetime.now(timezone.utc)
-
+        
     elif data.approval_level == 2:
+        risk.risk_manager_approval_status = status_req_id
+        risk.risk_manager_approval_remark = data.remark
+        risk.risk_manager_approval_by = user_id
+        risk.risk_manager_approved_on = datetime.now(timezone.utc)
+
+    elif data.approval_level == 3:
         risk.risk_head_approval_status = status_req_id
         risk.risk_head_approval_remark = data.remark
         risk.risk_head_approval_by = user_id
         risk.risk_head_approved_on = datetime.now(timezone.utc)
 
-    elif data.approval_level == 3:
-        risk.risk_manager_approval_status = status_req_id
-        risk.risk_manager_approval_remark = data.remark
-        risk.risk_manager_approval_by = user_id
-        risk.risk_manager_approved_on = datetime.now(timezone.utc)
+
 
     else:
         raise Exception("Invalid approval level")
@@ -131,12 +133,13 @@ def approve_risk(db, data, user_id):
     try:
         if data.approval_level == 1:
             send_function_head_approval_email(db, risk.risk_register_id)
-
+            
         elif data.approval_level == 2:
-            send_risk_head_email(db, risk.risk_register_id)
+            send_risk_manager_email(db, risk.risk_register_id)
 
         elif data.approval_level == 3:
-            send_risk_manager_email(db, risk.risk_register_id)
+            send_risk_head_email(db, risk.risk_register_id)
+
     
     except Exception as e:
         print("Email trigger failed:", e)
