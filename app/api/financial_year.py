@@ -14,13 +14,13 @@ router = APIRouter(
 )
 
 @router.get("/")
-def get_financial_year():
+def get_financial_year():          # This API returns the current financial year based on the current date. The financial year is assumed to start in April and end in March of the following year
     try:
         today = datetime.today()
         year = today.year
         month = today.month
 
-        if month >= 4:
+        if month >= 4:            # If the current month is April or later, the financial year starts in the current year and ends in the next year
             start_year = year
             end_year = year + 1
         else:

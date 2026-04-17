@@ -66,7 +66,7 @@ def create_role(data: RoleCreateNew, db: Session = Depends(get_db)):
         return error_response(str(e), 400)
 
 
-# GET ALL
+# GET ALL roles with menuids
 @router.get("/", response_model=List[RoleResponseNew])
 def get_roles(db: Session = Depends(get_db)):
     

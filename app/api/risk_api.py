@@ -17,6 +17,7 @@ from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk
 router = APIRouter(prefix="/risk", tags=["Risk"])
 
 
+# for the model to dict
 def model_to_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 

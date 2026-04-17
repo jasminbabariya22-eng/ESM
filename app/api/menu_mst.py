@@ -14,7 +14,7 @@ router = APIRouter(prefix="/menu_map",
                    )
 
 
-# Get ALL
+# Get ALL the records from the menu table
 @router.get("/menus")
 def get_all_menus(db: Session = Depends(get_db)):
 

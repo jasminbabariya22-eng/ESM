@@ -52,7 +52,7 @@ def create_role_menu(data: RoleMenuCreate, db: Session = Depends(get_db)):
         
     
     
-# Get by role_id
+# Get by role_id 
 @router.get("/{role_id}")
 def get_role_menu(role_id: int, db: Session = Depends(get_db)):
 

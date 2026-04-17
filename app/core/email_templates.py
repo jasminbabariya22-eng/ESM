@@ -1,4 +1,6 @@
 def build_email_template(title, content_html):
+    
+    """Builds a complete HTML email template with the given title and content."""
 
     return f"""
     <html>

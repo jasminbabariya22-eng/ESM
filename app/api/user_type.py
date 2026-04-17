@@ -92,7 +92,7 @@ def get_user_type(user_type_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         return error_response(str(e), 400)
 
-# UPDATE
+# UPDATE User Type
 @router.put("/{user_type_id}", response_model=UserTypeResponse)
 def update_user_type(user_type_id: int, data: UserTypeUpdate, db: Session = Depends(get_db)):
     

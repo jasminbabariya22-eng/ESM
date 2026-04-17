@@ -23,6 +23,7 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
+# for the response of each api
 def build_hybrid_response(desc):
     return {
         "risk_description_id": desc.risk_description_id,

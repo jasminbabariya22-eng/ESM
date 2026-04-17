@@ -87,7 +87,7 @@ app.include_router(risk_treatment_router)
 app.include_router(financial_year_router)
 
 
-
+# Add global exception handlers
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)

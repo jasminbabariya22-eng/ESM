@@ -3,13 +3,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from app.core.config import settings
 
-security = HTTPBearer()
+security = HTTPBearer()           # Create an instance of HTTPBearer for token authentication
 
 
+# Dependency to get the current user from the token
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-
-    token = credentials.credentials
-
+    token = credentials.credentials                   # Extract the token from the credentials
     try:
         payload = jwt.decode(
             token,

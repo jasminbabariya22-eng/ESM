@@ -8,6 +8,9 @@ from app.core.response import success_response
 from app.schemas.auth import LoginResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
+
+
+# Authentication APIs
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # @router.post("/login")
@@ -37,6 +40,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 #         "token_type": "bearer"
 #     }
 
+
+# This API is used for login and returns user details along with access token
 @router.post("/login", response_model=LoginResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
 

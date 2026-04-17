@@ -23,6 +23,7 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
+# for the response of each api
 def build_hybrid_response(risk):
     return {
         "risk_register_id": risk.risk_register_id,
@@ -236,7 +237,7 @@ def get_Risk_by_register_id(risk_register_id: int, db: Session = Depends(get_db)
         return error_response(str(e), 400)
 
 
-# UPDATE
+# UPDATE Risk Register (Only allowed when risk is not yet approved by any level)
 @router.put("/{risk_register_id}")
 def update_Risk(
     risk_register_id: int,

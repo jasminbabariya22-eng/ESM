@@ -26,7 +26,7 @@ def approve_risk(db, data, user_id):
     # Convert 7 / 8 to Approved / Rejected
     if data.approval_status_id == 7:
         status_name_required = "Approved"
-        status_req_id = 1
+        status_req_id = 1 
     elif data.approval_status_id == 8:
         status_name_required = "Rejected"
         status_req_id = -1

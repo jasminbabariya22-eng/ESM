@@ -8,10 +8,12 @@ from app.core.response import success_response, error_response
 from app.core.database import get_db
 from app.models.email_job_mst import EmailJobMst
 
-# IMPORTANT: router must exist
+
 router = APIRouter(prefix="/email-job", tags=["Email Job"], dependencies=[Depends(get_current_user)])
 
 
+
+# for the api through send the email (optinal)
 @router.post("/create")
 def create_email_job(
     email_server_id: int,
@@ -38,11 +40,6 @@ def create_email_job(
         db.commit()
         db.refresh(job)
 
-        # return {
-        #     "message": "Email job created successfully",
-        #     "email_job_id": job.email_job_id
-        # }
-        
         return success_response({
             "email_job_id": job.email_job_id})
         

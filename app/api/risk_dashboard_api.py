@@ -13,7 +13,7 @@ from app.services.risk_dashboard_service import *
 router = APIRouter(prefix="/risk-dashboard", tags=["Risk Dashboard"])
 
 
-# KPI
+# KPI for the dashboard
 @router.get("/summary", response_model=RiskDashboardSummaryResponse)
 def get_dashboard_summary(
     start_date: str = Query(..., description="Start Date (YYYY-MM-DD)"),

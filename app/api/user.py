@@ -9,6 +9,7 @@ from app.schemas.user import UserHybridResponse
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 
+
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
@@ -16,7 +17,7 @@ router = APIRouter(
 )
 
 # --------------------------------
-# 1️⃣ CREATE USER
+# CREATE USER
 # --------------------------------
 @router.post("/", response_model=UserResponse)
 def create_user(
@@ -73,7 +74,7 @@ def create_user(
 
 
 # --------------------------------
-# 2️⃣ GET USER BY ID
+# GET USER BY ID
 # --------------------------------
 @router.get("/{user_id}", response_model=UserHybridResponse)
 def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
@@ -121,7 +122,7 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
         return error_response(str(e), 400)
 
 # --------------------------------
-# 3️⃣ SOFT DELETE USER
+# SOFT DELETE USER
 # --------------------------------
 @router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
@@ -143,7 +144,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 
 
 # --------------------------------
-# 4️⃣ UPDATE USER
+# UPDATE USER
 # --------------------------------
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(
@@ -200,7 +201,8 @@ def update_user(
         return error_response(str(e), 400)
 
 # --------------------------------
-# 5️⃣ GET ALL USERS   
+#  GET ALL USERS 
+#---------------------------------  
 @router.get("/", response_model=List[UserHybridResponse])
 def get_users(db: Session = Depends(get_db)):
     

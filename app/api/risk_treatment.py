@@ -23,6 +23,7 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
+# for the response of each api
 def build_hybrid_response(t):
     return {
         "risk_treatment_id": t.risk_treatment_id,
@@ -129,6 +130,7 @@ def create_risk_treatment(
         return error_response(str(e), 400)
 
 
+
 # Get ALL
 @router.get("/", response_model=List[RiskTreatmentHybridResponse])
 def get_treatments(db: Session = Depends(get_db)):
@@ -142,6 +144,7 @@ def get_treatments(db: Session = Depends(get_db)):
     
     except Exception as e:
         return error_response(str(e), 400)
+
 
 
 # Get BY risk_treatment_id
@@ -181,6 +184,7 @@ def get_treatment(risk_description_id: int, db: Session = Depends(get_db)):
         return error_response(str(e), 400)
 
 
+
 # Get by risk_id
 @router.get("/{risk_id}")
 def get_Risk_Treatment_by_risk_id(risk_id: str, db: Session = Depends(get_db)):
@@ -215,7 +219,7 @@ def get_Risk_Treatment_by_risk_id(risk_id: str, db: Session = Depends(get_db)):
 
 
 
-# UPDATE
+# UPDATE (Only allowed when risk is not yet approved by any level)
 @router.put("/{risk_treatment_id}")
 def update_Risk_treatment(
     risk_treatment_id: int,
@@ -327,8 +331,9 @@ def delete_treatment(treatment_id: int, db: Session = Depends(get_db)):
         db.rollback()
         return error_response(str(e), 400)
     
-# Get Treatment history by treatment id
+    
 
+# Get Treatment history by treatment id
 @router.get("/history/{treatment_id}")
 def get_treatment_history(treatment_id: int, db: Session = Depends(get_db)):
     try:

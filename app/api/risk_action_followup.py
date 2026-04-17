@@ -97,6 +97,8 @@ def parse_progress_range(value: str):
     return None, None
 
 
+# formula :- Average of all the lower values and average of all the upper values from the followups linked to that treatment.
+
 def update_risk_progress_from_followup(db, treatment_id: int):
     # Fetch only required column (optimized)
     followups = db.query(RiskActionFollowup.progress).filter(
@@ -242,7 +244,7 @@ async def create_followup(
         if not next_followup_date:
             next_followup_date = datetime.now(timezone.utc)
 
-        # ✅ VALIDATION (IMPORTANT)
+        # VALIDATION
         treatment = db.query(RiskTreatment).filter(
             RiskTreatment.risk_treatment_id == reference_id
         ).first()
@@ -340,7 +342,7 @@ def get_followup(followup_id: int, db: Session = Depends(get_db)):
         return error_response(str(e), 400)
 
   
- ## Download File
+ ## Download File only
  
 @router.get("/download-file/{followup_id}")
 def download_file(followup_id: int, db: Session = Depends(get_db)):

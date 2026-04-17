@@ -13,7 +13,7 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
-# Get all Status
+# Get all Status 
 @router.get("/", response_model=List[StatusResponse])
 def get_all_status(db: Session = Depends(get_db)):
     try:

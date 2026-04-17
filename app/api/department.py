@@ -124,7 +124,7 @@ def update_department(dept_id: int, data: DepartmentUpdate, db: Session = Depend
         db.rollback()
         return error_response(str(e), 400)
 
-# SOFT DELETE
+# SOFT DELETE 
 @router.delete("/{dept_id}")
 def delete_department(dept_id: int, db: Session = Depends(get_db)):
     

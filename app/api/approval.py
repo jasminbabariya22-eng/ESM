@@ -13,10 +13,10 @@ from app.models.user import User
 from app.models.risk_register_hist import RiskRegisterHist
 
 
-
+# for the return each data
 def build_history_response(row):
     
-    if row.risk_function_head_approval_status == 1:
+    if row.risk_function_head_approval_status == 1:    # for the risk register table
         function_head_status_name = "Approved"
     elif row.risk_function_head_approval_status == -1:
         function_head_status_name = "Rejected"
@@ -107,7 +107,7 @@ router = APIRouter(prefix="/approval", tags=["Approval"], dependencies=[Depends(
 #     except Exception as e:
 #         return error_response(str(e), 400)
 
-@router.post("/approve")
+@router.post("/approve")                        # for the Approve any riks using risk_register_id            
 def approve_risk_api(
     data: RiskApprovalRequest,
     db: Session = Depends(get_db),
