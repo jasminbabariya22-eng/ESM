@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 
+# Schemas for Department operations, including creation, update, and response models
 class DepartmentCreate(BaseModel):
     dept_name: str
     dept_short_name: str

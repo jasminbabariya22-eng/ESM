@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 
+# Schemas for UserType operations, including creation, update, and response models
 class UserTypeCreate(BaseModel):
     name: str
     description: Optional[str] = None

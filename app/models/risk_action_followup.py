@@ -7,6 +7,7 @@ from sqlalchemy import Text
 from app.core.config import settings
 
 
+# RiskActionFollowup model representing the risk_action_followup table in the database
 class RiskActionFollowup(Base):
 
     __tablename__ = "risk_action_followup"

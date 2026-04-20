@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 
+# Schemas for Status operations, including creation, update, and response models
 class StatusCreate(BaseModel):
     status_name: str
     type: Optional[str] = None

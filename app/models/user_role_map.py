@@ -3,6 +3,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 
+# UserRoleMap model representing the user_role_map table in the database
 class UserRoleMap(Base):
     __tablename__ = "user_role_map"
     __table_args__ = {"schema": settings.DB_SCHEMA}

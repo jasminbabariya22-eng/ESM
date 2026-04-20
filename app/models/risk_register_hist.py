@@ -6,6 +6,7 @@ from app.models.mst_status import Status
 from app.models.user import User
 
 
+# RiskRegisterHist model representing the risk_register_hist table in the database
 class RiskRegisterHist(Base):
     __tablename__ = "risk_register_hist"
     __table_args__ = {"schema": settings.DB_SCHEMA}

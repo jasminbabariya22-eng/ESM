@@ -6,6 +6,7 @@ from sqlalchemy import text
 import traceback
 
 
+# function do the actual email sending using the email server details and job details, returns True if email sent successfully, otherwise False
 def send_email(db: Session, job):
 
     server = db.execute(text("""

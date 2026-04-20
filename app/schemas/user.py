@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
+
+# Schemas for User operations, including creation, update, and response models
 # -------- CREATE --------
 class UserCreate(BaseModel):
     log_id: str
@@ -11,12 +13,12 @@ class UserCreate(BaseModel):
     email: EmailStr
 
     # photo: Optional[str] = None
-    contact_no: Optional[str] = None
+    contact_no: Optional[str] = None    # optinal because some users may not have contact number
     # country_code: Optional[int] = None
     # std_code: Optional[int] = None
 
     # country: Optional[str] = None
-    address: Optional[str] = None
+    address: Optional[str] = None       # optional because some users may not have address
     # user_city: Optional[str] = None
 
     dept_id: int

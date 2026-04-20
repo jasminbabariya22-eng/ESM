@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+
+# Schemas for Risk Dashboard operations, including response models for various dashboard views and summaries
 class RiskDashboardSummaryResponse(BaseModel):
     year: int
     total: int
@@ -59,3 +61,8 @@ class RiskHeatmapResponse(BaseModel):
     count: int
     color: str
     code: str
+    
+class RiskHeatmapcountResponse(BaseModel):
+    count: int
+    inherent_code: str
+    current_code: str

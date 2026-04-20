@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.mst_status import Status
 from app.services.risk_service import get_color
 
-# KPI
+# KPI for Risk Dashboard - Total Risks, New, Open, Closed, In Progress, Pending, Completed, Approved, Rejected
 def get_dashboard_summary_service(db: Session, start_date: datetime, end_date: datetime):
     result = db.query(
         func.count(RiskRegister.risk_register_id).label("total"),

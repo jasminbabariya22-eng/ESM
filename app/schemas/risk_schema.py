@@ -10,6 +10,7 @@ from .risk_description_full import RiskDescriptionHybridResponse
 from .risk_treatment_full import RiskTreatmentHybridResponse
 
 
+# Schemas for Risk operations, including request models for saving and updating risks, and response model for detailed risk information
 class RiskSaveRequest(BaseModel):
     risk_register: RiskRegisterCreate = None
     risk_description: RiskDescriptionCreate = None

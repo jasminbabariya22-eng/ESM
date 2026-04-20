@@ -4,6 +4,7 @@ from app.core.config import settings
 from sqlalchemy.orm import relationship
 
 
+# EmailServer model representing the email_server table in the database
 class EmailServer(Base):
     __tablename__ = "email_server"
     __table_args__ = {"schema": settings.DB_SCHEMA}

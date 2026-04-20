@@ -6,7 +6,7 @@ from app.models.mst_status import Status
 from app.core.config import settings
 
 
-
+# RiskRegister Model representing the risk_register table in the database
 class RiskRegister(Base):
     __tablename__ = "risk_register"
     __table_args__ = {"schema": settings.DB_SCHEMA}

@@ -205,7 +205,7 @@ def get_risk_heatmap(
 
 # Count with Risk Rating
 
-@router.get("/risk-transition-heatmap")
+@router.get("/risk-transition-heatmap", response_model=List[RiskHeatmapcountResponse])
 def get_risk_transition_heatmap(
     start_date: str,
     end_date: str,

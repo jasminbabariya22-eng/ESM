@@ -4,6 +4,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 
+# EmailJobMst model representing the mst_email_job table in the database
 class EmailJobMst(Base):
     __tablename__ = "mst_email_job"
     __table_args__ = {"schema": settings.DB_SCHEMA}

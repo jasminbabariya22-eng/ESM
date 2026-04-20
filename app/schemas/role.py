@@ -3,6 +3,8 @@ from typing import Optional
 from datetime import datetime
 from typing import List
 
+
+# Schemas for Role operations, including creation, update, and response models
 class RoleCreate(BaseModel):
     name: str
     description: Optional[str] = None

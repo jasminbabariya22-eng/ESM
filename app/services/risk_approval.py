@@ -13,6 +13,8 @@ from app.services.email_event_service import (
 )
 
 
+# function to handle risk approval at different levels (Function Head, Risk Manager, Risk Head), updates the risk status based on the approval and creates a history record of the change. 
+# Also triggers email notifications based on the approval level.
 def approve_risk(db, data, user_id):
 
     risk = db.query(RiskRegister).filter(
@@ -42,19 +44,19 @@ def approve_risk(db, data, user_id):
     # if not status_obj:
     #     raise Exception("Invalid status id")
 
-    if data.approval_level == 1:
+    if data.approval_level == 1:                       # function head approval using 1 as approval level
         risk.risk_function_head_approval_status = status_req_id
         risk.risk_function_head_approval_remark = data.remark
         risk.risk_function_head_approval_by = user_id
         risk.risk_function_head_approval_on = datetime.now(timezone.utc)
         
-    elif data.approval_level == 2:
+    elif data.approval_level == 2:                   # risk manager approval using 2 as approval level
         risk.risk_manager_approval_status = status_req_id
         risk.risk_manager_approval_remark = data.remark
         risk.risk_manager_approval_by = user_id
         risk.risk_manager_approved_on = datetime.now(timezone.utc)
 
-    elif data.approval_level == 3:
+    elif data.approval_level == 3:                    # risk head approval using 3 as approval level
         risk.risk_head_approval_status = status_req_id
         risk.risk_head_approval_remark = data.remark
         risk.risk_head_approval_by = user_id
@@ -75,7 +77,7 @@ def approve_risk(db, data, user_id):
     risk_head = risk.risk_head_approval_status
     risk_manager = risk.risk_manager_approval_status
 
-    pending_id = get_status_id("Pending for Action")
+    pending_id = get_status_id("Pending for Action")    # if any one of reject so update status to pending for action, if all approved then update to new
     new_id = get_status_id("New")
 
     # MAIN LOGIC
@@ -144,6 +146,6 @@ def approve_risk(db, data, user_id):
     except Exception as e:
         print("Email trigger failed:", e)
         
-    send_treatment_email_after_approval(db, risk.risk_register_id)
+    send_treatment_email_after_approval(db, risk.risk_register_id)    # for email sending after approval to treatment owner if any treatment exist for the risk
 
     return risk, "", ""

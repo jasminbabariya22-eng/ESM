@@ -3,6 +3,8 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.core.config import settings
 
+
+# RiskTreatment model representing the risk_treatment table in the database
 class RiskTreatment(Base):
     __tablename__ = "risk_treatment"
     __table_args__ = {"schema": settings.DB_SCHEMA}

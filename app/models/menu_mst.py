@@ -3,6 +3,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 
+# Menu model representing the mst_menu table in the database
 class Menu(Base):
     __tablename__ = "mst_menu"
     __table_args__ = {"schema": settings.DB_SCHEMA}

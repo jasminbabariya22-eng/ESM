@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import UploadFile, File
 
 
+# Schemas for Risk Action Follow-up operations, including creation, update, and response models
 class RiskActionFollowupCreate(BaseModel):
 
     reference_id: int

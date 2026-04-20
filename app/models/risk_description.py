@@ -4,6 +4,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 
+# RiskDescription model representing the risk_description table in the database
 class RiskDescription(Base):
     __tablename__ = "risk_description"
     __table_args__ = {"schema": settings.DB_SCHEMA}

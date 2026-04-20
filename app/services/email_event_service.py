@@ -8,9 +8,11 @@ from app.core.email_templates import build_email_template
 from app.models.email_job_mst import EmailJobMst
 from app.models.risk_register import RiskRegister
 
-SCHEMA = settings.DB_SCHEMA
+SCHEMA = settings.DB_SCHEMA    # fetch schema from config for dynamic queries
 
-def get_emails_by_user_ids(db, user_ids):
+
+# UTILITY FUNCTIONS 
+def get_emails_by_user_ids(db, user_ids):   
     user_ids = list(set([uid for uid in user_ids if uid]))
 
     if not user_ids:
@@ -55,6 +57,7 @@ def get_users_by_role_name(db, role_name):
     return [r.email for r in result if r.email]
 
 
+# EMAIL JOB CREATION
 def create_email_job(db, to_list, cc_list, subject, body, created_by=1):
     
     if not to_list:

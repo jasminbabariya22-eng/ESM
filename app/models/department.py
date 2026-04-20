@@ -3,7 +3,7 @@ from app.core.database import Base
 from sqlalchemy.orm import relationship
 from app.core.config import settings
 
-class Department(Base):
+class Department(Base):                     # Define the Department model representing the mst_department table
     __tablename__ = "mst_department"
     __table_args__ = {"schema": settings.DB_SCHEMA}
 
@@ -21,5 +21,5 @@ class Department(Base):
     last_risk_number = Column(Integer, default=0)
     
     # Relationship
-    risks = relationship("RiskRegister", back_populates="department")
+    risks = relationship("RiskRegister", back_populates="department") 
     users = relationship("User", back_populates="department")

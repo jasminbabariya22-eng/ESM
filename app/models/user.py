@@ -5,6 +5,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 
+# User model representing the mst_users table in the database
 class User(Base):
     __tablename__ = "mst_users"
     __table_args__ = {"schema": settings.DB_SCHEMA}

@@ -370,7 +370,7 @@ def get_risk_by_user(db, user_id):
 
 
 
-
+# function use for converting SQLAlchemy model object to dict, if object is None then return dict with all keys but value as None, if prefix is provided then add prefix to all keys in the dict
 def to_dict(obj, model=None,prefix=None):
     def format_key(key):
         return f"{prefix}{key}" if prefix else key

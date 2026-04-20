@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 
+# Schemas for Risk Treatment operations, including creation, update, and response models
 class RiskTreatmentCreate(BaseModel):
     risk_description_id: int
     risk_register_id: Optional[int] = None

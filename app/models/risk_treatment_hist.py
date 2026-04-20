@@ -4,6 +4,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 
+# RiskTreatmentHist model representing the risk_treatment_hist table in the database
 class RiskTreatmentHist(Base):
     __tablename__ = "risk_treatment_hist"
     __table_args__ = {"schema": settings.DB_SCHEMA}

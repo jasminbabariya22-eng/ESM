@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 
+# Schemas for Risk Register operations, including creation, update, and response models
 class RiskRegisterCreate(BaseModel):
     risk_name: str
     dept_id: int

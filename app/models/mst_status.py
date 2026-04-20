@@ -3,6 +3,8 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 from app.core.config import settings
 
+
+# Status model representing the mst_status table in the database
 class Status(Base):
     __tablename__ = "mst_status"
     __table_args__ = {"schema": settings.DB_SCHEMA}

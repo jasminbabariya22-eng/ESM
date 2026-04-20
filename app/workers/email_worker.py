@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.email_sender import send_email
 
-SCHEMA = settings.DB_SCHEMA
+SCHEMA = settings.DB_SCHEMA     # fetching schema name from config to use in raw SQL queries
 
 print("======================================")
 print(" Email Worker Started Successfully ")
@@ -99,7 +99,7 @@ def email_worker():
         finally:
             db.close()
 
-        time.sleep(10)
+        time.sleep(10)           # ecah 10 second check for pending email jobs
 
 
 if __name__ == "__main__":
