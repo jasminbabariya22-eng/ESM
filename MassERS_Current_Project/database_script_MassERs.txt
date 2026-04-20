@@ -35,6 +35,42 @@ create table ers.risk_register
  is_deleted SMALLINT NOT NULL DEFAULT 0
 );
 
+
+------------- update 15/04/2025-------- progress float to varchar-----------
+
+CREATE TABLE IF NOT EXISTS ers.risk_register
+(
+    risk_register_id integer NOT NULL DEFAULT nextval('ers.risk_register_risk_register_id_seq'::regclass),
+    risk_id character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    risk_name character varying(250) COLLATE pg_catalog."default" NOT NULL,
+    dept_id integer NOT NULL,
+    risk_owner_id integer NOT NULL,
+    financial_year character varying(10) COLLATE pg_catalog."default",
+    risk_status integer,
+    risk_progress character varying(10) COLLATE pg_catalog."default",
+    risk_function_head_approval_status integer,
+    risk_function_head_approval_remark character varying(500) COLLATE pg_catalog."default",
+    risk_function_head_approval_on timestamp without time zone,
+    risk_function_head_approval_by integer,
+    risk_head_approval_status integer,
+    risk_head_approved_on timestamp without time zone,
+    risk_head_approval_remark character varying(500) COLLATE pg_catalog."default",
+    risk_head_approval_by integer,
+    risk_manager_approval_status integer,
+    risk_manager_approved_on timestamp without time zone,
+    risk_manager_approval_remark character varying(500) COLLATE pg_catalog."default",
+    risk_manager_approval_by integer,
+    created_by integer NOT NULL DEFAULT 1,
+    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    modified_by integer,
+    modified_on timestamp without time zone,
+    is_active smallint NOT NULL DEFAULT 0,
+    is_deleted smallint NOT NULL DEFAULT 0,
+    risk_co_owner_id integer DEFAULT 0,
+    CONSTRAINT risk_register_pkey PRIMARY KEY (risk_register_id)
+)
+
+
 --------------------------------------------------------------
 
 
@@ -70,6 +106,42 @@ create table ers.risk_register_hist
  is_active SMALLINT NOT NULL DEFAULT 0,
  is_deleted SMALLINT NOT NULL DEFAULT 0
 );
+
+
+
+------------- update 15/04/2025-------- progress float to varchar-----------
+
+CREATE TABLE IF NOT EXISTS ers.risk_register_hist
+(
+    risk_register_id integer,
+    risk_id character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    risk_name character varying(250) COLLATE pg_catalog."default" NOT NULL,
+    dept_id integer NOT NULL,
+    risk_owner_id integer NOT NULL,
+    risk_co_owner_id integer DEFAULT 0,
+    target_date timestamp without time zone,
+    financial_year character varying(10) COLLATE pg_catalog."default",
+    risk_status integer,
+    risk_progress character varying(10) COLLATE pg_catalog."default",
+    risk_function_head_approval_status integer,
+    risk_function_head_approval_remark character varying(500) COLLATE pg_catalog."default",
+    risk_function_head_approval_on timestamp without time zone,
+    risk_function_head_approval_by integer,
+    risk_head_approval_status integer,
+    risk_head_approved_on timestamp without time zone,
+    risk_head_approval_remark character varying(500) COLLATE pg_catalog."default",
+    risk_head_approval_by integer,
+    risk_manager_approval_status integer,
+    risk_manager_approved_on timestamp without time zone,
+    risk_manager_approval_remark character varying(500) COLLATE pg_catalog."default",
+    risk_manager_approval_by integer,
+    created_by integer NOT NULL DEFAULT 1,
+    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    modified_by integer,
+    modified_on timestamp without time zone,
+    is_active smallint NOT NULL DEFAULT 0,
+    is_deleted smallint NOT NULL DEFAULT 0
+)
 
 
 -----------------------------------------------------------
@@ -187,6 +259,30 @@ CREATE TABLE IF NOT EXISTS ers.risk_treatment_hist (
       --  REFERENCES ers.risk_description (risk_description_id)
        -- ON DELETE CASCADE
 );
+
+
+------------- update 15/04/2025-------- progress float to varchar-----------
+
+
+CREATE TABLE IF NOT EXISTS ers.risk_treatment_hist
+(
+    risk_treatment_id integer,
+    risk_description_id integer NOT NULL,
+    risk_register_id integer,
+    risk_id character varying(10) COLLATE pg_catalog."default",
+    action_plan text COLLATE pg_catalog."default" NOT NULL,
+    action_owner_id integer NOT NULL,
+    target_date timestamp without time zone,
+    progress character varying(10) COLLATE pg_catalog."default",
+    action_status_id integer,
+    next_followup_date timestamp without time zone,
+    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    created_by integer NOT NULL DEFAULT 1,
+    modified_on timestamp without time zone,
+    modified_by integer,
+    is_deleted smallint DEFAULT 0
+)
+
 -------------------------------------------------------------------------
 
 
