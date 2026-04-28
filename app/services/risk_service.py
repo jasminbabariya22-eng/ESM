@@ -390,6 +390,8 @@ def to_dict(obj, model=None,prefix=None):
         }
     return {}
 
+
+# find color code based on risk score, score is calculated by multiplying likelihood and impact, the color code is determined based on predefined thresholds for the score.
 def get_color(score):
     
     if score <= 4:

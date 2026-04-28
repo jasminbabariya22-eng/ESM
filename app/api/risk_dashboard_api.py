@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -209,15 +209,15 @@ def get_risk_heatmap(
 def get_risk_transition_heatmap(
     start_date: str,
     end_date: str,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    dept_id: Optional[int] = None,   
+    db: Session = Depends(get_db)
 ):
     try:
         start_date = datetime.fromisoformat(start_date)
         end_date = datetime.fromisoformat(end_date)
 
         return success_response(
-            risk_transition_heatmap(db, start_date, end_date)
+            risk_transition_heatmap(db, start_date, end_date, dept_id)
         )
 
     except Exception as e:

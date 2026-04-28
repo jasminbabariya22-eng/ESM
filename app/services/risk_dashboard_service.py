@@ -343,9 +343,9 @@ def risk_heatmap(db: Session, start_date, end_date):
 
 # Count with Heatmap
 
-def risk_transition_heatmap(db: Session, start_date, end_date):
-
-    results = db.query(
+def risk_transition_heatmap(db: Session, start_date, end_date, dept_id=None):
+    
+    query = db.query(
         RiskDescription.inherent_risk_likelihood_id.label("inh_likelihood"),
         RiskDescription.inherent_risk_impact_id.label("inh_impact"),
 
@@ -362,7 +362,13 @@ def risk_transition_heatmap(db: Session, start_date, end_date):
         RiskDescription.is_deleted == 0,
         RiskRegister.created_on >= start_date,
         RiskRegister.created_on <= end_date
-    ).group_by(
+    )
+
+    # Apply department filter ONLY if provided
+    if dept_id:
+        query = query.filter(RiskRegister.dept_id == dept_id)   
+
+    results = query.group_by(
         RiskDescription.inherent_risk_likelihood_id,
         RiskDescription.inherent_risk_impact_id,
         RiskDescription.current_risk_likelihood_id,

@@ -64,5 +64,6 @@ class RiskHeatmapResponse(BaseModel):
     
 class RiskHeatmapcountResponse(BaseModel):
     count: int
+    Department: str
     inherent_code: str
     current_code: str
