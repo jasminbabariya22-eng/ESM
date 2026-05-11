@@ -119,7 +119,8 @@ def get_my_dept_risks_by_dept_id(
 ):
 
     try:
-        risks = get_risk_by_dept(db, dept_id)
+
+        risks = get_risk_by_dept(db, dept_id,current_user)
 
         return success_response(data=risks)
     except Exception as e:

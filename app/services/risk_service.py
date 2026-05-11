@@ -501,18 +501,35 @@ def get_risk_by_id(db, id):
 #-----------
 # Risk LIST from Department id
 #----------
-def get_risk_by_dept(db, dept_id):  
+def get_risk_by_dept(db, dept_id,current_user):  
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     try:
+        dept_id_cur_user = current_user['dept_id']
+        user_type_name = current_user['user_type_name']
         query = db.query(
                     RiskRegister,
                     RiskDescription
                 ).outerjoin(
                     RiskDescription,
                     RiskRegister.risk_register_id == RiskDescription.risk_register_id
-                )
+                ).join(
+                    Status,
+                    RiskRegister.risk_status == Status.id)
                 
-        query = query.filter(RiskRegister.is_deleted == 0)
+        #query = query.filter(RiskRegister.is_deleted == 0)
+        
+        if user_type_name.upper() == 'RISK OWNER':
+            query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
+        elif user_type_name.upper() == 'FUNCTIONAL HEAD':
+            query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
+                           Status.status_name.upper() != 'DRAFTED' ,  
+                             Status.status_name.upper() != 'PENDING FOR ACTION'  )
+        elif user_type_name.upper() == 'RISK MANAGER':
+            query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1)
+        elif user_type_name.upper() == 'RISK HEAD':
+            query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_manager_approval_status == 1)
+        else:
+            query = query.filter(RiskRegister.is_deleted == 0)
 
         if dept_id:
             query = query.filter( RiskRegister.dept_id == dept_id )
@@ -858,8 +875,13 @@ def get_risk_by_description_id(db, description_id):
             for rt in rd.treatments:
                 treatments_list.append({
                     **to_dict(rt),
-                    "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
-                    "risk_co_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                    "action_owner_name": (
+                        f"{rt.action_owner.first_name or ''} "
+                        f"{rt.action_owner.last_name or ''}".strip()
+                        if rt.action_owner else None
+                    ),
+                    #"action_owner_name": rt.action_owner.log_id if rt.action_owner else None,
+                    #"risk_co_owner_name": rt.action_owner.log_id if rt.action_owner else None,
                     "risk_status_name": rt.status.status_name if rt.status else None
                 })
 
@@ -875,6 +897,16 @@ def get_risk_by_description_id(db, description_id):
             # Risk Register info
             risk_dict = {
                 **to_dict(rd.risk_register),
+                "risk_owner_name": (
+                    f"{rd.risk_register.risk_owner.first_name or ''} "
+                    f"{rd.risk_register.risk_owner.last_name or ''}".strip()
+                    if rd.risk_register.risk_owner else None
+                ),
+                "risk_co_owner_name": (
+                    f"{rd.risk_register.risk_co_owner.first_name or ''} "
+                    f"{rd.risk_register.risk_co_owner.last_name or ''}".strip()
+                    if rd.risk_register.risk_co_owner else None
+                ),
                 "risk_descriptions": [rd_dict]
             }
 
