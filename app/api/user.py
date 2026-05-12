@@ -8,6 +8,7 @@ from datetime import datetime
 from app.schemas.user import UserHybridResponse
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
+from app.models.user_type import UserType
 
 
 router = APIRouter(
@@ -244,5 +245,61 @@ def get_users(db: Session = Depends(get_db)):
 
         return success_response(response)
     
+    except Exception as e:
+        return error_response(str(e), 400)
+    
+    
+
+#-------------------------------------------------------------
+#           Get User Department Wise except function head
+#-------------------------------------------------------------
+@router.get("/department/{dept_id}", response_model=UserHybridResponse)
+def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
+    
+    try:
+        users = ( db.query(User)
+            .join(UserType, User.user_type_id == UserType.id)
+            .filter(
+                User.dept_id == dept_id,
+                UserType.name != 'Functional Head',
+                User.is_deleted == 0)
+            ).all()
+
+        if not users:
+            raise HTTPException(status_code=404, detail="User not found")
+        response = []
+
+        for user in users:
+            response.append({
+                "id": user.id,
+                "log_id": user.log_id,
+                "password": user.password,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "country": user.country,
+                "status": user.status,
+                "address": user.address,
+
+                "department_id": user.dept_id,
+                "department_name": user.department.dept_name if user.department else None,
+
+                "role_id": user.role_id,
+                "role_name": user.role.name if user.role else None,
+
+                "user_type_id": user.user_type_id,
+                "user_type_name": user.user_type.name if user.user_type else None,
+
+                "is_deleted": user.is_deleted,
+                "created_on": user.created_on,
+                
+                "photo": user.photo,
+                "contact_no": user.contact_no,
+                "country_code": user.country_code,
+                "std_code": user.std_code,
+                "user_city": user.user_city,
+            })
+
+        return success_response(response)        
     except Exception as e:
         return error_response(str(e), 400)
