@@ -79,7 +79,7 @@ def create_email_job(db, to_list, cc_list, subject, body, created_by=1):
     )
 
     db.add(job)
-    db.commit()
+    # db.commit()
     
     print("Email job inserted")
 
@@ -147,12 +147,12 @@ def send_function_head_approval_email(db: Session, risk_register_id: int):
     fh = get_users_by_role_name(db, "FUNCTION_HEAD")
     cc_emails = list(set(fh) - set(to_emails))
 
-    subject = f"[ERS] Risk Approved by Function Head - {risk.risk_id}"
+    subject = f"[ERS] Risk Updated by Function Head - {risk.risk_id}"
 
     content = f"""
     <p>Dear User,</p>
 
-    <p>The following risk has been approved by the Function Head:</p>
+    <p>The following risk has been updated by the Function Head:</p>
 
     <table border="1" cellpadding="8" cellspacing="0">
         <tr><td><b>Risk ID</b></td><td>{risk.risk_id}</td></tr>
@@ -167,6 +167,16 @@ def send_function_head_approval_email(db: Session, risk_register_id: int):
     body = build_email_template("Function Head Approval", content)
 
     create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_function_head_approval_by)
+    
+    # print("RISK ID:", risk.risk_register_id)
+
+    # print("OWNER EMAILS:", owner)
+
+    # print("RM EMAILS:", rm)
+
+    # print("RH EMAILS:", rh)
+
+    # print("FINAL TO EMAILS:", to_emails)
 
 
 # EVENT 3: RISK MANAGER ACTION

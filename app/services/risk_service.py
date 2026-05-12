@@ -522,8 +522,8 @@ def get_risk_by_dept(db, dept_id,current_user):
             query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
         elif user_type_name.upper() == 'FUNCTIONAL HEAD':
             query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
-                           Status.status_name.upper() != 'DRAFTED' ,  
-                             Status.status_name.upper() != 'PENDING FOR ACTION'  )
+                           func.upper(Status.status_name) != 'DRAFTED' ,  
+                             func.upper(Status.status_name) != 'PENDING FOR ACTION'  )
         elif user_type_name.upper() == 'RISK MANAGER':
             query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1)
         elif user_type_name.upper() == 'RISK HEAD':
