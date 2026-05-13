@@ -4,6 +4,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 import pandas as pd
 import io
+from sqlalchemy import or_
 
 import math
 from openpyxl.styles import PatternFill, Alignment,Font
@@ -518,18 +519,76 @@ def get_risk_by_dept(db, dept_id,current_user):
                 
         #query = query.filter(RiskRegister.is_deleted == 0)
         
+        # if user_type_name.upper() == 'RISK OWNER':
+        #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
+        # elif user_type_name.upper() == 'FUNCTIONAL HEAD':
+        #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
+        #                    func.upper(Status.status_name) != 'DRAFTED' ,  
+        #                      func.upper(Status.status_name) != 'PENDING FOR ACTION'  )
+        # elif user_type_name.upper() == 'RISK MANAGER':
+        #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1 and RiskRegister.risk_manager_approval_status != -1)
+        # elif user_type_name.upper() == 'RISK HEAD':
+        #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_manager_approval_status == 1 and RiskRegister.risk_head_approval_status != -1)
+        # else:
+        #     query = query.filter(RiskRegister.is_deleted == 0)
+        
         if user_type_name.upper() == 'RISK OWNER':
-            query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
+
+            query = query.filter(
+                RiskRegister.is_deleted == 0,
+                RiskRegister.dept_id == dept_id_cur_user
+            )
+
         elif user_type_name.upper() == 'FUNCTIONAL HEAD':
-            query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
-                           func.upper(Status.status_name) != 'DRAFTED' ,  
-                             func.upper(Status.status_name) != 'PENDING FOR ACTION'  )
+
+            query = query.filter(
+                RiskRegister.is_deleted == 0,
+                RiskRegister.dept_id == dept_id_cur_user,
+
+                func.upper(Status.status_name) != 'DRAFTED',
+
+                # functional head rejected should not see again
+                or_(
+                    RiskRegister.risk_function_head_approval_status.is_(None),
+                    RiskRegister.risk_function_head_approval_status != -1
+                )
+            )
+
         elif user_type_name.upper() == 'RISK MANAGER':
-            query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1)
+
+            query = query.filter(
+                RiskRegister.is_deleted == 0,
+
+                # FH approved
+                RiskRegister.risk_function_head_approval_status == 1,
+
+                # RM rejected should not see again
+                or_(
+                    RiskRegister.risk_manager_approval_status.is_(None),
+                    RiskRegister.risk_manager_approval_status != -1
+                )
+            )
+
         elif user_type_name.upper() == 'RISK HEAD':
-            query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_manager_approval_status == 1)
+
+            query = query.filter(
+                RiskRegister.is_deleted == 0,
+
+                # RM approved
+                RiskRegister.risk_manager_approval_status == 1,
+
+                # RH rejected should not see again
+                or_(
+                    RiskRegister.risk_head_approval_status.is_(None),
+                    RiskRegister.risk_head_approval_status != -1
+                )
+            )
+
         else:
-            query = query.filter(RiskRegister.is_deleted == 0)
+
+            query = query.filter(
+                RiskRegister.is_deleted == 0
+            )
 
         if dept_id:
             query = query.filter( RiskRegister.dept_id == dept_id )
