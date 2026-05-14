@@ -4,7 +4,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy import func
 import pandas as pd
 import io
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 import math
 from openpyxl.styles import PatternFill, Alignment,Font
@@ -532,6 +532,26 @@ def get_risk_by_dept(db, dept_id,current_user):
         # else:
         #     query = query.filter(RiskRegister.is_deleted == 0)
         
+        no_rejection_condition = and_(
+
+            or_(
+                RiskRegister.risk_function_head_approval_status.is_(None),
+                RiskRegister.risk_function_head_approval_status != -1
+            ),
+
+            or_(
+                RiskRegister.risk_manager_approval_status.is_(None),
+                RiskRegister.risk_manager_approval_status != -1
+            ),
+
+            or_(
+                RiskRegister.risk_head_approval_status.is_(None),
+                RiskRegister.risk_head_approval_status != -1
+            )
+        )
+        
+        # ---------------- ROLE FILTER ----------------
+
         if user_type_name.upper() == 'RISK OWNER':
 
             query = query.filter(
@@ -543,15 +563,12 @@ def get_risk_by_dept(db, dept_id,current_user):
 
             query = query.filter(
                 RiskRegister.is_deleted == 0,
+
                 RiskRegister.dept_id == dept_id_cur_user,
 
                 func.upper(Status.status_name) != 'DRAFTED',
 
-                # functional head rejected should not see again
-                or_(
-                    RiskRegister.risk_function_head_approval_status.is_(None),
-                    RiskRegister.risk_function_head_approval_status != -1
-                )
+                no_rejection_condition
             )
 
         elif user_type_name.upper() == 'RISK MANAGER':
@@ -562,11 +579,7 @@ def get_risk_by_dept(db, dept_id,current_user):
                 # FH approved
                 RiskRegister.risk_function_head_approval_status == 1,
 
-                # RM rejected should not see again
-                or_(
-                    RiskRegister.risk_manager_approval_status.is_(None),
-                    RiskRegister.risk_manager_approval_status != -1
-                )
+                no_rejection_condition
             )
 
         elif user_type_name.upper() == 'RISK HEAD':
@@ -577,11 +590,7 @@ def get_risk_by_dept(db, dept_id,current_user):
                 # RM approved
                 RiskRegister.risk_manager_approval_status == 1,
 
-                # RH rejected should not see again
-                or_(
-                    RiskRegister.risk_head_approval_status.is_(None),
-                    RiskRegister.risk_head_approval_status != -1
-                )
+                no_rejection_condition
             )
 
         else:
