@@ -37,6 +37,7 @@ def build_history_response(row):
 
         "risk_register_id": row.risk_register_id,
         "risk_id": row.risk_id,
+        "risk_name": row.risk_name,
 
         "risk_status": row.risk_status,
 
