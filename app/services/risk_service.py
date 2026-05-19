@@ -88,7 +88,7 @@ def create_update_risk(db: Session, data, current_user):
         treatments = data.risk_treatments or []
         
         pending_for_action = get_status_id(db,"Pending for Action")
-        opened_status = get_status_id(db,"Opened")
+        opened_status = get_status_id(db,"Open")
 
         # CREATE OR UPDATE RISK REGISTER
 
@@ -534,7 +534,7 @@ def get_risk_by_dept(db, dept_id,current_user):
         #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
         # elif user_type_name.upper() == 'FUNCTIONAL HEAD':
         #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
-        #                    func.upper(Status.status_name) != 'DRAFTED' ,  
+        #                    func.upper(Status.status_name) != 'DRAFT' ,  
         #                      func.upper(Status.status_name) != 'PENDING FOR ACTION'  )
         # elif user_type_name.upper() == 'RISK MANAGER':
         #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1 and RiskRegister.risk_manager_approval_status != -1)
@@ -577,7 +577,7 @@ def get_risk_by_dept(db, dept_id,current_user):
 
                 RiskRegister.dept_id == dept_id_cur_user,
 
-                func.upper(Status.status_name) != 'DRAFTED',
+                func.upper(Status.status_name) != 'DRAFT',
 
                 no_rejection_condition
             )
@@ -803,7 +803,7 @@ def get_risk_by_risk_id(db, risk_id):
             risk_head = rr.risk_head_approval_status
             risk_manager = rr.risk_manager_approval_status
 
-            if  rr.status and rr.status.status_name == 'Drafted' or rr.status and rr.status.status_name == 'Pending for Action':
+            if  rr.status and rr.status.status_name == 'Draft' or rr.status and rr.status.status_name == 'Pending for Action':
                 final_status = rr.status.status_name
             else:
                 if functional_head == 1 and risk_head == 1 and risk_manager == 1:

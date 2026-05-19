@@ -6,11 +6,11 @@ class RiskDashboardSummaryResponse(BaseModel):
     year: int
     total: int
     New: int
-    opened: int  
+    open: int  
     in_progress: int
-    Closed: int
+    Close: int
     Pending: int
-    completed: int  
+    complet: int  
     approved: int   
     rejected: int   
     
