@@ -504,6 +504,17 @@ def get_risk_by_id(db, id):
 #----------
 def get_risk_by_dept(db, dept_id,current_user):  
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    
+    def get_approval_status_name(status):
+
+        status_map = {
+            1: "Approved",
+            -1: "Rejected",
+            None: "Pending"
+        }
+
+        return status_map.get(status, "Pending")
+    
     try:
         dept_id_cur_user = current_user['dept_id']
         user_type_name = current_user['user_type_name']
@@ -618,6 +629,26 @@ def get_risk_by_dept(db, dept_id,current_user):
             risk_status_name = None
             if rr.status:
                 risk_status_name = rr.status.status_name
+                
+            # APPROVAL STATUS NAMES
+
+            function_head_approval_status_name = (
+                get_approval_status_name(
+                    rr.risk_function_head_approval_status
+                )
+            )
+
+            risk_manager_approval_status_name = (
+                get_approval_status_name(
+                    rr.risk_manager_approval_status
+                )
+            )
+
+            risk_head_approval_status_name = (
+                get_approval_status_name(
+                    rr.risk_head_approval_status
+                )
+            )
 
             likelihood = None
             impact = None
@@ -656,7 +687,16 @@ def get_risk_by_dept(db, dept_id,current_user):
                 "current_color_str": current_color_str,
                 "current_color_code" : current_color_code,
                 "risk_owner_name" : risk_owner_name,
-                "risk_status_name" : risk_status_name
+                "risk_status_name" : risk_status_name,
+                
+                "function_head_approval_status_name":
+                    function_head_approval_status_name,
+
+                "risk_manager_approval_status_name":
+                    risk_manager_approval_status_name,
+
+                "risk_head_approval_status_name":
+                    risk_head_approval_status_name
             })
 
         return result

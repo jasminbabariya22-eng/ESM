@@ -168,15 +168,6 @@ def send_function_head_approval_email(db: Session, risk_register_id: int):
 
     create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_function_head_approval_by)
     
-    # print("RISK ID:", risk.risk_register_id)
-
-    # print("OWNER EMAILS:", owner)
-
-    # print("RM EMAILS:", rm)
-
-    # print("RH EMAILS:", rh)
-
-    # print("FINAL TO EMAILS:", to_emails)
 
 
 # EVENT 3: RISK MANAGER ACTION
