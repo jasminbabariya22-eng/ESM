@@ -72,6 +72,25 @@ def get_status_id(db: Session, status_name: str):
 
     return status.id
 
+
+def reset_risk_approvals(risk):
+    risk.risk_function_head_approval_status = None
+    risk.risk_function_head_approval_remark = None
+    risk.risk_function_head_approval_by = None
+    risk.risk_function_head_approval_on = None
+
+    risk.risk_manager_approval_status = None
+    risk.risk_manager_approval_remark = None
+    risk.risk_manager_approval_by = None
+    risk.risk_manager_approved_on = None
+
+    risk.risk_head_approval_status = None
+    risk.risk_head_approval_remark = None
+    risk.risk_head_approval_by = None
+    risk.risk_head_approved_on = None
+
+    return risk
+
 # ---------
 # CREATE OR UPDATE RISK
 # ---------
@@ -150,6 +169,8 @@ def create_update_risk(db: Session, data, current_user):
 
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
+            
+        reset_risk_approvals(risk)
 
 
         # HISTORY - RISK REGISTER
@@ -226,6 +247,8 @@ def create_update_risk(db: Session, data, current_user):
 
                 description.modified_by = current_user["id"]
                 description.modified_on = datetime.now(timezone.utc)
+                
+                reset_risk_approvals(risk)
 
 
             # HISTORY DESCRIPTION
@@ -257,6 +280,9 @@ def create_update_risk(db: Session, data, current_user):
         if description is not None:
 
             if desc_data and to_int(desc_data.risk_description_id) > 0:
+                
+                reset_risk_approvals(risk)
+                
                 db.query(RiskTreatment).filter(
                     RiskTreatment.risk_description_id == description.risk_description_id
                 ).delete()
@@ -331,6 +357,7 @@ def create_update_risk(db: Session, data, current_user):
     except Exception as e:
         db.rollback()
         raise e
+
 
 
 # Risk get by User (Optinal API)
@@ -577,7 +604,7 @@ def get_risk_by_dept(db, dept_id,current_user):
 
                 RiskRegister.dept_id == dept_id_cur_user,
 
-                func.upper(Status.status_name) != 'DRAFT',
+                func.upper(Status.status_name) != 'DRAFT', func.upper(Status.status_name) != 'PENDING FOR ACTION',
 
                 no_rejection_condition
             )

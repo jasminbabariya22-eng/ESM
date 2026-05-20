@@ -18,9 +18,9 @@ def get_dashboard_summary_service(db: Session, start_date: datetime, end_date: d
         func.count().filter(Status.status_name == "New").label("New"),
         func.count().filter(Status.status_name == "Open").label("Open"),  
         func.count().filter(Status.status_name == "In Progress").label("in_progress"),
-        func.count().filter(Status.status_name == "Closed").label("Closed"),
+        func.count().filter(Status.status_name == "Close").label("Close"),
         func.count().filter(Status.status_name == "Pending").label("Pending"),
-        func.count().filter(Status.status_name == "Completed").label("Completed"),  
+        func.count().filter(Status.status_name == "Complete").label("Complete"),  
         func.count().filter(Status.status_name == "Approved").label("Approved"),  
         func.count().filter(Status.status_name == "Rejected").label("Rejected")  
     ).join(
@@ -38,10 +38,10 @@ def get_dashboard_summary_service(db: Session, start_date: datetime, end_date: d
         "total": result.total or 0,
         "New": result.New or 0,
         "Open": result.Open or 0,  
-        "Closed": result.Closed or 0,
+        "Close": result.Close or 0,
         "in_progress": result.in_progress or 0,
         "Pending": result.Pending or 0,
-        "Completed": result.Completed or 0,  
+        "Complete": result.Complete or 0,  
         "Approved": result.Approved or 0,  
         "Rejected": result.Rejected or 0  
     }
