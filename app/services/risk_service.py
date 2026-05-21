@@ -52,7 +52,8 @@ def to_float(val):
 
 
 def to_datetime(val):
-    from datetime import datetime
+#     from datetime import datetime
+# from sqlalchemy import desc
     return datetime.fromisoformat(val) if val not in [None, ""] else None
 
 
@@ -142,21 +143,21 @@ def create_update_risk(db: Session, data, current_user):
             if not risk:
                 raise ValueError("RiskRegister not found")
             
-            if risk.risk_status == pending_for_action and to_int(register_data.risk_status) == opened_status:
-                risk.risk_head_approval_by = None
-                risk.risk_head_approval_remark = None
-                risk.risk_head_approval_status = None
-                risk.risk_head_approved_on = None
+            # if risk.risk_status == pending_for_action and to_int(register_data.risk_status) == opened_status:
+            #     risk.risk_head_approval_by = None
+            #     risk.risk_head_approval_remark = None
+            #     risk.risk_head_approval_status = None
+            #     risk.risk_head_approved_on = None
 
-                risk.risk_manager_approval_by = None
-                risk.risk_manager_approval_remark = None
-                risk.risk_manager_approval_status = None
-                risk.risk_manager_approved_on = None
+            #     risk.risk_manager_approval_by = None
+            #     risk.risk_manager_approval_remark = None
+            #     risk.risk_manager_approval_status = None
+            #     risk.risk_manager_approved_on = None
 
-                risk.function_head_status= None
-                risk.risk_function_head_approval_by = None
-                risk.risk_function_head_approval_on = None
-                risk.risk_function_head_approval_remark = None
+            #     risk.function_head_status= None
+            #     risk.risk_function_head_approval_by = None
+            #     risk.risk_function_head_approval_on = None
+            #     risk.risk_function_head_approval_remark = None
             
 
             risk.risk_name = register_data.risk_name
@@ -170,7 +171,7 @@ def create_update_risk(db: Session, data, current_user):
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
             
-        reset_risk_approvals(risk)
+        #reset_risk_approvals(risk)
 
 
         # HISTORY - RISK REGISTER
@@ -248,7 +249,7 @@ def create_update_risk(db: Session, data, current_user):
                 description.modified_by = current_user["id"]
                 description.modified_on = datetime.now(timezone.utc)
                 
-                reset_risk_approvals(risk)
+                # reset_risk_approvals(risk)
 
 
             # HISTORY DESCRIPTION
@@ -281,7 +282,7 @@ def create_update_risk(db: Session, data, current_user):
 
             if desc_data and to_int(desc_data.risk_description_id) > 0:
                 
-                reset_risk_approvals(risk)
+                # #reset_risk_approvals(risk)
                 
                 db.query(RiskTreatment).filter(
                     RiskTreatment.risk_description_id == description.risk_description_id
@@ -537,10 +538,10 @@ def get_risk_by_dept(db, dept_id,current_user):
         status_map = {
             1: "Approved",
             -1: "Rejected",
-            None: "Pending"
+            None: " "
         }
 
-        return status_map.get(status, "Pending")
+        return status_map.get(status, " ")
     
     try:
         dept_id_cur_user = current_user['dept_id']
@@ -658,22 +659,30 @@ def get_risk_by_dept(db, dept_id,current_user):
                 risk_status_name = rr.status.status_name
                 
             # APPROVAL STATUS NAMES
-
+            # read status from risk history table last entry
+            risk_id_tmp = rr.risk_register_id
+            risk_history = (
+                db.query(RiskRegisterHist)
+                .filter(RiskRegisterHist.risk_register_id == risk_id_tmp)
+                .order_by((RiskRegisterHist.risk_register_id).desc())
+                .first()
+            )
+            
             function_head_approval_status_name = (
                 get_approval_status_name(
-                    rr.risk_function_head_approval_status
+                    risk_history.risk_function_head_approval_status
                 )
             )
 
             risk_manager_approval_status_name = (
                 get_approval_status_name(
-                    rr.risk_manager_approval_status
+                    risk_history.risk_manager_approval_status
                 )
             )
 
             risk_head_approval_status_name = (
                 get_approval_status_name(
-                    rr.risk_head_approval_status
+                    risk_history.risk_head_approval_status
                 )
             )
 
@@ -847,7 +856,11 @@ def get_risk_by_risk_id(db, risk_id):
             # ---------- Risk Descriptions ----------
             risk_desc_list = []
 
-            for rd in rr.risk_descriptions:
+            # for rd in rr.risk_descriptions:
+            for rd in sorted(
+                rr.risk_descriptions,
+                key=lambda x: x.risk_description_id
+            ):
 
                 likelihood = rd.inherent_risk_likelihood_id
                 impact = rd.inherent_risk_impact_id
@@ -871,7 +884,11 @@ def get_risk_by_risk_id(db, risk_id):
                 # ---------- Treatments ----------
                 treatments_list = []
 
-                for rt in rd.treatments:
+                # for rt in rd.treatments:
+                for rt in sorted(
+                    rd.treatments,
+                    key=lambda x: x.risk_treatment_id
+                ):
                     treatments_list.append({
                         **to_dict(rt),
                         "risk_owner_name": rt.action_owner.log_id if rt.action_owner else None,
@@ -984,7 +1001,11 @@ def get_risk_by_description_id(db, description_id):
 
         result = []
 
-        for rd in descriptions:
+        # for rd in descriptions:
+        for rd in sorted(
+            descriptions,
+            key=lambda x: x.risk_description_id
+        ):
 
             likelihood = rd.inherent_risk_likelihood_id
             impact = rd.inherent_risk_impact_id
@@ -1007,7 +1028,12 @@ def get_risk_by_description_id(db, description_id):
             # Treatments
             treatments_list = []
 
-            for rt in rd.treatments:
+            # for rt in rd.treatments:
+            for rt in sorted(
+                rd.treatments,
+                key=lambda x: x.risk_treatment_id
+            ):
+            
                 treatments_list.append({
                     **to_dict(rt),
                     "action_owner_name": (

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from app.models.risk_register import RiskRegister
 from app.models.mst_status import Status
 from app.models.risk_register_hist import RiskRegisterHist
+from app.services.risk_service import reset_risk_approvals
 
 from app.services.email_event_service import (
     send_function_head_approval_email,
@@ -110,7 +111,7 @@ def approve_risk(db, data, user_id):
     if -1 in approvals:
         risk.risk_status = pending_id
         risk_status_name = "Pending for Action"
-
+        reset_risk_approvals(risk)
     else:
 
         current_status = db.query(Status).filter(
