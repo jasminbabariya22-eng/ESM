@@ -106,6 +106,7 @@ def create_update_risk(db: Session, data, current_user):
         register_data = data.risk_register
         desc_data = data.risk_description
         treatments = data.risk_treatments or []
+        user_type_name = current_user['user_type_name']
         
         pending_for_action = get_status_id(db,"Pending for Action")
         opened_status = get_status_id(db,"Open")
@@ -143,21 +144,21 @@ def create_update_risk(db: Session, data, current_user):
             if not risk:
                 raise ValueError("RiskRegister not found")
             
-            # if risk.risk_status == pending_for_action and to_int(register_data.risk_status) == opened_status:
-            #     risk.risk_head_approval_by = None
-            #     risk.risk_head_approval_remark = None
-            #     risk.risk_head_approval_status = None
-            #     risk.risk_head_approved_on = None
+            if user_type_name.upper() == 'RISK OWNER':
+                risk.risk_head_approval_by = None
+                risk.risk_head_approval_remark = None
+                risk.risk_head_approval_status = None
+                risk.risk_head_approved_on = None
 
-            #     risk.risk_manager_approval_by = None
-            #     risk.risk_manager_approval_remark = None
-            #     risk.risk_manager_approval_status = None
-            #     risk.risk_manager_approved_on = None
+                risk.risk_manager_approval_by = None
+                risk.risk_manager_approval_remark = None
+                risk.risk_manager_approval_status = None
+                risk.risk_manager_approved_on = None
 
-            #     risk.function_head_status= None
-            #     risk.risk_function_head_approval_by = None
-            #     risk.risk_function_head_approval_on = None
-            #     risk.risk_function_head_approval_remark = None
+                risk.function_head_status= None
+                risk.risk_function_head_approval_by = None
+                risk.risk_function_head_approval_on = None
+                risk.risk_function_head_approval_remark = None
             
 
             risk.risk_name = register_data.risk_name
@@ -431,6 +432,41 @@ def get_color(score):
         return "#FF9800"
     else:
         return "#F44336"
+        
+COLOR_MAP = {
+    "1A": "#008000",  # Green
+    "2A": "#008000",
+    "3A": "#008000",
+    "1B": "#008000",
+    "2B": "#008000",
+
+    "4A": "#90EE90",  # Light Green
+    "5A": "#90EE90",
+    "3B": "#90EE90",
+    "1C": "#90EE90",
+    "2C": "#90EE90",
+
+    "4B": "#FFFF00",  # Yellow
+    "5B": "#FFFF00",
+    "3C": "#FFFF00",
+    "1D": "#FFFF00",
+    "2D": "#FFFF00",
+
+    "4C": "#FFA500",  # Orange
+    "5C": "#FFA500",
+    "3D": "#FFA500",
+    "1E": "#FFA500",
+    "2E": "#FFA500",
+
+    "4D": "#FF0000",  # Red
+    "5D": "#FF0000",
+    "3E": "#FF0000",
+    "4E": "#FF0000",
+    "5E": "#FF0000",
+}
+
+def get_color_code(code: str) -> str:
+    return COLOR_MAP.get(code.upper().strip(), "#FFFFFF")  # Default White
 
 
 #-----------
@@ -504,10 +540,12 @@ def get_risk_by_id(db, id):
             current_color_code = None
 
             if likelihood and impact:
-                inherent_color_str = get_color(likelihood*impact)
+                #inherent_color_str = get_color(likelihood*impact)
                 inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
-                current_color_str = get_color(current_likelihood*current_impact)
+                inherent_color_str = get_color_code(inherent_color_code)
+                #current_color_str = get_color(current_likelihood*current_impact)
                 current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+                current_color_str = get_color_code(current_color_code)
 
             result.append({
                 **to_dict(rr),
@@ -659,30 +697,31 @@ def get_risk_by_dept(db, dept_id,current_user):
                 risk_status_name = rr.status.status_name
                 
             # APPROVAL STATUS NAMES
-            # read status from risk history table last entry
-            risk_id_tmp = rr.risk_register_id
-            risk_history = (
-                db.query(RiskRegisterHist)
-                .filter(RiskRegisterHist.risk_register_id == risk_id_tmp)
-                .order_by((RiskRegisterHist.risk_register_id).desc())
-                .first()
-            )
+            # # read status from risk history table last entry
+            #risk_id_tmp = rr.risk_register_id
+            #risk_history = (
+            #    db.query(RiskRegisterHist)
+            #    .filter(RiskRegisterHist.risk_register_id == risk_id_tmp,
+            #            RiskRegisterHist.modified_on.isnot(None))
+            #    .order_by((RiskRegisterHist.modified_on).desc())
+            #    .first()
+            #)
             
             function_head_approval_status_name = (
                 get_approval_status_name(
-                    risk_history.risk_function_head_approval_status
+                    rr.risk_function_head_approval_status
                 )
             )
 
             risk_manager_approval_status_name = (
                 get_approval_status_name(
-                    risk_history.risk_manager_approval_status
+                    rr.risk_manager_approval_status
                 )
             )
 
             risk_head_approval_status_name = (
                 get_approval_status_name(
-                    risk_history.risk_head_approval_status
+                    rr.risk_head_approval_status
                 )
             )
 
@@ -708,12 +747,14 @@ def get_risk_by_dept(db, dept_id,current_user):
 
 
                 if likelihood and impact:
-                    inherent_color_str = get_color(likelihood*impact)
+                    #inherent_color_str = get_color(likelihood*impact)
                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+                    inherent_color_str = get_color_code(inherent_color_code)
 
                 if current_likelihood and current_impact:
-                    current_color_str = get_color(current_likelihood*current_impact)
+                    #current_color_str = get_color(current_likelihood*current_impact)
                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+                    current_color_str = get_color_code(current_color_code)
 
             result.append({
                 **to_dict(rr),
@@ -873,12 +914,14 @@ def get_risk_by_risk_id(db, risk_id):
                 current_color_code = None
 
                 if likelihood and impact:
-                    inherent_color_str = get_color(likelihood * impact)
+                    #inherent_color_str = get_color(likelihood * impact)
                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+                    inherent_color_str = get_color_code(inherent_color_code)
 
                 if current_likelihood and current_impact:
-                    current_color_str = get_color(current_likelihood * current_impact)
+                    #current_color_str = get_color(current_likelihood * current_impact)
                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+                    current_color_str = get_color_code(current_color_code)
 
 
                 # ---------- Treatments ----------
@@ -1018,12 +1061,14 @@ def get_risk_by_description_id(db, description_id):
             current_color_code = None
 
             if likelihood and impact:
-                inherent_color_str = get_color(likelihood * impact)
+                #inherent_color_str = get_color(likelihood * impact)
                 inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+                inherent_color_str = get_color_code(inherent_color_code)
 
             if current_likelihood and current_impact:
-                current_color_str = get_color(current_likelihood * current_impact)
+                #current_color_str = get_color(current_likelihood * current_impact)
                 current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+                current_color_str = get_color_code(current_color_code)
 
             # Treatments
             treatments_list = []
@@ -1106,15 +1151,17 @@ def get_risk_data_excel(db, dept_id):
 
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
 
-    green_value = {"1A", "2A", "3A", "1B", "2B","1C"}
-    yellow_value = {"4A", "5A", "3B", "3C", "2D","2C","1D","1E"}
-    amber_value = {"2E", "3E", "3D", "4C", "4B","5B"}
-    red_value = {"4E", "5E", "4D", "5D", "5C"}
+    green_value = {"1A", "2A", "3A", "1B", "2B"}
+    light_green_value = {"1C","2C", "3B","4A","5A"}
+    yellow_value = {"4B", "5B", "3C", "2D","1D"}
+    amber_value = {"1E", "2E", "3D", "4C", "5C"}
+    red_value = {"3E","4E", "5E", "4D", "5D"}
 
-    green_fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
-    yellow_fill = PatternFill(start_color="FFEB3B", end_color="FFEB3B", fill_type="solid")
-    amber_fill = PatternFill(start_color="FF9800", end_color="FF9800", fill_type="solid")
-    red_fill = PatternFill(start_color="F44336", end_color="F44336", fill_type="solid")
+    green_fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    amber_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+    light_green_fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
 
     try:
 
@@ -1254,6 +1301,8 @@ def get_risk_data_excel(db, dept_id):
                         cell_d.fill = yellow_fill
                     elif cell_d.value in red_value:
                         cell_d.fill = red_fill
+                    elif cell_d.value in light_green_value:
+                        cell_d.fill = light_green_fill
 
                     if cell_f.value in green_value:
                         cell_f.fill = green_fill
@@ -1263,6 +1312,8 @@ def get_risk_data_excel(db, dept_id):
                         cell_f.fill = yellow_fill
                     elif cell_f.value in red_value:
                         cell_f.fill = red_fill
+                    elif cell_f.value in light_green_value:
+                        cell_f.fill = light_green_fill
 
                 # Column Width
                 column_widths = {
@@ -1357,7 +1408,7 @@ def get_risk_data_excel(db, dept_id):
 
     except Exception as e:
         raise e
-    
+        
     
     
 # def get_risk_data_excel_previous(db,dept_id):

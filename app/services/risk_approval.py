@@ -111,7 +111,6 @@ def approve_risk(db, data, user_id):
     if -1 in approvals:
         risk.risk_status = pending_id
         risk_status_name = "Pending for Action"
-        reset_risk_approvals(risk)
     else:
 
         current_status = db.query(Status).filter(
@@ -198,6 +197,10 @@ def approve_risk(db, data, user_id):
     )
 
     db.add(hist)
+    
+    #reset approval
+    #if -1 in approvals:
+    #    reset_risk_approvals(risk)
 
     # ---------------- EMAIL JOB INSERT ----------------
 
