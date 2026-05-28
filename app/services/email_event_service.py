@@ -19,9 +19,9 @@ def get_emails_by_user_ids(db, user_ids):
         print("No user IDs")
         return []
 
-    result = db.execute(text("""
+    result = db.execute(text(f"""
         SELECT email
-        FROM ers.mst_users
+        FROM {SCHEMA}.mst_users
         WHERE id = ANY(:ids)
         AND is_deleted = 0
     """), {"ids": user_ids}).fetchall()
@@ -34,9 +34,9 @@ def get_emails_by_user_ids(db, user_ids):
 
 
 # def get_department_head(db, dept_id):
-#     result = db.execute(text("""
+#     result = db.execute(text(f"""
 #         SELECT head_id
-#         FROM mst_department
+#         FROM {SCHEMA}.mst_department
 #         WHERE id = :id
 #     """), {"id": dept_id}).fetchone()
 
@@ -45,10 +45,10 @@ def get_emails_by_user_ids(db, user_ids):
 
 # ROLE BASED (BY NAME FROM DB)
 def get_users_by_role_name(db, role_name):
-    result = db.execute(text("""
+    result = db.execute(text(f"""
         SELECT u.email
-        FROM ers.mst_users u
-        JOIN ers.mst_user_role r ON r.id = u.role_id
+        FROM {SCHEMA}.mst_users u
+        JOIN {SCHEMA}.mst_user_role r ON r.id = u.role_id
         WHERE r.name = :role_name
         AND u.is_deleted = 0
         AND r.is_deleted = 0

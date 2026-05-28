@@ -4,14 +4,16 @@ from email.mime.multipart import MIMEMultipart
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import traceback
+from app.core.config import settings
 
+SCHEMA = settings.DB_SCHEMA
 
 # function do the actual email sending using the email server details and job details, returns True if email sent successfully, otherwise False
 def send_email(db: Session, job):
 
-    server = db.execute(text("""
+    server = db.execute(text(f"""
         SELECT *
-        FROM ers.email_server
+        FROM {SCHEMA}.email_server
         WHERE email_server_id = :id
         AND is_deleted = 0
     """), {"id": job.email_server_id}).fetchone()
