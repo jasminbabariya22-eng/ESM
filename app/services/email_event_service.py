@@ -19,12 +19,15 @@ def get_emails_by_user_ids(db, user_ids):
         print("No user IDs")
         return []
 
-    result = db.execute(text(f"""
-        SELECT email
-        FROM {SCHEMA}.mst_users
-        WHERE id = ANY(:ids)
-        AND is_deleted = 0
-    """), {"ids": user_ids}).fetchall()
+    result = db.execute(
+        text(f"""
+            SELECT email
+            FROM {SCHEMA}.mst_users
+            WHERE id = ANY(:ids)
+            AND is_deleted = 0
+            """),
+            {"ids": user_ids}
+    ).fetchall()
 
     emails = [r.email for r in result if r.email]
 
@@ -34,9 +37,9 @@ def get_emails_by_user_ids(db, user_ids):
 
 
 # def get_department_head(db, dept_id):
-#     result = db.execute(text(f"""
+#     result = db.execute(text("""
 #         SELECT head_id
-#         FROM {SCHEMA}.mst_department
+#         FROM mst_department
 #         WHERE id = :id
 #     """), {"id": dept_id}).fetchone()
 

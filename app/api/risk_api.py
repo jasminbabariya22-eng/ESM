@@ -11,7 +11,7 @@ from app.schemas.risk_schema import RiskSaveRequest
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id,get_risk_data_excel, get_followups_by_reference_id, get_risk_by_id
+from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id,get_risk_data_excel, get_followups_by_reference_id, get_risk_by_id, get_last_risk_statusbyid
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -240,5 +240,24 @@ def get_reference_by_reference_id(
         
         return success_response(data=reference)
     
+    except Exception as e:
+        return error_response(message=str(e),status_code=400)
+
+# -----------------------------
+# GET BY DEPARTMENT ID
+# -----------------------------
+
+@router.get("/get_last_risk_status")
+def get_last_risk_status(
+    
+    risk_id: int,
+    db: Session = Depends(get_db)
+):
+
+    try:
+
+        risks = get_last_risk_statusbyid(db, risk_id)
+
+        return success_response(data=risks)
     except Exception as e:
         return error_response(message=str(e),status_code=400)

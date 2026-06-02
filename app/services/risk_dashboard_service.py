@@ -159,7 +159,7 @@ def department_wise_progress(db: Session, start_date, end_date):
         }
         for row in results
     ]
-
+    
     
 # Dept wise stacked Bar Chart for Status
 

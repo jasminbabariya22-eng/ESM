@@ -49,7 +49,7 @@ def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
 def get_departments(db: Session = Depends(get_db)):
     
     try:
-        departments = db.query(Department).filter(Department.is_deleted == 0).order_by(Department.id.asc()).all()
+        departments = db.query(Department).filter(Department.is_deleted == 0).order_by(Department.dept_name.asc()).all()
         response = []
 
         for dept in departments:

@@ -100,9 +100,21 @@ def parse_progress_range(value: str):
 # formula :- Average of all the lower values and average of all the upper values from the followups linked to that treatment.
 
 def update_risk_progress_from_followup(db, treatment_id: int):
+    # ---------------- Treatment ----------------
+    treatment = db.query(RiskTreatment).filter(
+        RiskTreatment.risk_treatment_id == treatment_id
+    ).first()
+
+    if not treatment:
+        return
+
+
     # Fetch only required column (optimized)
-    followups = db.query(RiskActionFollowup.progress).filter(
-        RiskActionFollowup.reference_id == treatment_id
+    # followups = db.query(RiskActionFollowup.progress).filter(
+    #     RiskActionFollowup.reference_id == treatment_id
+    # ).all()
+    followups = db.query(RiskTreatment.progress).filter(
+        RiskTreatment.risk_register_id == treatment.risk_register_id
     ).all()
 
     if not followups:
@@ -127,17 +139,14 @@ def update_risk_progress_from_followup(db, treatment_id: int):
     avg_lower = sum(lower_values) / len(lower_values)
     avg_upper = sum(upper_values) / len(upper_values)
 
-    final_progress_range = f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
+    if avg_lower == 100.0 or avg_upper == 100.0:
+        final_progress_range = "100%"
+    else:
+        final_progress_range = f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
 
-    # ---------------- Treatment ----------------
-    treatment = db.query(RiskTreatment).filter(
-        RiskTreatment.risk_treatment_id == treatment_id
-    ).first()
-
-    if not treatment:
-        return
-
-    treatment.progress = final_progress_range
+    
+    #no need to update in teartment table
+    #treatment.progress = final_progress_range
 
     # ---------------- Risk ----------------
     risk = db.query(RiskRegister).filter(
@@ -251,6 +260,9 @@ async def create_followup(
 
         if not treatment:
             return error_response("Invalid reference_id (must be treatment_id)", 400)
+        
+        treatment.progress = progress
+        treatment.action_status_id = status
 
         followup = RiskActionFollowup(
             reference_id=reference_id,

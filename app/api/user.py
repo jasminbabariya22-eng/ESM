@@ -208,7 +208,11 @@ def update_user(
 def get_users(db: Session = Depends(get_db)):
     
     try:
-        users = db.query(User).filter(User.is_deleted == 0).all()
+        users = (db.query(User)
+                 .join(UserType, User.user_type_id == UserType.id)
+                 .filter(UserType.name != 'Admin',User.is_deleted == 0)
+                 .order_by(User.first_name)
+                 ).all()
 
         response = []
 
@@ -262,6 +266,7 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
             .filter(
                 User.dept_id == dept_id,
                 UserType.name != 'Functional Head',
+                UserType.name != 'Admin',
                 User.is_deleted == 0)
             ).all()
 

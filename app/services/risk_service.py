@@ -564,15 +564,9 @@ def get_risk_by_id(db, id):
     except Exception as e:
         raise e
     
-    
-#-----------
-# Risk LIST from Department id
-#----------
-def get_risk_by_dept(db, dept_id,current_user):  
-    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
-    
-    def get_approval_status_name(status):
 
+def get_approval_status_name(status):
+    
         status_map = {
             1: "Approved",
             -1: "Rejected",
@@ -580,6 +574,14 @@ def get_risk_by_dept(db, dept_id,current_user):
         }
 
         return status_map.get(status, " ")
+
+#-----------
+# Risk LIST from Department id
+#----------
+def get_risk_by_dept(db, dept_id,current_user):  
+    impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    
+    
     
     try:
         dept_id_cur_user = current_user['dept_id']
@@ -1685,3 +1687,81 @@ def get_followups_by_reference_id(db, reference_id):
 
     except Exception as e:
         raise e
+    
+def get_last_risk_statusbyid(db, risk_id):
+        try:
+            #Read Risk register based on risk_register_id
+            # If all approval done than no need to read history
+            risk_register = (
+                db.query(RiskRegister)
+                .filter(
+                    RiskRegister.risk_register_id == risk_id,
+                    RiskRegister.risk_function_head_approval_status == 1,
+                    RiskRegister.risk_manager_approval_status == 1,
+                    RiskRegister.risk_head_approval_status == 1
+                )
+                .all()
+            )
+            data = []
+            if risk_register:
+                return data
+                
+            # APPROVAL STATUS NAMES
+            # # read status from risk history table last entry
+            risk_history = (
+                db.query(RiskRegisterHist)
+                .filter(
+                    RiskRegisterHist.risk_register_id == risk_id,
+                    RiskRegisterHist.modified_on.isnot(None),
+                    or_(
+                        RiskRegisterHist.risk_function_head_approval_status.isnot(None),
+                        RiskRegisterHist.risk_manager_approval_status.isnot(None),
+                        RiskRegisterHist.risk_head_approval_status.isnot(None)
+                    ),
+                    or_(
+                        RiskRegisterHist.risk_function_head_approval_status == -1,
+                        RiskRegisterHist.risk_manager_approval_status == -1,
+                        RiskRegisterHist.risk_head_approval_status == -1
+                    )
+                )
+                .order_by(RiskRegisterHist.modified_on.desc())
+                .first()
+            )
+            function_head_approval_status_name = ""
+            if risk_history != None:
+                if risk_history.risk_function_head_approval_status != None:
+                    function_head_approval_status_name = (
+                        get_approval_status_name(
+                            risk_history.risk_function_head_approval_status
+                        )
+                    )
+
+            risk_manager_approval_status_name = ""
+            if risk_history != None:
+                if risk_history.risk_manager_approval_status != None:
+                    risk_manager_approval_status_name = (
+                        get_approval_status_name(
+                            risk_history.risk_manager_approval_status
+                        )
+                    )
+            
+            risk_head_approval_status_name = ""
+            if risk_history != None:
+                if risk_history.risk_head_approval_status != None:
+                    risk_head_approval_status_name = (
+                        get_approval_status_name(
+                            risk_history.risk_head_approval_status
+                        )
+                    )
+            result = []
+            if function_head_approval_status_name != "":
+                risk_last_status = {
+                    **to_dict(risk_history),
+                    "function_head_approval_status_name":function_head_approval_status_name,
+                    "risk_manager_approval_status_name" : risk_manager_approval_status_name,
+                    "risk_head_approval_status_name": risk_head_approval_status_name
+                }
+                result.append(risk_last_status)
+            return result
+        except Exception as e:
+            raise e
