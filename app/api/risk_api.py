@@ -11,7 +11,7 @@ from app.schemas.risk_schema import RiskSaveRequest
 from app.core.response import success_response, error_response
 
 from app.services.risk_service import create_update_risk
-from app.services.risk_service import get_risk_by_user,get_risk_by_dept,get_risk_by_risk_id, get_risk_by_description_id,get_risk_data_excel, get_followups_by_reference_id, get_risk_by_id, get_last_risk_statusbyid
+from app.services.risk_service import *
 
 
 router = APIRouter(prefix="/risk", tags=["Risk"])
@@ -261,3 +261,35 @@ def get_last_risk_status(
         return success_response(data=risks)
     except Exception as e:
         return error_response(message=str(e),status_code=400)
+    
+    
+    
+    
+## copy data from one FY to another FY
+
+@router.get("/copy_risks")
+def copy_risks(
+    Source_FY: str,
+    Destination_FY: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+
+        result = copy_risks_fy(
+            db=db,
+            source_fy=Source_FY,
+            destination_fy=Destination_FY,
+            current_user_id=current_user["id"]   
+        )
+
+        return success_response(
+            data=result,
+            message="Risks copied successfully"
+        )
+
+    except Exception as e:
+        return error_response(
+            message=str(e),
+            status_code=400
+        )

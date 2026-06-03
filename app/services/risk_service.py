@@ -1765,3 +1765,252 @@ def get_last_risk_statusbyid(db, risk_id):
             return result
         except Exception as e:
             raise e
+        
+        
+        
+# Using FY copy data 
+
+
+def copy_risks_fy(
+    db,
+    source_fy: str,
+    destination_fy: str,
+    current_user_id: int
+):
+    try:
+
+        # Preload Department Counters
+        departments = (
+            db.query(Department)
+            .all()
+        )
+
+        dept_counters = {}
+
+        for dept in departments:
+            dept_counters[dept.id] = {
+                "last_number": dept.last_risk_number,
+                "short_name": dept.dept_short_name,
+                "obj": dept
+            }
+
+        # Cache Columns
+        risk_columns = [
+            c.name
+            for c in RiskRegister.__table__.columns
+            if c.name not in (
+                "risk_register_id",
+                "created_on",
+                "modified_on",
+                "modified_by"
+            )
+        ]
+
+        desc_columns = [
+            c.name
+            for c in RiskDescription.__table__.columns
+            if c.name not in (
+                "risk_description_id",
+                "created_on",
+                "modified_on",
+                "modified_by"
+            )
+        ]
+
+        treatment_columns = [
+            c.name
+            for c in RiskTreatment.__table__.columns
+            if c.name not in (
+                "risk_treatment_id",
+                "created_on",
+                "modified_on",
+                "modified_by"
+            )
+        ]
+
+        total_copied = 0
+        total_descriptions = 0
+        total_treatments = 0
+
+        offset = 0
+        batch_size = 100
+
+        while True:
+
+            risks = (
+                db.query(RiskRegister)
+                .options(
+                    joinedload(RiskRegister.risk_descriptions)
+                    .joinedload(RiskDescription.treatments)
+                )
+                .filter(
+                    RiskRegister.financial_year == source_fy,
+                    RiskRegister.is_deleted == 0
+                )
+                .order_by(RiskRegister.risk_register_id)
+                .offset(offset)
+                .limit(10)                         #change to batch_size
+                .all()
+            )
+
+            if not risks:
+                break
+
+            # ------------------------------------------
+            # Process Batch
+            # ------------------------------------------
+            for old_risk in risks:
+
+                dept_info = dept_counters.get(
+                    old_risk.dept_id
+                )
+
+                if not dept_info:
+                    raise Exception(
+                        f"Department not found: {old_risk.dept_id}"
+                    )
+
+                dept_info["last_number"] += 1
+
+                new_risk_code = (
+                    f"{dept_info['short_name']}-"
+                    f"{str(dept_info['last_number']).zfill(4)}"
+                )
+
+                # Risk Register
+                new_risk = RiskRegister()
+
+                for col in risk_columns:
+                    setattr(
+                        new_risk,
+                        col,
+                        getattr(old_risk, col)
+                    )
+
+                new_risk.risk_id = new_risk_code
+                new_risk.financial_year = destination_fy
+
+                # reset columns
+                new_risk.risk_function_head_approval_status = None
+                new_risk.risk_function_head_approval_remark = None
+                new_risk.risk_function_head_approval_on = None
+                new_risk.risk_function_head_approval_by = None
+
+                new_risk.risk_head_approval_status = None
+                new_risk.risk_head_approval_remark = None
+                new_risk.risk_head_approved_on = None
+                new_risk.risk_head_approval_by = None
+
+                new_risk.risk_manager_approval_status = None
+                new_risk.risk_manager_approval_remark = None
+                new_risk.risk_manager_approved_on = None
+                new_risk.risk_manager_approval_by = None
+                
+                new_risk.risk_status = None
+                new_risk.risk_progress = None
+
+                new_risk.created_by = current_user_id
+                new_risk.created_on = datetime.now()
+
+                db.add(new_risk)
+                db.flush()
+
+                total_copied += 1
+
+                # Descriptions
+                for old_desc in old_risk.risk_descriptions:
+
+                    total_descriptions += 1
+
+                    new_desc = RiskDescription()
+
+                    for col in desc_columns:
+                        setattr(
+                            new_desc,
+                            col,
+                            getattr(old_desc, col)
+                        )
+
+                    new_desc.risk_register_id = (
+                        new_risk.risk_register_id
+                    )
+
+                    new_desc.risk_id = (
+                        new_risk.risk_id
+                    )
+
+                    new_desc.created_by = current_user_id
+                    new_desc.created_on = datetime.now()
+
+                    db.add(new_desc)
+                    db.flush()
+
+                    # Treatments
+                    for old_treatment in old_desc.treatments:
+
+                        total_treatments += 1
+
+                        new_treatment = RiskTreatment()
+
+                        for col in treatment_columns:
+                            setattr(
+                                new_treatment,
+                                col,
+                                getattr(old_treatment, col)
+                            )
+
+                        new_treatment.risk_register_id = (
+                            new_risk.risk_register_id
+                        )
+
+                        new_treatment.risk_description_id = (
+                            new_desc.risk_description_id
+                        )
+
+                        new_treatment.risk_id = (
+                            new_risk.risk_id
+                        )
+
+                        new_treatment.target_date = None
+                        new_treatment.action_status_id = None
+                        new_treatment.progress = None
+                        
+                        new_treatment.next_followup_date = None
+
+
+                        new_treatment.created_by = current_user_id
+                        new_treatment.created_on = datetime.now()
+
+                        db.add(new_treatment)
+
+            db.commit()
+
+            print(
+                f"Processed batch "
+                f"{offset} - {offset + len(risks)}"
+            )
+
+            offset += batch_size
+
+        # Update Department Counters Once
+        for dept_id, dept_info in dept_counters.items():
+
+            dept_info["obj"].last_risk_number = (
+                dept_info["last_number"]
+            )
+
+        db.commit()
+
+        return {
+            "status": True,
+            "message": "Risk copy completed",
+            "source_financial_year": source_fy,
+            "destination_financial_year": destination_fy,
+            "total_risks_copied": total_copied,
+            "total_descriptions_copied": total_descriptions,
+            "total_treatments_copied": total_treatments
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise e
