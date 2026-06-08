@@ -235,6 +235,50 @@ CREATE TABLE IF NOT EXISTS ers.risk_treatment
 )
 
 
+----------------04/06/2026 add 4 columns------------------------
+ALTER TABLE ers.risk_treatment
+ADD COLUMN approved_by integer,
+ADD COLUMN approved_on timestamp without time zone,
+ADD COLUMN approval_remark character varying(500),
+ADD COLUMN approval_status integer;
+
+
+------------
+-- Table: ers.risk_treatment
+
+-- DROP TABLE IF EXISTS ers.risk_treatment;
+
+CREATE TABLE IF NOT EXISTS ers.risk_treatment
+(
+    risk_treatment_id integer NOT NULL DEFAULT nextval('ers.risk_treatment_risk_treatment_id_seq'::regclass),
+    risk_description_id integer NOT NULL,
+    risk_register_id integer,
+    risk_id character varying(10) COLLATE pg_catalog."default",
+    action_plan text COLLATE pg_catalog."default" NOT NULL,
+    action_owner_id integer NOT NULL,
+    target_date timestamp without time zone,
+    progress character varying(10) COLLATE pg_catalog."default",
+    action_status_id integer,
+    next_followup_date timestamp without time zone,
+    created_on timestamp without time zone NOT NULL DEFAULT now(),
+    created_by integer NOT NULL DEFAULT 1,
+    modified_on timestamp without time zone,
+    modified_by integer,
+    is_deleted smallint DEFAULT 0,
+    approved_by integer,
+    approved_on timestamp without time zone,
+    approval_remark character varying(500) COLLATE pg_catalog."default",
+    approval_status integer,
+    CONSTRAINT risk_treatment_pkey PRIMARY KEY (risk_treatment_id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS ers.risk_treatment
+    OWNER to postgres;
+
+
+
 ---------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS ers.risk_treatment_hist (

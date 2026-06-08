@@ -12,10 +12,12 @@ from app.schemas.risk_treatment import (
     RiskTreatmentCreate,
     RiskTreatmentUpdate,
     RiskTreatmentHybridResponse,
+    TreatmentApproval
 )
 from app.models.risk_description import RiskDescription
 from app.models.risk_register import RiskRegister
 from app.models.risk_treatment_hist import RiskTreatmentHist
+from app.models.mst_status import Status
 
 router = APIRouter(
     prefix="/risk-treatment",
@@ -25,6 +27,14 @@ router = APIRouter(
 
 # for the response of each api
 def build_hybrid_response(t):
+    
+    approval_status_name = None
+
+    if t.approval_status == 1:
+        approval_status_name = "Approved"
+    elif t.approval_status == -1:
+        approval_status_name = "Rejected"
+    
     return {
         "risk_treatment_id": t.risk_treatment_id,
         "risk_description_id": t.risk_description_id,
@@ -48,6 +58,19 @@ def build_hybrid_response(t):
         "progress": t.progress,
         "action_status_id": t.action_status_id,
         "next_followup_date": t.next_followup_date,
+
+        "approved_by": t.approved_by,
+        
+        "approved_by_name": (
+            t.approved_user.log_id
+            if t.approved_user
+            else None
+        ),
+        
+        "approved_on": t.approved_on,
+        "approval_remark": t.approval_remark,
+        "approval_status": t.approval_status,
+        "approval_status_name": approval_status_name,
 
         "is_deleted": t.is_deleted,
         "created_on": t.created_on
@@ -87,6 +110,8 @@ def create_risk_treatment(
             progress = payload.progress,
             action_status_id = payload.action_status_id,
             next_followup_date = payload.next_followup_date,
+            
+            approval_status=0,                                      # default
             
             created_on = datetime.now(timezone.utc),
             created_by = current_user["id"],
@@ -305,11 +330,11 @@ def delete_treatment(treatment_id: int, db: Session = Depends(get_db)):
             risk_id = treatment.risk_id,
             action_plan = treatment.action_plan,
             action_owner_id = treatment.action_owner_id,
-            TabErrorget_date = treatment.target_date,
+            target_date = treatment.target_date,
             progress = treatment.progress,
             action_status_id = treatment.action_status_id,
-            newt_followup_date = treatment.next_followup_date,
-            crated_by = treatment.created_by,
+            next_followup_date = treatment.next_followup_date,
+            created_by = treatment.created_by,
             created_on = treatment.created_on,
             
             modified_by = treatment.modified_by,
@@ -347,4 +372,61 @@ def get_treatment_history(treatment_id: int, db: Session = Depends(get_db)):
         return success_response(history_records)
 
     except Exception as e:
+        return error_response(str(e), 400)
+    
+# Treatment approved
+@router.put("/{risk_treatment_id}/approve")
+def approve_treatment(
+    risk_treatment_id: int,
+    data: TreatmentApproval,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+
+        treatment = db.query(RiskTreatment).filter(
+            RiskTreatment.risk_treatment_id == risk_treatment_id,
+            RiskTreatment.is_deleted == 0,
+            RiskTreatment.progress == "100",
+            # RiskTreatment.action_status_id == Status.status_name(db, "Completed")
+        ).first()
+
+        if not treatment:
+            return error_response("Risk Treatment is not completed",404)
+
+        # Allow only 1 (Approved) and -1 (Rejected)
+        if data.approval_status not in [1, -1]:
+            return error_response("approval_status must be 1 (Approved) or -1 (Rejected)",400)
+
+        treatment.approval_status = data.approval_status
+        treatment.approval_remark = data.approval_remark
+        treatment.approved_by = current_user["id"]
+        treatment.approved_on = datetime.now(timezone.utc)
+
+        treatment.modified_by = current_user["id"]
+        treatment.modified_on = datetime.now(timezone.utc)
+
+        db.commit()
+        db.refresh(treatment)
+
+        return success_response({
+            "risk_treatment_id": treatment.risk_treatment_id,
+            "approval_status": treatment.approval_status,
+            "approval_status_name": (
+                "Approved"
+                if treatment.approval_status == 1
+                else "Rejected"
+            ),
+            "approval_remark": treatment.approval_remark,
+            "approved_by": treatment.approved_by,
+            "approved_on": treatment.approved_on,
+            "approved_by_name": (
+                treatment.approved_user.log_id
+                if treatment.approved_user
+                else None
+            )
+        })
+
+    except Exception as e:
+        db.rollback()
         return error_response(str(e), 400)

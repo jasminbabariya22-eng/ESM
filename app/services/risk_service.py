@@ -1770,7 +1770,6 @@ def get_last_risk_statusbyid(db, risk_id):
         
 # Using FY copy data 
 
-
 def copy_risks_fy(
     db,
     source_fy: str,
@@ -1849,7 +1848,7 @@ def copy_risks_fy(
                 )
                 .order_by(RiskRegister.risk_register_id)
                 .offset(offset)
-                .limit(10)                         #change to batch_size
+                .limit(batch_size)                         # change to batch_size
                 .all()
             )
 

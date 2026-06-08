@@ -23,6 +23,14 @@ class RiskTreatmentUpdate(BaseModel):
     action_status_id: Optional[int] = None
     target_date: Optional[datetime] = None
     next_followup_date: Optional[datetime] = None
+
+    approval_status: Optional[int] = None
+    approval_remark: Optional[str] = None
+    
+    
+class TreatmentApproval(BaseModel):
+    approval_status: int
+    approval_remark: Optional[str] = None    
     
 class RiskTreatmentHybridResponse(BaseModel):
     risk_treatment_id: int
@@ -39,6 +47,11 @@ class RiskTreatmentHybridResponse(BaseModel):
     progress: Optional[str]
     action_status_id: Optional[int]
     next_followup_date: Optional[datetime]
+    
+    approved_by: Optional[int]
+    approved_on: Optional[datetime]
+    approval_remark: Optional[str]
+    approval_status: Optional[int]
 
     is_deleted: int
     created_on: Optional[datetime]

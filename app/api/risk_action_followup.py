@@ -99,67 +99,8 @@ def parse_progress_range(value: str):
 
 # formula :- Average of all the lower values and average of all the upper values from the followups linked to that treatment.
 
-# def update_risk_progress_from_followup(db, treatment_id: int):
-#     # ---------------- Treatment ----------------
-#     treatment = db.query(RiskTreatment).filter(
-#         RiskTreatment.risk_treatment_id == treatment_id
-#     ).first()
-
-#     if not treatment:
-#         return
-
-
-#     # Fetch only required column (optimized)
-#     # followups = db.query(RiskActionFollowup.progress).filter(
-#     #     RiskActionFollowup.reference_id == treatment_id
-#     # ).all()
-#     followups = db.query(RiskTreatment.progress).filter(
-#         RiskTreatment.risk_register_id == treatment.risk_register_id
-#     ).all()
-
-#     if not followups:
-#         return
-
-#     lower_values = []
-#     upper_values = []
-
-#     for (progress,) in followups:   # tuple unpack
-#         if not progress:
-#             continue
-
-#         low, high = parse_progress_range(progress)
-
-#         if low is not None and high is not None:
-#             lower_values.append(low)
-#             upper_values.append(high)
-
-#     if not lower_values:
-#         return
-
-#     avg_lower = sum(lower_values) / len(lower_values)
-#     avg_upper = sum(upper_values) / len(upper_values)
-
-#     if avg_lower == 100.0 or avg_upper == 100.0:
-#         final_progress_range = "100%"
-#     else:
-#         final_progress_range = f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
-
-    
-#     #no need to update in teartment table
-#     #treatment.progress = final_progress_range
-
-#     # ---------------- Risk ----------------
-#     risk = db.query(RiskRegister).filter(
-#         RiskRegister.risk_register_id == treatment.risk_register_id
-#     ).first()
-
-#     if risk:
-#         risk.risk_progress = final_progress_range
-
-
 def update_risk_progress_from_followup(db, treatment_id: int):
-
-    # Get current treatment
+    # ---------------- Treatment ----------------
     treatment = db.query(RiskTreatment).filter(
         RiskTreatment.risk_treatment_id == treatment_id
     ).first()
@@ -167,33 +108,26 @@ def update_risk_progress_from_followup(db, treatment_id: int):
     if not treatment:
         return
 
-    # Get all treatments under the same risk
-    treatments = db.query(RiskTreatment).filter(
+
+    # Fetch only required column (optimized)
+    # followups = db.query(RiskActionFollowup.progress).filter(
+    #     RiskActionFollowup.reference_id == treatment_id
+    # ).all()
+    followups = db.query(RiskTreatment.progress).filter(
         RiskTreatment.risk_register_id == treatment.risk_register_id
     ).all()
+
+    if not followups:
+        return
 
     lower_values = []
     upper_values = []
 
-    for tr in treatments:
-
-        # Get latest followup for this treatment
-        latest_followup = (
-            db.query(RiskActionFollowup)
-            .filter(
-                RiskActionFollowup.reference_id == tr.risk_treatment_id
-            )
-            .order_by(
-                RiskActionFollowup.followup_id.desc()
-            )
-            .first()
-        )
-
-        # Skip if no followup exists
-        if not latest_followup or not latest_followup.progress:
+    for (progress,) in followups:   # tuple unpack
+        if not progress:
             continue
 
-        low, high = parse_progress_range(latest_followup.progress)
+        low, high = parse_progress_range(progress)
 
         if low is not None and high is not None:
             lower_values.append(low)
@@ -205,20 +139,86 @@ def update_risk_progress_from_followup(db, treatment_id: int):
     avg_lower = sum(lower_values) / len(lower_values)
     avg_upper = sum(upper_values) / len(upper_values)
 
-    if avg_lower == 100 and avg_upper == 100:                   #change or to and
+    if avg_lower == 100.0 or avg_upper == 100.0:
         final_progress_range = "100%"
     else:
-        final_progress_range = (
-            f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
-        )
+        final_progress_range = f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
 
-    # Update Risk Register
+    
+    #no need to update in teartment table
+    #treatment.progress = final_progress_range
+
+    # ---------------- Risk ----------------
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == treatment.risk_register_id
     ).first()
 
     if risk:
         risk.risk_progress = final_progress_range
+
+#--------------------new function----------------
+# def update_risk_progress_from_followup(db, treatment_id: int):
+
+#     # Get current treatment
+#     treatment = db.query(RiskTreatment).filter(
+#         RiskTreatment.risk_treatment_id == treatment_id
+#     ).first()
+
+#     if not treatment:
+#         return
+
+#     # Get all treatments under the same risk
+#     treatments = db.query(RiskTreatment).filter(
+#         RiskTreatment.risk_register_id == treatment.risk_register_id
+#     ).all()
+
+#     lower_values = []
+#     upper_values = []
+
+#     for tr in treatments:
+
+#         # Get latest followup for this treatment
+#         latest_followup = (
+#             db.query(RiskActionFollowup)
+#             .filter(
+#                 RiskActionFollowup.reference_id == tr.risk_treatment_id
+#             )
+#             .order_by(
+#                 RiskActionFollowup.followup_id.desc()
+#             )
+#             .first()
+#         )
+
+#         # Skip if no followup exists
+#         if not latest_followup or not latest_followup.progress:
+#             continue
+
+#         low, high = parse_progress_range(latest_followup.progress)
+
+#         if low is not None and high is not None:
+#             lower_values.append(low)
+#             upper_values.append(high)
+
+#     if not lower_values:
+#         return
+
+#     avg_lower = sum(lower_values) / len(lower_values)
+#     avg_upper = sum(upper_values) / len(upper_values)
+
+#     if avg_lower == 100 and avg_upper == 100:                   #change or to and
+#         final_progress_range = "100%"
+#     else:
+#         final_progress_range = (
+#             f"{round(avg_lower, 2)}-{round(avg_upper, 2)}%"
+#         )
+
+#     # Update Risk Register
+#     risk = db.query(RiskRegister).filter(
+#         RiskRegister.risk_register_id == treatment.risk_register_id
+#     ).first()
+
+#     if risk:
+#         risk.risk_progress = final_progress_range
 
 # -------------------------
 # CREATE Followup and file upload

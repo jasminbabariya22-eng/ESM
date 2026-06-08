@@ -36,6 +36,18 @@ class RiskTreatment(Base):
     action_status_id = Column(Integer, ForeignKey(f"{settings.DB_SCHEMA}.mst_status.id"))
 
     next_followup_date = Column(DateTime)
+    
+    # approved_by = Column(Integer)
+    approved_by = Column(
+        Integer,
+        ForeignKey(
+            f"{settings.DB_SCHEMA}.mst_users.id"
+        )
+    )
+    
+    approved_on = Column(DateTime)
+    approval_remark = Column(String(500))
+    approval_status = Column(Integer)
 
     created_on = Column(DateTime)
     created_by = Column(Integer, nullable=False)
@@ -50,4 +62,6 @@ class RiskTreatment(Base):
     risk_register = relationship("RiskRegister")
     action_owner = relationship("User", foreign_keys=[action_owner_id])
     status = relationship("Status")
+    
+    approved_user = relationship("User", foreign_keys=[approved_by])
     
