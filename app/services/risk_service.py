@@ -1774,7 +1774,9 @@ def copy_risks_fy(
     db,
     source_fy: str,
     destination_fy: str,
-    current_user_id: int
+    current_user_id: int,
+    department_short_name: str = None,
+    risk_id: str = None
 ):
     try:
 
@@ -1833,10 +1835,48 @@ def copy_risks_fy(
 
         offset = 0
         batch_size = 100
+        
+        
+        # Validate Source FY
+        source_risk_exists = (
+            db.query(RiskRegister)
+            .filter(
+                RiskRegister.financial_year == source_fy,
+                RiskRegister.is_deleted == 0
+            )
+            .first()
+        )
+
+        if not source_risk_exists:
+            raise Exception(f"No risks found for source financial year '{source_fy}'")
+        
+        # Validate Department        
+        if department_short_name:
+
+            department_exists = (
+                db.query(Department).filter(Department.dept_short_name == department_short_name).first())
+
+            if not department_exists:
+                raise Exception(f"Department '{department_short_name}' not found")
+
+        # Validate Risk ID
+        if risk_id:
+            risk_exists = (
+                db.query(RiskRegister)
+                .filter(
+                    RiskRegister.risk_id == risk_id,
+                    RiskRegister.financial_year == source_fy,
+                    RiskRegister.is_deleted == 0
+                )
+                .first()
+            )
+
+            if not risk_exists:
+                raise Exception(f"Risk '{risk_id}' not found in FY {source_fy}")
 
         while True:
 
-            risks = (
+            query = (
                 db.query(RiskRegister)
                 .options(
                     joinedload(RiskRegister.risk_descriptions)
@@ -1846,9 +1886,23 @@ def copy_risks_fy(
                     RiskRegister.financial_year == source_fy,
                     RiskRegister.is_deleted == 0
                 )
+            )
+
+            # Department
+            if department_short_name:
+
+                query = (query.join(Department,RiskRegister.dept_id == Department.id)
+                    .filter(Department.dept_short_name == department_short_name))
+
+            # Risk ID 
+            if risk_id:
+                query = (query.filter(RiskRegister.risk_id == risk_id))
+
+            risks = (
+                query
                 .order_by(RiskRegister.risk_register_id)
                 .offset(offset)
-                .limit(batch_size)                         # change to batch_size
+                .limit(batch_size)
                 .all()
             )
 
@@ -2005,6 +2059,8 @@ def copy_risks_fy(
             "message": "Risk copy completed",
             "source_financial_year": source_fy,
             "destination_financial_year": destination_fy,
+            "department_short_name": department_short_name,
+            "risk_id": risk_id,
             "total_risks_copied": total_copied,
             "total_descriptions_copied": total_descriptions,
             "total_treatments_copied": total_treatments

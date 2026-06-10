@@ -168,6 +168,30 @@ def create_risk_register(payload: RiskRegisterCreate, db: Session = Depends(get_
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Get all financial years
+@router.get("/get-financial-years")
+def get_financial_years(db: Session = Depends(get_db)):
+    try:
+        years = (
+            db.query(RiskRegister.financial_year)
+            .filter(
+                RiskRegister.financial_year.isnot(None),
+                RiskRegister.financial_year != "",
+                RiskRegister.is_deleted == 0,
+                RiskRegister.is_active == 0
+            )
+            .distinct()
+            .order_by(RiskRegister.financial_year.desc())
+            .all()
+        )
+
+        result = [row[0] for row in years]
+
+        return success_response(result)
+
+    except Exception as e:
+        return error_response(str(e), 400)
+
 # Get ALL 
 @router.get("/")
 def get_All_Risks(db: Session = Depends(get_db)):
@@ -180,6 +204,7 @@ def get_All_Risks(db: Session = Depends(get_db)):
         return success_response(response_list)
     except Exception as e:
         return error_response(str(e), 400)
+    
 
 
 # Get by risk_id
@@ -345,3 +370,26 @@ def delete_risk(risk_register_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+    
+# Get Financial Year
+# @router.get("/get-financial-years")
+# def get_financial_years(db: Session = Depends(get_db)):
+#     try:
+#         years = (
+#             db.query(RiskRegister.financial_year)
+#             .filter(RiskRegister.financial_year.isnot(None))
+#             .distinct()
+#             .order_by(RiskRegister.financial_year.desc())
+#             .all()
+#         )
+
+#         result = [row[0] for row in years]
+
+#         return success_response(result)
+
+#     except Exception as e:
+#         return error_response(str(e), 400)
+
+

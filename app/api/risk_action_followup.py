@@ -314,8 +314,8 @@ async def create_followup(
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        if not next_followup_date:
-            next_followup_date = datetime.now(timezone.utc)
+        # if not next_followup_date:
+        #     next_followup_date = datetime.now(timezone.utc)
 
         # VALIDATION
         treatment = db.query(RiskTreatment).filter(

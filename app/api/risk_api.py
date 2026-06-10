@@ -269,8 +269,10 @@ def get_last_risk_status(
 
 @router.get("/copy_risks")
 def copy_risks(
-    Source_FY: str,
-    Destination_FY: str,
+    source_fy: str,
+    destination_fy: str,
+    department_short_name: str = None,
+    risk_id: str = None,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -278,17 +280,19 @@ def copy_risks(
 
         result = copy_risks_fy(
             db=db,
-            source_fy=Source_FY,
-            destination_fy=Destination_FY,
-            current_user_id=current_user["id"]   
+            source_fy=source_fy,
+            destination_fy=destination_fy,
+            current_user_id=current_user["id"],
+            department_short_name=department_short_name,
+            risk_id=risk_id
         )
 
-        return success_response(
-            data=result,
-            message="Risks copied successfully"
+        return success_response(data=result,
+                message="Risks copied successfully"
         )
 
     except Exception as e:
+
         return error_response(
             message=str(e),
             status_code=400
