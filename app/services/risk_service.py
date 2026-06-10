@@ -1705,7 +1705,7 @@ def get_last_risk_statusbyid(db, risk_id):
             data = []
             if risk_register:
                 return data
-                
+
             # APPROVAL STATUS NAMES
             # # read status from risk history table last entry
             risk_history = (
@@ -1766,7 +1766,7 @@ def get_last_risk_statusbyid(db, risk_id):
         except Exception as e:
             raise e
         
-        
+
         
 # Using FY copy data 
 
@@ -1849,6 +1849,20 @@ def copy_risks_fy(
 
         if not source_risk_exists:
             raise Exception(f"No risks found for source financial year '{source_fy}'")
+        
+         # Validate Destination year data already exists
+        destination_risk_exists = (
+            db.query(RiskRegister)
+            .filter(
+                RiskRegister.financial_year == destination_fy,
+                RiskRegister.is_deleted == 0
+            )
+            .first()
+        )
+
+        if destination_risk_exists:
+            raise Exception(f"Data already exists '{destination_fy}'")
+        
         
         # Validate Department        
         if department_short_name:
