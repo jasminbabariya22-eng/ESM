@@ -5,6 +5,7 @@ from sqlalchemy import func
 import pandas as pd
 import io
 from sqlalchemy import or_, and_
+from datetime import datetime
 
 import math
 from openpyxl.styles import PatternFill, Alignment,Font
@@ -578,7 +579,212 @@ def get_approval_status_name(status):
 #-----------
 # Risk LIST from Department id
 #----------
-def get_risk_by_dept(db, dept_id,current_user):  
+# def get_risk_by_dept(db, dept_id,current_user):  
+#     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    
+    
+    
+#     try:
+#         dept_id_cur_user = current_user['dept_id']
+#         user_type_name = current_user['user_type_name']
+#         query = db.query(
+#                     RiskRegister,
+#                     RiskDescription
+#                 ).outerjoin(
+#                     RiskDescription,
+#                     RiskRegister.risk_register_id == RiskDescription.risk_register_id
+#                 ).join(
+#                     Status,
+#                     RiskRegister.risk_status == Status.id)
+                
+#         #query = query.filter(RiskRegister.is_deleted == 0)
+        
+#         # if user_type_name.upper() == 'RISK OWNER':
+#         #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
+#         # elif user_type_name.upper() == 'FUNCTIONAL HEAD':
+#         #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
+#         #                    func.upper(Status.status_name) != 'DRAFT' ,  
+#         #                      func.upper(Status.status_name) != 'PENDING FOR ACTION'  )
+#         # elif user_type_name.upper() == 'RISK MANAGER':
+#         #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1 and RiskRegister.risk_manager_approval_status != -1)
+#         # elif user_type_name.upper() == 'RISK HEAD':
+#         #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_manager_approval_status == 1 and RiskRegister.risk_head_approval_status != -1)
+#         # else:
+#         #     query = query.filter(RiskRegister.is_deleted == 0)
+        
+#         no_rejection_condition = and_(
+
+#             or_(
+#                 RiskRegister.risk_function_head_approval_status.is_(None),
+#                 RiskRegister.risk_function_head_approval_status != -1
+#             ),
+
+#             or_(
+#                 RiskRegister.risk_manager_approval_status.is_(None),
+#                 RiskRegister.risk_manager_approval_status != -1
+#             ),
+
+#             or_(
+#                 RiskRegister.risk_head_approval_status.is_(None),
+#                 RiskRegister.risk_head_approval_status != -1
+#             )
+#         )
+        
+#         # ---------------- ROLE FILTER ----------------
+
+#         if user_type_name.upper() == 'RISK OWNER':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+#                 RiskRegister.dept_id == dept_id_cur_user
+#             )
+
+#         elif user_type_name.upper() == 'FUNCTIONAL HEAD':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+
+#                 RiskRegister.dept_id == dept_id_cur_user,
+
+#                 func.upper(Status.status_name) != 'DRAFT', func.upper(Status.status_name) != 'PENDING FOR ACTION',
+
+#                 no_rejection_condition
+#             )
+
+#         elif user_type_name.upper() == 'RISK MANAGER':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+
+#                 # FH approved
+#                 RiskRegister.risk_function_head_approval_status == 1,
+
+#                 no_rejection_condition
+#             )
+
+#         elif user_type_name.upper() == 'RISK HEAD':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+
+#                 # RM approved
+#                 RiskRegister.risk_manager_approval_status == 1,
+
+#                 no_rejection_condition
+#             )
+
+#         else:
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0
+#             )
+
+#         if dept_id:
+#             query = query.filter( RiskRegister.dept_id == dept_id )
+
+
+#         records = query.order_by(
+#                 RiskRegister.risk_register_id,
+#                 RiskDescription.risk_description_id
+#             ).all()    
+        
+
+#         result = []
+#         for rr, rd in records:
+#             risk_owner_name = None
+#             if rr.risk_owner:
+#                 risk_owner_name = rr.risk_owner.log_id
+            
+#             risk_status_name = None
+#             if rr.status:
+#                 risk_status_name = rr.status.status_name
+                
+#             # APPROVAL STATUS NAMES
+#             # # read status from risk history table last entry
+#             #risk_id_tmp = rr.risk_register_id
+#             #risk_history = (
+#             #    db.query(RiskRegisterHist)
+#             #    .filter(RiskRegisterHist.risk_register_id == risk_id_tmp,
+#             #            RiskRegisterHist.modified_on.isnot(None))
+#             #    .order_by((RiskRegisterHist.modified_on).desc())
+#             #    .first()
+#             #)
+            
+#             function_head_approval_status_name = (
+#                 get_approval_status_name(
+#                     rr.risk_function_head_approval_status
+#                 )
+#             )
+
+#             risk_manager_approval_status_name = (
+#                 get_approval_status_name(
+#                     rr.risk_manager_approval_status
+#                 )
+#             )
+
+#             risk_head_approval_status_name = (
+#                 get_approval_status_name(
+#                     rr.risk_head_approval_status
+#                 )
+#             )
+
+#             likelihood = None
+#             impact = None
+#             current_likelihood = None
+#             current_impact = None
+#             inherent_color_str = None
+#             inherent_color_code = None
+#             current_color_str = None
+#             current_color_code = None
+           
+#             if rd is not None:
+#                 if rd.inherent_risk_likelihood_id:
+#                     likelihood = rd.inherent_risk_likelihood_id
+#                 if rd.inherent_risk_impact_id:
+#                     impact = rd.inherent_risk_impact_id
+
+#                 if rd.current_risk_likelihood_id:
+#                     current_likelihood = rd.current_risk_likelihood_id
+#                 if rd.current_risk_impact_id:
+#                     current_impact = rd.current_risk_impact_id
+
+
+#                 if likelihood and impact:
+#                     #inherent_color_str = get_color(likelihood*impact)
+#                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+#                     inherent_color_str = get_color_code(inherent_color_code)
+
+#                 if current_likelihood and current_impact:
+#                     #current_color_str = get_color(current_likelihood*current_impact)
+#                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+#                     current_color_str = get_color_code(current_color_code)
+
+#             result.append({
+#                 **to_dict(rr),
+#                 **to_dict(rd, RiskDescription, prefix="rd_"),
+#                 "inherent_color_str": inherent_color_str,
+#                 "inherent_color_code" : inherent_color_code,
+#                 "current_color_str": current_color_str,
+#                 "current_color_code" : current_color_code,
+#                 "risk_owner_name" : risk_owner_name,
+#                 "risk_status_name" : risk_status_name,
+                
+#                 "function_head_approval_status_name":
+#                     function_head_approval_status_name,
+
+#                 "risk_manager_approval_status_name":
+#                     risk_manager_approval_status_name,
+
+#                 "risk_head_approval_status_name":
+#                     risk_head_approval_status_name
+#             })
+
+#         return result
+#     except Exception as e:
+#         raise e
+
+##----------------------------------------------------------new function------------
+def get_risk_by_dept(db, dept_id,financial_year,current_user):  
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     
     
@@ -680,6 +886,25 @@ def get_risk_by_dept(db, dept_id,current_user):
 
         if dept_id:
             query = query.filter( RiskRegister.dept_id == dept_id )
+            
+            
+        # Financial Year Filter. if not pass give current only
+        if financial_year:
+            query = query.filter(
+                RiskRegister.financial_year == financial_year
+            )
+        else:
+            # Current financial year
+            today = datetime.now()
+
+            if today.month >= 4:
+                current_fy = f"{today.year}-{today.year + 1}"
+            else:
+                current_fy = f"{today.year - 1}-{today.year}"
+
+            query = query.filter(
+                RiskRegister.financial_year == current_fy
+    )
 
 
         records = query.order_by(
@@ -1144,13 +1369,272 @@ def calculate_row_height(text, column_width):
     return max(15, lines * 15)
 
     
-def get_risk_data_excel(db, dept_id):
+# def get_risk_data_excel(db, dept_id):
     
-    import io
-    import pandas as pd
-    from openpyxl.styles import PatternFill, Alignment, Font
-    from sqlalchemy.orm import joinedload
+#     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
 
+#     green_value = {"1A", "2A", "3A", "1B", "2B"}
+#     light_green_value = {"1C","2C", "3B","4A","5A"}
+#     yellow_value = {"4B", "5B", "3C", "2D","1D"}
+#     amber_value = {"1E", "2E", "3D", "4C", "5C"}
+#     red_value = {"3E","4E", "5E", "4D", "5D"}
+
+#     green_fill = PatternFill(start_color="008000", end_color="008000", fill_type="solid")
+#     yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+#     amber_fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+#     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+#     light_green_fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+
+#     try:
+
+#         query = db.query(RiskRegister).options(
+#             joinedload(RiskRegister.risk_descriptions)
+#             .joinedload(RiskDescription.treatments)
+#             .joinedload(RiskTreatment.action_owner),
+#             joinedload(RiskRegister.department),
+#             joinedload(RiskRegister.risk_owner)
+#         )
+
+#         if dept_id:
+#             query = query.filter(RiskRegister.dept_id == dept_id)
+
+#         query = query.filter(
+#             RiskRegister.is_deleted == 0,
+#             RiskRegister.dept_id > 0
+#         ).order_by(RiskRegister.risk_register_id)
+
+#         risks = query.all()
+
+#         department_rows = {}
+#         risk_merge_ranges = {}
+#         description_merge_ranges = {}
+#         current_rows = {}
+
+#         for risk in risks:
+
+#             dept_name = "UNKNOWN"
+#             if risk.department:
+#                 dept_name = risk.department.dept_short_name
+
+#             if dept_name not in department_rows:
+#                 department_rows[dept_name] = []
+#                 risk_merge_ranges[dept_name] = []
+#                 description_merge_ranges[dept_name] = []
+#                 current_rows[dept_name] = 2
+
+#             risk_owner_name = risk.risk_owner.log_id if risk.risk_owner else ""
+
+#             risk_start_row = current_rows[dept_name]
+
+#             descriptions = risk.risk_descriptions if risk.risk_descriptions else [None]
+
+#             for desc in descriptions:
+
+#                 desc_start_row = current_rows[dept_name]
+
+#                 likelihood = desc.inherent_risk_likelihood_id if desc else None
+#                 impact = desc.inherent_risk_impact_id if desc else None
+
+#                 current_likelihood = desc.current_risk_likelihood_id if desc else None
+#                 current_impact = desc.current_risk_impact_id if desc else None
+
+#                 inherent_color_code = ""
+#                 current_color_code = ""
+
+#                 if likelihood and impact:
+#                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+
+#                 if current_likelihood and current_impact:
+#                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+
+#                 treatments = desc.treatments if desc and desc.treatments else [None]
+
+#                 first_desc = True
+
+#                 for treatment in treatments:
+
+#                     department_rows[dept_name].append({
+
+#                         "Risk ID": risk.risk_id if current_rows[dept_name] == risk_start_row else "",
+#                         "Risk Name": risk.risk_name if current_rows[dept_name] == risk_start_row else "",
+
+#                         "Risk Description": desc.risk_description if desc and first_desc else "",
+#                         "Inherent Risk Level": inherent_color_code if first_desc else "",
+#                         "Current Mitigation": desc.mitigation if desc and first_desc else "",
+#                         "Current Risk Level": current_color_code if first_desc else "",
+
+#                         "Risk Owner": risk_owner_name if current_rows[dept_name] == risk_start_row else "",
+#                         "Action Plan": treatment.action_plan if treatment else "",
+#                         "Action Owner": treatment.action_owner.log_id if treatment and treatment.action_owner else "",
+#                         "Target Date": treatment.target_date.date() if treatment and treatment.target_date else "",
+#                         "Action Status": treatment.status.status_name if treatment and treatment.status else ""
+#                     })
+
+#                     first_desc = False
+#                     current_rows[dept_name] += 1
+
+#                 desc_end_row = current_rows[dept_name] - 1
+
+#                 if desc_end_row >= desc_start_row:
+#                     description_merge_ranges[dept_name].append(
+#                         (desc_start_row, desc_end_row)
+#                     )
+
+#             risk_end_row = current_rows[dept_name] - 1
+
+#             if risk_end_row >= risk_start_row:
+#                 risk_merge_ranges[dept_name].append(
+#                     (risk_start_row, risk_end_row)
+#                 )
+
+#         output = io.BytesIO()
+
+#         wrap_alignment = Alignment(wrap_text=True, vertical="center")
+
+#         merge_alignment = Alignment(
+#             horizontal="center",
+#             vertical="center",
+#             wrap_text=True
+#         )
+
+#         with pd.ExcelWriter(output, engine="openpyxl") as writer:
+
+#             for dept_name, rows in department_rows.items():
+
+#                 df = pd.DataFrame(rows)
+
+#                 sheet_name = dept_name[:31]
+
+#                 df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+#                 worksheet = writer.sheets[sheet_name]
+
+#                 # Color Fill
+#                 for row in range(2, len(df) + 2):
+
+#                     cell_d = worksheet[f"D{row}"]
+#                     cell_f = worksheet[f"F{row}"]
+
+#                     if cell_d.value in green_value:
+#                         cell_d.fill = green_fill
+#                     elif cell_d.value in amber_value:
+#                         cell_d.fill = amber_fill
+#                     elif cell_d.value in yellow_value:
+#                         cell_d.fill = yellow_fill
+#                     elif cell_d.value in red_value:
+#                         cell_d.fill = red_fill
+#                     elif cell_d.value in light_green_value:
+#                         cell_d.fill = light_green_fill
+
+#                     if cell_f.value in green_value:
+#                         cell_f.fill = green_fill
+#                     elif cell_f.value in amber_value:
+#                         cell_f.fill = amber_fill
+#                     elif cell_f.value in yellow_value:
+#                         cell_f.fill = yellow_fill
+#                     elif cell_f.value in red_value:
+#                         cell_f.fill = red_fill
+#                     elif cell_f.value in light_green_value:
+#                         cell_f.fill = light_green_fill
+
+#                 # Column Width
+#                 column_widths = {
+#                     "A": 15,   # Risk ID (A)
+#                     "B" :20, # Risk Name (B)
+#                     "C": 50,   # Risk Description (C)
+#                     "D": 10,   # Inherent Risk Level (D)
+#                     "E": 70,    # Mitigation (E)
+#                     "F": 10, # Current risk level (F)
+#                     "G": 15, # Risk Owner (G)
+#                     "H": 70, # Treatment (H)
+#                     "I": 15, # Action Owner (I)
+#                     "J": 15,  # Target Date (J)
+#                     "K":15 # Status
+#                 }
+
+#                 for col, width in column_widths.items():
+#                     worksheet.column_dimensions[col].width = width
+
+#                 # Risk Merge
+#                 for start, end in risk_merge_ranges[dept_name]:
+
+#                     if start != end:
+
+#                         worksheet.merge_cells(f"A{start}:A{end}")
+#                         worksheet.merge_cells(f"B{start}:B{end}")
+#                         worksheet.merge_cells(f"G{start}:G{end}")
+
+#                     worksheet[f"A{start}"].alignment = merge_alignment
+#                     worksheet[f"B{start}"].alignment = merge_alignment
+#                     worksheet[f"G{start}"].alignment = merge_alignment
+
+#                 # Description Merge
+#                 for start, end in description_merge_ranges[dept_name]:
+
+#                     if start != end:
+
+#                         worksheet.merge_cells(f"C{start}:C{end}")
+#                         worksheet.merge_cells(f"D{start}:D{end}")
+#                         worksheet.merge_cells(f"E{start}:E{end}")
+#                         worksheet.merge_cells(f"F{start}:F{end}")
+
+#                     worksheet[f"C{start}"].alignment = merge_alignment
+#                     worksheet[f"D{start}"].alignment = merge_alignment
+#                     worksheet[f"E{start}"].alignment = merge_alignment
+#                     worksheet[f"F{start}"].alignment = merge_alignment
+
+#                 # Wrap Text & Dynamic Height
+#                 for row in range(2, len(df) + 2):
+
+#                     worksheet[f"C{row}"].alignment = wrap_alignment
+#                     worksheet[f"E{row}"].alignment = wrap_alignment
+#                     worksheet[f"H{row}"].alignment = wrap_alignment
+
+#                     desc = worksheet[f"C{row}"].value
+#                     mitigation = worksheet[f"E{row}"].value
+#                     treatment = worksheet[f"H{row}"].value
+
+#                     height_desc = calculate_row_height(desc, column_widths["C"])
+#                     height_mit = calculate_row_height(mitigation, column_widths["E"])
+#                     height_treat = calculate_row_height(treatment, column_widths["H"])
+
+#                     worksheet.row_dimensions[row].height = max(
+#                         height_desc,
+#                         height_mit,
+#                         height_treat
+#                     )
+
+#                 # Header Style
+#                 header_alignment = Alignment(
+#                     wrap_text=True,
+#                     horizontal="center",
+#                     vertical="center"
+#                 )
+
+#                 header_fill = PatternFill(
+#                     start_color="D9E1F2",
+#                     end_color="D9E1F2",
+#                     fill_type="solid"
+#                 )
+
+#                 header_font = Font(bold=True)
+
+#                 for cell in worksheet[1]:
+#                     cell.alignment = header_alignment
+#                     cell.fill = header_fill
+#                     cell.font = header_font
+
+#         output.seek(0)
+
+#         return output
+
+#     except Exception as e:
+#         raise e
+
+
+##-------------------------------------------new function---------------
+def get_risk_data_excel(db, dept_id,financial_year):
+    
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
 
     green_value = {"1A", "2A", "3A", "1B", "2B"}
@@ -1175,8 +1659,25 @@ def get_risk_data_excel(db, dept_id):
             joinedload(RiskRegister.risk_owner)
         )
 
+        # Department_id filter
         if dept_id:
             query = query.filter(RiskRegister.dept_id == dept_id)
+            
+        # Financial year filter
+        if financial_year:
+            query = query.filter(
+                RiskRegister.financial_year == financial_year
+            )
+        else:
+            today = datetime.now()
+
+            if today.month >= 4:
+                current_fy = f"{today.year}-{today.year + 1}"
+            else:
+                current_fy = f"{today.year - 1}-{today.year}"
+
+            query = query.filter(
+                RiskRegister.financial_year == current_fy)
 
         query = query.filter(
             RiskRegister.is_deleted == 0,

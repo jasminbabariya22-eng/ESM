@@ -115,12 +115,13 @@ def get_my_dept_risks_by_dept_id(
     
     dept_id: Optional[int] = None,
     db: Session = Depends(get_db),
+    financial_year: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
 
     try:
 
-        risks = get_risk_by_dept(db, dept_id,current_user)
+        risks = get_risk_by_dept(db, dept_id,financial_year,current_user)
 
         return success_response(data=risks)
     except Exception as e:
@@ -198,13 +199,14 @@ def get_risk_by_description(
 )
 def export_risk_excel(
     dept_id: Optional[int] = None,
+    financial_year: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
 
     try:
 
-        risk_data = get_risk_data_excel(db,dept_id)
+        risk_data = get_risk_data_excel(db,dept_id,financial_year)
 
         if not risk_data:
             return error_response(message="Risk data not found", status_code=404)
