@@ -101,6 +101,7 @@ pip install -r requirements.txt
 
 ```bash
 uvicorn app.main:app --reload
+python -m app.workers.email_worker
 ```
 
 5. Open generated docs:
