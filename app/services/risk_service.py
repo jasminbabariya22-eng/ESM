@@ -350,6 +350,7 @@ def create_update_risk(db: Session, data, current_user):
 
         db.commit()
         send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
+        db.commit()
 
         return {
             "risk_register": model_to_dict(risk),

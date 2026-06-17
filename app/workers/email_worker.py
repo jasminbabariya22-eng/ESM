@@ -1,4 +1,5 @@
 import time
+import traceback
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -44,7 +45,7 @@ def email_worker():
                 continue
 
             print(f"[{datetime.now()}] Found {len(jobs)} pending email(s)")
-
+            
             for job in jobs:
                 print(f"\n==============================")
                 print(f"Processing Job ID: {job.email_job_id}")
@@ -52,10 +53,11 @@ def email_worker():
                 print(f"CC: {job.email_cc}")
                 print(f"==============================")
 
-                success = send_email(db, job)
+                success = send_email(job)
 
-                new_attempt = job.send_attempts + 1
-
+                # new_attempt = job.send_attempts + 1
+                new_attempt = (job.send_attempts or 0) + 1
+                
                 if success:
                     print(" Email sent successfully")
 
