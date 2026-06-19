@@ -135,6 +135,8 @@ def create_update_risk(db: Session, data, current_user):
 
             db.add(risk)
             db.flush()
+            if risk.status.id == opened_status and user_type_name.upper() == 'RISK OWNER':
+                send_risk_created_email(db, risk.risk_register_id)
 
         else:
 
@@ -160,6 +162,9 @@ def create_update_risk(db: Session, data, current_user):
                 risk.risk_function_head_approval_by = None
                 risk.risk_function_head_approval_on = None
                 risk.risk_function_head_approval_remark = None
+
+                if risk.status.id == opened_status:
+                    send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
             
 
             risk.risk_name = register_data.risk_name
@@ -349,8 +354,7 @@ def create_update_risk(db: Session, data, current_user):
         # risk.risk_progress = "0-0%"
 
         db.commit()
-        send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
-        db.commit()
+        #send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
 
         return {
             "risk_register": model_to_dict(risk),

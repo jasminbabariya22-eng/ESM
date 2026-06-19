@@ -5,12 +5,7 @@ from app.models.mst_status import Status
 from app.models.risk_register_hist import RiskRegisterHist
 from app.services.risk_service import reset_risk_approvals
 
-from app.services.email_event_service import (
-    send_function_head_approval_email,
-    send_risk_manager_email,
-    send_risk_head_email,
-    send_treatment_email_after_approval
-)
+from app.services.email_event_service import *
 
 
 def approve_risk(db, data, user_id):
@@ -204,33 +199,87 @@ def approve_risk(db, data, user_id):
 
     # ---------------- EMAIL JOB INSERT ----------------
 
-    if data.approval_level == 1:
+    # if data.approval_level == 1:
 
-        send_function_head_approval_email(
-            db,
-            risk.risk_register_id,
+    #     send_function_head_approval_email(
+    #         db,
+    #         risk.risk_register_id,
             
-        )
+    #     )
 
-    elif data.approval_level == 2:
+    # elif data.approval_level == 2:
 
-        send_risk_manager_email(
+    #     send_risk_manager_email(
+    #         db,
+    #         risk.risk_register_id
+    #     )
+
+    # elif data.approval_level == 3:
+
+    #     send_risk_head_email(
+    #         db,
+    #         risk.risk_register_id
+    #     )
+    
+    # APPROVED
+    if status_req_id == 1:
+
+        if data.approval_level == 1:
+
+            send_function_head_approval_email(
+                db,
+                risk.risk_register_id
+            )
+
+        elif data.approval_level == 2:
+
+            send_risk_manager_email(
+                db,
+                risk.risk_register_id
+            )
+
+        elif data.approval_level == 3:
+
+            send_risk_head_email(
+                db,
+                risk.risk_register_id
+            )
+
+        send_treatment_email_after_approval(
             db,
             risk.risk_register_id
         )
 
-    elif data.approval_level == 3:
+    # REJECTED
+    elif status_req_id == -1:
 
-        send_risk_head_email(
-            db,
-            risk.risk_register_id
+        role_map = {
+            1: "Functional Head",
+            2: "Risk Manager",
+            3: "Risk Head"
+        }
+
+        send_risk_rejection_email(
+            db=db,
+            risk_register_id=risk.risk_register_id,
+            rejected_by_role=role_map[data.approval_level],
+            remark=data.remark
         )
 
     # treatment email
-    send_treatment_email_after_approval(
-        db,
-        risk.risk_register_id
-    )
+    # send_treatment_email_after_approval(
+    #     db,
+    #     risk.risk_register_id
+    # )
+    if (
+        risk.risk_function_head_approval_status == 1 and
+        risk.risk_manager_approval_status == 1 and
+        risk.risk_head_approval_status == 1
+    ):
+        send_treatment_email_after_approval(
+            db,
+            risk.risk_register_id
+        )
 
     # ---------------- SINGLE COMMIT ----------------
 

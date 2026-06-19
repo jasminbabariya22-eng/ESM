@@ -29,8 +29,9 @@ def build_email_template(title, content_html):
                         <!-- Footer -->
                         <tr>
                             <td style="padding:15px; font-size:12px; color:#777; border-top:1px solid #eee;">
-                                This is an automated email from <b>ERS System</b>.<br>
-                                Please do not reply directly.
+                                <p style="font-size:12px;color:gray;">
+                                This is an automated notification. Please do not reply to this email.
+                                </p>
                             </td>
                         </tr>
 

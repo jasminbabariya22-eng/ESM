@@ -1,0 +1,138 @@
+2026-06-17 12:22:12,878 | INFO | Process to send email. Email Job ID=555
+2026-06-17 12:22:12,878 | ERROR | Email send failed. Email Job ID=555 Error=local variable 'server' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 120, in send_email
+    'outgoing_email_user' : server['EMAIL_FROM'],
+UnboundLocalError: local variable 'server' referenced before assignment
+2026-06-17 12:32:57,230 | INFO | Process to send email. Email Job ID=556
+2026-06-17 12:32:57,230 | INFO | Recipients Count => TO=6, CC=4, BCC=0
+2026-06-17 12:32:57,230 | INFO | TO: support@alethelabs.com, jasmin.babariya@alethelabs.co.in, function@pil.com, function_legal@yahoo.com, manager_legal@yahoo.com, sunilpal@example.com
+2026-06-17 12:32:57,232 | INFO | CC: risk-owner-abc@pil.com, head_legal@yahoo.com, jasminbabariya7@gmail.com, test@yahoo.com
+2026-06-17 12:32:57,232 | ERROR | Email send failed. Email Job ID=556 Error='dict' object has no attribute 'outgoing_email_port'
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 162, in send_email
+    if server.outgoing_email_port:
+AttributeError: 'dict' object has no attribute 'outgoing_email_port'
+2026-06-17 12:32:57,251 | INFO | Process to send email. Email Job ID=557
+2026-06-17 12:32:57,252 | INFO | Recipients Count => TO=1, CC=10, BCC=0
+2026-06-17 12:32:57,252 | INFO | TO: mjatin10117@gmail.com
+2026-06-17 12:32:57,252 | INFO | CC: support@alethelabs.com, risk-owner-abc@pil.com, function@pil.com, head_legal@yahoo.com, test@yahoo.com, function_legal@yahoo.com, manager_legal@yahoo.com, jasmin.babariya@alethelabs.co.in, jasminbabariya7@gmail.com, sunilpal@example.com
+2026-06-17 12:32:57,253 | ERROR | Email send failed. Email Job ID=557 Error='dict' object has no attribute 'outgoing_email_port'
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 162, in send_email
+    if server.outgoing_email_port:
+AttributeError: 'dict' object has no attribute 'outgoing_email_port'
+2026-06-17 12:37:58,131 | INFO | Process to send email. Email Job ID=558
+2026-06-17 12:37:58,132 | INFO | Recipients Count => TO=8, CC=2, BCC=0
+2026-06-17 12:37:58,132 | INFO | TO: support@alethelabs.com, risk-owner-abc@pil.com, sunilpal@example.com, test@yahoo.com, manager_legal@yahoo.com, jasmin.babariya@alethelabs.co.in, jasminbabariya7@gmail.com, head_legal@yahoo.com
+2026-06-17 12:37:58,132 | INFO | CC: function@pil.com, function_legal@yahoo.com
+2026-06-17 12:37:58,132 | ERROR | Email send failed. Email Job ID=558 Error='dict' object has no attribute 'outgoing_email_port'
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 162, in send_email
+    if server['SMTP_PORT']:
+AttributeError: 'dict' object has no attribute 'outgoing_email_port'
+2026-06-17 12:41:18,786 | INFO | Process to send email. Email Job ID=559
+2026-06-17 12:41:18,787 | INFO | Recipients Count => TO=7, CC=3, BCC=0
+2026-06-17 12:41:18,787 | INFO | TO: risk-owner-abc@pil.com, sunilpal@example.com, function@pil.com, test@yahoo.com, function_legal@yahoo.com, jasminbabariya7@gmail.com, head_legal@yahoo.com
+2026-06-17 12:41:18,788 | INFO | CC: support@alethelabs.com, manager_legal@yahoo.com, jasmin.babariya@alethelabs.co.in
+2026-06-17 12:41:18,789 | ERROR | Email send failed. Email Job ID=559 Error='dict' object has no attribute 'outgoing_email_port'
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 162, in send_email
+    if server['SMTP_PORT']:
+AttributeError: 'dict' object has no attribute 'outgoing_email_port'
+2026-06-17 12:50:52,514 | INFO | Process to send email. Email Job ID=560
+2026-06-17 12:50:52,514 | INFO | Recipients Count => TO=6, CC=4, BCC=0
+2026-06-17 12:50:52,514 | INFO | TO: support@alethelabs.com, jasmin.babariya@alethelabs.co.in, function@pil.com, function_legal@yahoo.com, manager_legal@yahoo.com, sunilpal@example.com
+2026-06-17 12:50:52,515 | INFO | CC: test@yahoo.com, jasminbabariya7@gmail.com, head_legal@yahoo.com, risk-owner-abc@pil.com
+2026-06-17 12:50:56,284 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Risk Head - HR-2085' Recipients=10
+2026-06-17 12:50:56,325 | INFO | Process to send email. Email Job ID=561
+2026-06-17 12:50:56,326 | INFO | Recipients Count => TO=1, CC=10, BCC=0
+2026-06-17 12:50:56,326 | INFO | TO: mjatin10117@gmail.com
+2026-06-17 12:50:56,326 | INFO | CC: risk-owner-abc@pil.com, jasminbabariya7@gmail.com, test@yahoo.com, support@alethelabs.com, jasmin.babariya@alethelabs.co.in, function@pil.com, head_legal@yahoo.com, function_legal@yahoo.com, manager_legal@yahoo.com, sunilpal@example.com
+2026-06-17 12:50:59,171 | INFO | Email sent successfully. Subject='[ERS] Action Required: Treatments for Risk HR-2085' Recipients=11
+2026-06-17 13:32:56,756 | INFO | Process to send email. Email Job ID=562
+2026-06-17 13:32:56,758 | INFO | Recipients Count => TO=1, CC=9, BCC=0
+2026-06-17 13:32:56,759 | INFO | TO: jasminbabariya22@gmail.com
+2026-06-17 13:32:56,759 | INFO | CC: function_legal@yahoo.com, jasminbabariya7@gmail.com, jasmin.babariya@alethelabs.co.in, risk-owner-abc@pil.com, function@pil.com, support@alethelabs.com, test@yahoo.com, head_legal@yahoo.com, manager_legal@yahoo.com
+2026-06-17 13:32:59,863 | INFO | Email sent successfully. Subject='[ERS] New Risk Created - HR-2087' Recipients=10
+2026-06-17 13:34:30,184 | INFO | Process to send email. Email Job ID=563
+2026-06-17 13:34:30,185 | INFO | Recipients Count => TO=8, CC=2, BCC=0
+2026-06-17 13:34:30,185 | INFO | TO: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, jasminbabariya7@gmail.com, head_legal@yahoo.com, manager_legal@yahoo.com, risk-owner-abc@pil.com, test@yahoo.com, sunilpal@example.com
+2026-06-17 13:34:30,186 | INFO | CC: function_legal@yahoo.com, function@pil.com
+2026-06-17 13:34:32,873 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Function Head - HR-2086' Recipients=10
+2026-06-17 13:36:53,357 | INFO | Process to send email. Email Job ID=564
+2026-06-17 13:36:53,358 | INFO | Recipients Count => TO=1, CC=9, BCC=0
+2026-06-17 13:36:53,358 | INFO | TO: sunilpal@example.com
+2026-06-17 13:36:53,359 | INFO | CC: function_legal@yahoo.com, jasminbabariya7@gmail.com, jasmin.babariya@alethelabs.co.in, risk-owner-abc@pil.com, function@pil.com, support@alethelabs.com, test@yahoo.com, head_legal@yahoo.com, manager_legal@yahoo.com
+2026-06-17 13:36:56,013 | INFO | Email sent successfully. Subject='[ERS] New Risk Created - HR-2088' Recipients=10
+2026-06-17 13:46:07,599 | INFO | Process to send email. Email Job ID=565
+2026-06-17 13:46:07,599 | INFO | Recipients Count => TO=8, CC=2, BCC=0
+2026-06-17 13:46:07,599 | INFO | TO: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, jasminbabariya7@gmail.com, bholubabariya48@gmail.com, head_legal@yahoo.com, manager_legal@yahoo.com, risk-owner-abc@pil.com, test@yahoo.com
+2026-06-17 13:46:07,599 | INFO | CC: function_legal@yahoo.com, function@pil.com
+2026-06-17 13:46:11,149 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Function Head - HR-2090' Recipients=10
+2026-06-17 16:07:28,351 | INFO | Process to send email. Email Job ID=566
+2026-06-17 16:07:28,363 | ERROR | Email send failed. Email Job ID=566 Error=local variable 'all_recipients' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 74, in send_email
+    if not all_recipients:
+UnboundLocalError: local variable 'all_recipients' referenced before assignment
+2026-06-17 16:07:38,442 | INFO | Process to send email. Email Job ID=566
+2026-06-17 16:07:38,449 | ERROR | Email send failed. Email Job ID=566 Error=local variable 'all_recipients' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 74, in send_email
+    if not all_recipients:
+UnboundLocalError: local variable 'all_recipients' referenced before assignment
+2026-06-17 16:07:48,476 | INFO | Process to send email. Email Job ID=566
+2026-06-17 16:07:48,482 | ERROR | Email send failed. Email Job ID=566 Error=local variable 'all_recipients' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 74, in send_email
+    if not all_recipients:
+UnboundLocalError: local variable 'all_recipients' referenced before assignment
+2026-06-17 16:09:28,730 | INFO | Process to send email. Email Job ID=567
+2026-06-17 16:09:28,737 | ERROR | Email send failed. Email Job ID=567 Error=local variable 'all_recipients' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 74, in send_email
+    # Combine all receivers (VERY IMPORTANT)
+UnboundLocalError: local variable 'all_recipients' referenced before assignment
+2026-06-17 16:09:38,760 | INFO | Process to send email. Email Job ID=567
+2026-06-17 16:09:38,771 | ERROR | Email send failed. Email Job ID=567 Error=local variable 'all_recipients' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 74, in send_email
+    # Combine all receivers (VERY IMPORTANT)
+UnboundLocalError: local variable 'all_recipients' referenced before assignment
+2026-06-17 16:09:48,791 | INFO | Process to send email. Email Job ID=567
+2026-06-17 16:09:48,806 | ERROR | Email send failed. Email Job ID=567 Error=local variable 'all_recipients' referenced before assignment
+Traceback (most recent call last):
+  File "D:\ESM\app\services\email_sender.py", line 74, in send_email
+    # Combine all receivers (VERY IMPORTANT)
+UnboundLocalError: local variable 'all_recipients' referenced before assignment
+2026-06-17 16:15:35,679 | INFO | Process to send email. Email Job ID=568
+2026-06-17 16:15:35,688 | INFO | Recipients Count => TO=7, CC=3, BCC=0
+2026-06-17 16:15:35,689 | INFO | TO: jasminbabariya7@gmail.com, risk-owner-abc@pil.com, test@yahoo.com, function@pil.com, head_legal@yahoo.com, bholubabariya48@gmail.com, function_legal@yahoo.com
+2026-06-17 16:15:35,690 | INFO | CC: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, manager_legal@yahoo.com
+2026-06-17 16:15:38,992 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Risk Manager - HR-2086' Recipients=10
+2026-06-17 16:21:20,292 | INFO | Process to send email. Email Job ID=569
+2026-06-17 16:21:20,299 | INFO | Recipients Count => TO=8, CC=2, BCC=0
+2026-06-17 16:21:20,310 | INFO | TO: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, jasminbabariya7@gmail.com, bholubabariya48@gmail.com, head_legal@yahoo.com, manager_legal@yahoo.com, risk-owner-abc@pil.com, test@yahoo.com
+2026-06-17 16:21:20,310 | INFO | CC: function_legal@yahoo.com, function@pil.com
+2026-06-17 16:21:23,572 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Function Head - HR-2092' Recipients=10
+2026-06-17 16:22:33,814 | INFO | Process to send email. Email Job ID=570
+2026-06-17 16:22:33,820 | INFO | Recipients Count => TO=7, CC=3, BCC=0
+2026-06-17 16:22:33,821 | INFO | TO: jasminbabariya7@gmail.com, risk-owner-abc@pil.com, test@yahoo.com, function@pil.com, head_legal@yahoo.com, bholubabariya48@gmail.com, function_legal@yahoo.com
+2026-06-17 16:22:33,821 | INFO | CC: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, manager_legal@yahoo.com
+2026-06-17 16:22:36,724 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Risk Manager - HR-2089' Recipients=10
+2026-06-17 16:26:27,469 | INFO | Process to send email. Email Job ID=571
+2026-06-17 16:26:27,476 | INFO | Recipients Count => TO=7, CC=3, BCC=0
+2026-06-17 16:26:27,477 | INFO | TO: jasminbabariya7@gmail.com, risk-owner-abc@pil.com, test@yahoo.com, function@pil.com, head_legal@yahoo.com, bholubabariya48@gmail.com, function_legal@yahoo.com
+2026-06-17 16:26:27,477 | INFO | CC: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, manager_legal@yahoo.com
+2026-06-17 16:26:30,803 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Risk Manager - HR-2090' Recipients=10
+2026-06-17 16:30:03,178 | INFO | Process to send email. Email Job ID=572
+2026-06-17 16:30:03,187 | INFO | Recipients Count => TO=7, CC=3, BCC=0
+2026-06-17 16:30:03,189 | INFO | TO: jasminbabariya7@gmail.com, risk-owner-abc@pil.com, test@yahoo.com, function@pil.com, head_legal@yahoo.com, bholubabariya48@gmail.com, function_legal@yahoo.com
+2026-06-17 16:30:03,191 | INFO | CC: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, manager_legal@yahoo.com
+2026-06-17 16:30:06,022 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Risk Manager - HR-2091' Recipients=10
+2026-06-17 16:31:36,358 | INFO | Process to send email. Email Job ID=573
+2026-06-17 16:31:36,371 | INFO | Recipients Count => TO=7, CC=3, BCC=0
+2026-06-17 16:31:36,374 | INFO | TO: jasminbabariya7@gmail.com, risk-owner-abc@pil.com, test@yahoo.com, function@pil.com, head_legal@yahoo.com, bholubabariya48@gmail.com, function_legal@yahoo.com
+2026-06-17 16:31:36,374 | INFO | CC: jasmin.babariya@alethelabs.co.in, support@alethelabs.com, manager_legal@yahoo.com
+2026-06-17 16:31:40,042 | INFO | Email sent successfully. Subject='[ERS] Risk Updated by Risk Manager - HR-2092' Recipients=10

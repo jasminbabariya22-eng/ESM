@@ -53,7 +53,7 @@ def email_worker():
                 print(f"CC: {job.email_cc}")
                 print(f"==============================")
 
-                success = send_email(job)
+                success = send_email(db, job)
 
                 # new_attempt = job.send_attempts + 1
                 new_attempt = (job.send_attempts or 0) + 1
