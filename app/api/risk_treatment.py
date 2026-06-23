@@ -18,6 +18,7 @@ from app.models.risk_description import RiskDescription
 from app.models.risk_register import RiskRegister
 from app.models.risk_treatment_hist import RiskTreatmentHist
 from app.models.mst_status import Status
+from app.services.email_event_service import send_action_approve_reject_email
 
 router = APIRouter(
     prefix="/risk-treatment",
@@ -408,6 +409,11 @@ def approve_treatment(
 
         db.commit()
         db.refresh(treatment)
+        
+        # sent email
+        send_action_approve_reject_email(db,treatment)
+        
+        db.commit()
 
         return success_response({
             "risk_treatment_id": treatment.risk_treatment_id,
