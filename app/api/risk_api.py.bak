@@ -273,7 +273,6 @@ def copy_risks(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-
     try:
         if source_fy == destination_fy:
             return error_response(message="Source financial year and destination financial year can not be same",status_code=400)

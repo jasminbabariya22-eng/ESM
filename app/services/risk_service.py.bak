@@ -917,7 +917,7 @@ def get_risk_by_dept(db, dept_id,financial_year,current_user):
                 RiskDescription.risk_description_id
             ).all()    
         
-        action_required = False
+		action_required = False
         result = []
         for rr, rd in records:
             action_required = False
@@ -1758,7 +1758,7 @@ def get_risk_data_excel(db, dept_id,financial_year):
                     department_rows[dept_name].append({
 
                         "Risk ID": risk.risk_id if current_rows[dept_name] == risk_start_row else "",
-                        "Risk Title": risk.risk_name if current_rows[dept_name] == risk_start_row else "",
+                        "Risk Name": risk.risk_name if current_rows[dept_name] == risk_start_row else "",
 
                         "Risk Description": desc.risk_description if desc and first_desc else "",
                         "Inherent Risk Level": inherent_color_code if first_desc else "",

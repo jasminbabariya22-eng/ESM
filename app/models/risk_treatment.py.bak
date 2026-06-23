@@ -63,4 +63,4 @@ class RiskTreatment(Base):
     action_owner = relationship("User", foreign_keys=[action_owner_id])
     status = relationship("Status")
     
-    approved_user = relationship("User", foreign_keys=[approved_by])
+	approved_user = relationship("User", foreign_keys=[approved_by])
