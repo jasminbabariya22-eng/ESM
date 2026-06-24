@@ -58,7 +58,7 @@ def create_role(data: RoleCreateNew, db: Session = Depends(get_db)):
             "id": role.id,
             "name": role.name,
             "description": role.description,
-            "menuids": data.menu_ids
+            "menuids": data.menuids
         })
         
     except Exception as e:

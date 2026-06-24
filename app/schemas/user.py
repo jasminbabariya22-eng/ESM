@@ -26,6 +26,11 @@ class UserCreate(BaseModel):
     user_type_id: Optional[int] = 0
 
     status: str
+    
+class ChangePasswordRequest(BaseModel):
+    log_id: str
+    old_password: str
+    new_password: str
 
 
 # -------- UPDATE --------

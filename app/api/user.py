@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserResponse
+from app.schemas.user import *
 from typing import List
 from datetime import datetime
 from app.schemas.user import UserHybridResponse
@@ -307,4 +307,35 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
 
         return success_response(response)        
     except Exception as e:
+        return error_response(str(e), 400)
+    
+    
+
+# CHANGE PASSWORD
+
+@router.put("/password/change-password")
+def change_password(
+    password_data: ChangePasswordRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        user = db.query(User).filter(
+            User.log_id == password_data.log_id,
+            User.is_deleted == 0
+        ).first()
+
+        # Check user exists and old password matches
+        if not user or user.password != password_data.old_password:
+            return error_response(message="Invalid credentials",status_code=401)
+
+        # Update password
+        user.password = password_data.new_password
+        user.modified_on = datetime.utcnow()
+
+        db.commit()
+
+        return success_response(message="Password changed successfully")
+
+    except Exception as e:
+        db.rollback()
         return error_response(str(e), 400)
