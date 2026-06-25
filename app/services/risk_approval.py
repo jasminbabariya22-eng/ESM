@@ -192,66 +192,13 @@ def approve_risk(db, data, user_id):
 
     db.add(hist)
     
-    #reset approval
-    #if -1 in approvals:
-    #    reset_risk_approvals(risk)
-
-    # ---------------- EMAIL JOB INSERT ----------------
-
-    # if data.approval_level == 1:
-
-    #     send_function_head_approval_email(
-    #         db,
-    #         risk.risk_register_id,
-            
-    #     )
-
-    # elif data.approval_level == 2:
-
-    #     send_risk_manager_email(
-    #         db,
-    #         risk.risk_register_id
-    #     )
-
-    # elif data.approval_level == 3:
-
-    #     send_risk_head_email(
-    #         db,
-    #         risk.risk_register_id
-    #     )
     
+    #reset approval
     # APPROVED
     if status_req_id == 1:
-
-        if data.approval_level == 1:
-
-            send_function_head_approval_email(
-                db,
-                risk.risk_register_id
-            )
-
-        elif data.approval_level == 2:
-
-            send_risk_manager_email(
-                db,
-                risk.risk_register_id
-            )
-
-        elif data.approval_level == 3:
-
-            send_risk_head_email(
-                db,
-                risk.risk_register_id
-            )
-
-        send_treatment_email_after_approval(
-            db,
-            risk.risk_register_id
-        )
-
-    # REJECTED
+        send_function_approval_email_seq(db,risk.risk_register_id, data.approval_level)
     elif status_req_id == -1:
-
+    
         role_map = {
             1: "Functional Head",
             2: "Risk Manager",
@@ -265,11 +212,6 @@ def approve_risk(db, data, user_id):
             remark=data.remark
         )
 
-    # treatment email
-    # send_treatment_email_after_approval(
-    #     db,
-    #     risk.risk_register_id
-    # )
     if (
         risk.risk_function_head_approval_status == 1 and
         risk.risk_manager_approval_status == 1 and
@@ -279,7 +221,6 @@ def approve_risk(db, data, user_id):
             db,
             risk.risk_register_id
         )
-
     # ---------------- SINGLE COMMIT ----------------
 
     db.commit()
@@ -295,157 +236,3 @@ def approve_risk(db, data, user_id):
         risk.risk_status,
         risk_status_name
     )
-
-
-
-# from datetime import datetime, timezone
-# from app.models.risk_register import RiskRegister
-# from app.models.mst_status import Status
-
-# from app.models.risk_register_hist import RiskRegisterHist
-# from app.services.risk_service import *
-
-# from app.services.email_event_service import (
-#     send_function_head_approval_email,
-#     send_risk_head_email,
-#     send_risk_manager_email,
-#     send_treatment_email_after_approval
-# )
-
-
-# # function to handle risk approval at different levels (Function Head, Risk Manager, Risk Head), updates the risk status based on the approval and creates a history record of the change. 
-# # Also triggers email notifications based on the approval level.
-# def approve_risk(db, data, user_id):
-
-#     risk = db.query(RiskRegister).filter(
-#         RiskRegister.risk_register_id == data.risk_register_id,
-#         RiskRegister.is_deleted == 0
-#     ).first()
-
-#     if not risk:
-#         raise Exception("Risk not found")
-
-#     # Convert 7 / 8 to Approved / Rejected
-#     if data.approval_status_id == 7:
-#         status_name_required = "Approved"
-#         status_req_id = 1 
-#     elif data.approval_status_id == 8:
-#         status_name_required = "Rejected"
-#         status_req_id = -1
-#     else:
-#         raise Exception("Invalid approval status. Use 7 for Approved and 8 for Rejected")
-
-#     # Get status name
-#     # status_obj = db.query(Status).filter(
-#     #     Status.status_name == status_name_required,
-#     #     Status.is_deleted == 0
-#     # ).first()
-    
-#     # if not status_obj:
-#     #     raise Exception("Invalid status id")
-
-#     if data.approval_level == 1:                       # function head approval using 1 as approval level
-#         risk.risk_function_head_approval_status = status_req_id
-#         risk.risk_function_head_approval_remark = data.remark
-#         risk.risk_function_head_approval_by = user_id
-#         risk.risk_function_head_approval_on = datetime.now(timezone.utc)
-        
-#     elif data.approval_level == 2:                   # risk manager approval using 2 as approval level
-#         risk.risk_manager_approval_status = status_req_id
-#         risk.risk_manager_approval_remark = data.remark
-#         risk.risk_manager_approval_by = user_id
-#         risk.risk_manager_approved_on = datetime.now(timezone.utc)
-
-#     elif data.approval_level == 3:                    # risk head approval using 3 as approval level
-#         risk.risk_head_approval_status = status_req_id
-#         risk.risk_head_approval_remark = data.remark
-#         risk.risk_head_approval_by = user_id
-#         risk.risk_head_approved_on = datetime.now(timezone.utc)
-
-
-
-#     else:
-#         raise Exception("Invalid approval level")
-
-#         # ---------------- Status logic ----------------
-
-#     def get_status_id(name):
-#         s = db.query(Status).filter(Status.status_name == name, Status.is_deleted == 0).first()
-#         return s.id if s else None
-
-#     function_head = risk.risk_function_head_approval_status
-#     risk_head = risk.risk_head_approval_status
-#     risk_manager = risk.risk_manager_approval_status
-
-#     pending_id = get_status_id("Pending for Action")    # if any one of reject so update status to pending for action, if all approved then update to new
-#     new_id = get_status_id("New")
-
-#     # MAIN LOGIC
-#     if -1 in [function_head, risk_head, risk_manager]:
-#         risk.risk_status = pending_id
-#     else:
-#         risk.risk_status = new_id
-        
-#     hist = RiskRegisterHist(                ## add in history table
-#         risk_register_id=risk.risk_register_id,
-
-#         risk_id=risk.risk_id,
-#         risk_name=risk.risk_name,
-
-#         dept_id=risk.dept_id,
-#         risk_owner_id=risk.risk_owner_id,
-#         risk_co_owner_id=risk.risk_co_owner_id,
-
-#         # target_date=risk.target_date,
-#         financial_year=risk.financial_year,
-
-#         risk_status=risk.risk_status,
-#         risk_progress=risk.risk_progress,
-
-#         risk_function_head_approval_status=risk.risk_function_head_approval_status,
-#         risk_function_head_approval_remark=risk.risk_function_head_approval_remark,
-#         risk_function_head_approval_on=risk.risk_function_head_approval_on,
-#         risk_function_head_approval_by=risk.risk_function_head_approval_by,
-
-#         risk_head_approval_status=risk.risk_head_approval_status,
-#         risk_head_approved_on=risk.risk_head_approved_on,
-#         risk_head_approval_remark=risk.risk_head_approval_remark,
-#         risk_head_approval_by=risk.risk_head_approval_by,
-
-#         risk_manager_approval_status=risk.risk_manager_approval_status,
-#         risk_manager_approved_on=risk.risk_manager_approved_on,
-#         risk_manager_approval_remark=risk.risk_manager_approval_remark,
-#         risk_manager_approval_by=risk.risk_manager_approval_by,
-
-#         created_by=risk.created_by,
-#         created_on=risk.created_on,
-
-#         modified_by=user_id,
-#         modified_on=datetime.now(timezone.utc),
-
-#         is_active=risk.is_active,
-#         is_deleted=risk.is_deleted
-#     )
-
-#     db.add(hist)
-
-#     db.commit()
-
-#     # ---------------- EMAIL TRIGGER ----------------
-#     try:
-#         if data.approval_level == 1:
-#             send_function_head_approval_email(db, risk.risk_register_id)
-            
-#         elif data.approval_level == 2:
-#             send_risk_manager_email(db, risk.risk_register_id)
-
-#         elif data.approval_level == 3:
-#             send_risk_head_email(db, risk.risk_register_id)
-
-    
-#     except Exception as e:
-#         print("Email trigger failed:", e)
-        
-#     send_treatment_email_after_approval(db, risk.risk_register_id)    # for email sending after approval to treatment owner if any treatment exist for the risk
-
-#     return risk, "", ""

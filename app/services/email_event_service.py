@@ -332,12 +332,13 @@ def send_risk_created_email(db: Session, risk_register_id: int):
     body = build_email_template("New Risk Created", content)
 
     create_email_job(db, fh, cc_emails, subject, body, created_by=risk.risk_owner_id)
+    
+    
+    
+## --------------------------------------------Common Function for Approval---------------------------------------------------------
 
-
-# EVENT 2: FUNCTION HEAD APPROVAL (TO: RM, CC: FH, RH, RO)
-
-def send_function_head_approval_email(db: Session, risk_register_id: int):
-
+def send_function_approval_email_seq(db: Session, risk_register_id: int,seq: int):
+    
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == risk_register_id
     ).first()
@@ -353,120 +354,201 @@ def send_function_head_approval_email(db: Session, risk_register_id: int):
 
     fh = ctx["fh"]
     rm = ctx["rm"]
-    # rh = ctx["rh"]
+    rh = ctx["rh"]
+    if seq == 1:
+        to_emails = list(set(rm))
+        cc_emails = list(set(fh + owner)- set(to_emails))
+        subject = f"Risk Updated by Function Head - {risk.risk_id}"
+        action_msg = "Risk has been Approved by Functional Head."
+        
+        template_title = "Function Head Approval"
+        created_by = risk.risk_function_head_approval_by
+        
+    elif seq == 2:
+        to_emails = list(set(rh))
+        cc_emails = list(set(owner + fh + rm)- set(to_emails))
+        subject = f"Risk approved by Risk Manager - {risk.risk_id}"
+        action_msg = "Risk has been Approved by Risk Manager."
+        
+        template_title = "Risk Manager Approval"
+        created_by = risk.risk_manager_approval_by
+        
+    else:
+        treatments = db.execute(
+            text(f"""
+                SELECT DISTINCT action_owner_id
+                FROM {SCHEMA}.risk_treatment
+                WHERE risk_id = :risk_id
+                AND is_deleted = 0
+                AND action_owner_id IS NOT NULL
+            """),
+            {"risk_id": risk.risk_id}
+        ).fetchall()
 
-    to_emails = list(set(rm))
-    cc_emails = list(set(fh + owner)- set(to_emails))
+        action_owner_emails = []
+        for row in treatments:
+            owner_user = get_emails_by_user_ids(db,[row.action_owner_id])
 
-    subject = f"Risk Updated by Function Head - {risk.risk_id}"
+            if owner_user and owner_user.get("email"):
+                action_owner_emails.append(
+                    owner_user["email"]
+                )
+
+        to_emails = list(set(owner + action_owner_emails))
+        cc_emails = list(set(fh + rm + rh)- set(to_emails))
+        subject = f"Risk approved by Risk Head - {risk.risk_id}"
+        action_msg = "Risk has been Approved by Risk Head."
+        
+        template_title = "Risk Head Approval"
+        created_by = risk.risk_head_approval_by
+        
     content = build_risk_details_html(
             risk=risk,
             function_name=function_list,
             owner_name=full_name,
-            action_message="Risk has been Approved by Functional Head."
+            action_message=action_msg
         )
 
-    body = build_email_template("Function Head Approval", content)
+    body = build_email_template(template_title, content)
 
-    create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_function_head_approval_by)
+    create_email_job(db, to_emails, cc_emails, subject, body, created_by=created_by)
+
+
+
+
+# # EVENT 2: FUNCTION HEAD APPROVAL (TO: RM, CC: FH, RH, RO)
+
+# def send_function_head_approval_email(db: Session, risk_register_id: int):
+
+#     risk = db.query(RiskRegister).filter(
+#         RiskRegister.risk_register_id == risk_register_id
+#     ).first()
+
+#     if not risk:
+#         return
+    
+#     ctx = get_risk_email_context(db, risk)         # comman function for email context healper
+
+#     function_list = ctx["function_name"]
+#     owner = ctx["owner_email"]
+#     full_name = ctx["owner_name"]
+
+#     fh = ctx["fh"]
+#     rm = ctx["rm"]
+#     # rh = ctx["rh"]
+
+#     to_emails = list(set(rm))
+#     cc_emails = list(set(fh + owner)- set(to_emails))
+
+#     subject = f"Risk Updated by Function Head - {risk.risk_id}"
+#     content = build_risk_details_html(
+#             risk=risk,
+#             function_name=function_list,
+#             owner_name=full_name,
+#             action_message="Risk has been Approved by Functional Head."
+#         )
+
+#     body = build_email_template("Function Head Approval", content)
+
+#     create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_function_head_approval_by)
     
 
 
-# EVENT 3: RISK MANAGER ACTION (TO: RH, CC:FH,RM, RO)
+# # EVENT 3: RISK MANAGER ACTION (TO: RH, CC:FH,RM, RO)
 
-def send_risk_manager_email(db: Session, risk_register_id: int):
+# def send_risk_manager_email(db: Session, risk_register_id: int):
 
-    risk = db.query(RiskRegister).filter(
-        RiskRegister.risk_register_id == risk_register_id
-    ).first()
+#     risk = db.query(RiskRegister).filter(
+#         RiskRegister.risk_register_id == risk_register_id
+#     ).first()
 
-    if not risk:
-        return
+#     if not risk:
+#         return
 
-    ctx = get_risk_email_context(db, risk)
+#     ctx = get_risk_email_context(db, risk)
 
-    function_list = ctx["function_name"]
-    owner = ctx["owner_email"]
-    full_name = ctx["owner_name"]
+#     function_list = ctx["function_name"]
+#     owner = ctx["owner_email"]
+#     full_name = ctx["owner_name"]
 
-    fh = ctx["fh"]
-    rm = ctx["rm"]
-    rh = ctx["rh"]
+#     fh = ctx["fh"]
+#     rm = ctx["rm"]
+#     rh = ctx["rh"]
 
-    to_emails = list(set(rh))
+#     to_emails = list(set(rh))
 
-    cc_emails = list(set(owner + fh + rm)- set(to_emails))
+#     cc_emails = list(set(owner + fh + rm)- set(to_emails))
 
-    subject = f"Risk approved by Risk Manager - {risk.risk_id}"
+#     subject = f"Risk approved by Risk Manager - {risk.risk_id}"
 
-    content = build_risk_details_html(
-                    risk=risk,
-                    function_name=function_list,
-                    owner_name=full_name,
-                    action_message="Risk has been Approved by Risk Manager."
-                )
+#     content = build_risk_details_html(
+#                     risk=risk,
+#                     function_name=function_list,
+#                     owner_name=full_name,
+#                     action_message="Risk has been Approved by Risk Manager."
+#                 )
 
-    body = build_email_template("Risk Manager Approval", content)
+#     body = build_email_template("Risk Manager Approval", content)
 
-    create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_manager_approval_by)
+#     create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_manager_approval_by)
 
 
-# EVENT 4: RISK HEAD ACTION (TO: RO, CC: FH,RM,RO)
+# # EVENT 4: RISK HEAD ACTION (TO: RO, CC: FH,RM,RO)
 
-def send_risk_head_email(db: Session, risk_register_id: int):
+# def send_risk_head_email(db: Session, risk_register_id: int):
 
-    risk = db.query(RiskRegister).filter(
-        RiskRegister.risk_register_id == risk_register_id
-    ).first()
+#     risk = db.query(RiskRegister).filter(
+#         RiskRegister.risk_register_id == risk_register_id
+#     ).first()
 
-    if not risk:
-        return
+#     if not risk:
+#         return
 
-    ctx = get_risk_email_context(db, risk)
+#     ctx = get_risk_email_context(db, risk)
 
-    function_list = ctx["function_name"]
-    owner = ctx["owner_email"]
-    full_name = ctx["owner_name"]
+#     function_list = ctx["function_name"]
+#     owner = ctx["owner_email"]
+#     full_name = ctx["owner_name"]
 
-    fh = ctx["fh"]
-    rm = ctx["rm"]
-    rh = ctx["rh"]
+#     fh = ctx["fh"]
+#     rm = ctx["rm"]
+#     rh = ctx["rh"]
     
-    treatments = db.execute(
-        text(f"""
-            SELECT DISTINCT action_owner_id
-            FROM {SCHEMA}.risk_treatment
-            WHERE risk_id = :risk_id
-            AND is_deleted = 0
-            AND action_owner_id IS NOT NULL
-        """),
-        {"risk_id": risk.risk_id}
-    ).fetchall()
+#     treatments = db.execute(
+#         text(f"""
+#             SELECT DISTINCT action_owner_id
+#             FROM {SCHEMA}.risk_treatment
+#             WHERE risk_id = :risk_id
+#             AND is_deleted = 0
+#             AND action_owner_id IS NOT NULL
+#         """),
+#         {"risk_id": risk.risk_id}
+#     ).fetchall()
 
-    action_owner_emails = []
-    for row in treatments:
-        owner_user = get_emails_by_user_ids(db,[row.action_owner_id])
+#     action_owner_emails = []
+#     for row in treatments:
+#         owner_user = get_emails_by_user_ids(db,[row.action_owner_id])
 
-        if owner_user and owner_user.get("email"):
-            action_owner_emails.append(
-                owner_user["email"]
-            )
+#         if owner_user and owner_user.get("email"):
+#             action_owner_emails.append(
+#                 owner_user["email"]
+#             )
 
-    to_emails = list(set(owner + action_owner_emails))
-    cc_emails = list(set(fh + rm + rh)- set(to_emails))
+#     to_emails = list(set(owner + action_owner_emails))
+#     cc_emails = list(set(fh + rm + rh)- set(to_emails))
 
-    subject = f"Risk approved by Risk Head - {risk.risk_id}"
+#     subject = f"Risk approved by Risk Head - {risk.risk_id}"
 
-    content = build_risk_details_html(
-                            risk=risk,
-                            function_name=function_list,
-                            owner_name=full_name,
-                            action_message="Risk has been Approved by Risk Head."
-                        )
+#     content = build_risk_details_html(
+#                             risk=risk,
+#                             function_name=function_list,
+#                             owner_name=full_name,
+#                             action_message="Risk has been Approved by Risk Head."
+#                         )
 
-    body = build_email_template("Risk Head Approval", content)
+#     body = build_email_template("Risk Head Approval", content)
 
-    create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_head_approval_by)
+#     create_email_job(db, to_emails, cc_emails, subject, body, created_by=risk.risk_head_approval_by)
     
     
 # EVENT 5: SEND TREATMENT EMAIL AFTER FULL APPROVAL
@@ -664,7 +746,7 @@ def send_action_approve_reject_email(db: Session, treatment: RiskTreatment):
     cc_emails = list(set(to_owner + rm + rh + fh) - set(to_action))
     
     status = ""
-    if treatment.action_status_id == 1:
+    if treatment.approval_status == 1:
         subject = f"Risk action approved - {risk.risk_id},{treatment.action_plan}"
         status = "approved"
     else:
