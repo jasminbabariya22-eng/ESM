@@ -313,20 +313,65 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
 
 # CHANGE PASSWORD
 
+# @router.put("/password/change-password")
+# def change_password(
+#     password_data: ChangePasswordRequest,
+#     db: Session = Depends(get_db)
+# ):
+#     try:
+#         user = db.query(User).filter(
+#             User.log_id == password_data.log_id,
+#             User.is_deleted == 0
+#         ).first()
+
+#         # Check user exists and old password matches
+#         if not user or user.password != password_data.old_password:
+#             return error_response(message="Invalid credentials",status_code=401)
+
+#         # Update password
+#         user.password = password_data.new_password
+#         user.modified_on = datetime.utcnow()
+
+#         db.commit()
+
+#         return success_response(message="Password changed successfully")
+
+#     except Exception as e:
+#         db.rollback()
+#         return error_response(str(e), 400)
+
+
 @router.put("/password/change-password")
 def change_password(
     password_data: ChangePasswordRequest,
     db: Session = Depends(get_db)
 ):
     try:
+        # Fetch user by id
         user = db.query(User).filter(
-            User.log_id == password_data.log_id,
+            User.id == password_data.id,
             User.is_deleted == 0
         ).first()
 
-        # Check user exists and old password matches
-        if not user or user.password != password_data.old_password:
-            return error_response(message="Invalid credentials",status_code=401)
+        if not user:
+            return error_response(
+                message="User not found",
+                status_code=404
+            )
+
+        # Verify old password
+        if user.password != password_data.old_password:
+            return error_response(
+                message="Invalid old password",
+                status_code=401
+            )
+
+        # Prevent same password
+        if password_data.old_password == password_data.new_password:
+            return error_response(
+                message="New password must be different from old password",
+                status_code=400
+            )
 
         # Update password
         user.password = password_data.new_password
@@ -334,7 +379,9 @@ def change_password(
 
         db.commit()
 
-        return success_response(message="Password changed successfully")
+        return success_response(
+            message="Password changed successfully"
+        )
 
     except Exception as e:
         db.rollback()

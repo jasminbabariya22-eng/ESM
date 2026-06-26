@@ -1,119 +1,25 @@
-2026-06-24 11:31:02,873 | INFO | Process to send email. Email Job ID=647
-2026-06-24 11:31:02,884 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 11:31:02,884 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 11:31:02,884 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 11:31:06,070 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2111' Recipients=5
-2026-06-24 13:01:41,530 | INFO | Process to send email. Email Job ID=648
-2026-06-24 13:01:41,547 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 13:01:41,547 | INFO | TO: manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 13:01:41,553 | INFO | CC: jasmin.babariya@alethelabs.co.in, bholubabariya48@gmail.com, manali.nagory@pipelineinfra.com
-2026-06-24 13:01:44,360 | INFO | Email sent successfully. Subject='Risk Updated by Function Head - HR-2112' Recipients=5
-2026-06-24 13:02:04,473 | INFO | Process to send email. Email Job ID=649
-2026-06-24 13:02:04,482 | INFO | Recipients Count => TO=4, CC=5, BCC=0
-2026-06-24 13:02:04,482 | INFO | TO: test@yahoo.com, Add@gmail.com, jasminbabariya7@gmail.com, head_legal@yahoo.com
-2026-06-24 13:02:04,490 | INFO | CC: bholubabariya48@gmail.com, manali.nagory@pipelineinfra.com, manager_legal@yahoo.com, support@alethelabs.com, jasmin.babariya@alethelabs.co.in
-2026-06-24 13:02:07,282 | INFO | Email sent successfully. Subject='Risk approved by Risk Manager - HR-2112' Recipients=9
-2026-06-24 13:03:47,600 | INFO | Process to send email. Email Job ID=650
-2026-06-24 13:03:47,600 | INFO | Recipients Count => TO=2, CC=8, BCC=0
-2026-06-24 13:03:47,600 | INFO | TO: bholubabariya48@gmail.com, mjatin10117@gmail.com
-2026-06-24 13:03:47,607 | INFO | CC: manali.nagory@pipelineinfra.com, manager_legal@yahoo.com, support@alethelabs.com, head_legal@yahoo.com, Add@gmail.com, test@yahoo.com, jasmin.babariya@alethelabs.co.in, jasminbabariya7@gmail.com
-2026-06-24 13:03:51,327 | INFO | Email sent successfully. Subject='Risk approved by Risk Head - HR-2112' Recipients=10
-2026-06-24 13:03:51,384 | INFO | Process to send email. Email Job ID=651
-2026-06-24 13:03:51,392 | INFO | Recipients Count => TO=1, CC=8, BCC=0
-2026-06-24 13:03:51,392 | INFO | TO: mjatin10117@gmail.com
-2026-06-24 13:03:51,392 | INFO | CC: manali.nagory@pipelineinfra.com, manager_legal@yahoo.com, support@alethelabs.com, head_legal@yahoo.com, Add@gmail.com, test@yahoo.com, jasmin.babariya@alethelabs.co.in, jasminbabariya7@gmail.com
-2026-06-24 13:03:54,912 | INFO | Email sent successfully. Subject='Action Required: Risk Treatment Assignment - HR-2112' Recipients=9
-2026-06-24 13:03:54,959 | INFO | Process to send email. Email Job ID=652
-2026-06-24 13:03:54,968 | INFO | Recipients Count => TO=1, CC=8, BCC=0
-2026-06-24 13:03:54,968 | INFO | TO: mjatin10117@gmail.com
-2026-06-24 13:03:54,968 | INFO | CC: manali.nagory@pipelineinfra.com, manager_legal@yahoo.com, support@alethelabs.com, head_legal@yahoo.com, Add@gmail.com, test@yahoo.com, jasmin.babariya@alethelabs.co.in, jasminbabariya7@gmail.com
-2026-06-24 13:03:57,878 | INFO | Email sent successfully. Subject='Action Required: Risk Treatment Assignment - HR-2112' Recipients=9
-2026-06-24 15:09:05,786 | INFO | Process to send email. Email Job ID=653
-2026-06-24 15:09:05,807 | INFO | Recipients Count => TO=1, CC=9, BCC=0
-2026-06-24 15:09:05,810 | INFO | TO: mjatin10117@gmail.com
-2026-06-24 15:09:05,810 | INFO | CC: manali.nagory@pipelineinfra.com, head_legal@yahoo.com, manager_legal@yahoo.com, jasminbabariya7@gmail.com, test@yahoo.com, support@alethelabs.com, jasmin.babariya@alethelabs.co.in, Add@gmail.com, bholubabariya48@gmail.com
-2026-06-24 15:09:09,341 | INFO | Email sent successfully. Subject='Risk action rejected - HR-2112,Studds two A' Recipients=10
-2026-06-24 15:33:23,610 | INFO | Process to send email. Email Job ID=654
-2026-06-24 15:33:23,617 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:33:23,617 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:33:23,617 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:33:26,713 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2113' Recipients=5
-2026-06-24 15:33:26,751 | INFO | Process to send email. Email Job ID=655
-2026-06-24 15:33:26,751 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:33:26,751 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:33:26,751 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:33:29,730 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2114' Recipients=5
-2026-06-24 15:33:29,777 | INFO | Process to send email. Email Job ID=656
-2026-06-24 15:33:29,779 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:33:29,779 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:33:29,779 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:33:32,389 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2115' Recipients=5
-2026-06-24 15:35:02,637 | INFO | Process to send email. Email Job ID=657
-2026-06-24 15:35:02,645 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:35:02,645 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:35:02,645 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:35:06,296 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2116' Recipients=5
-2026-06-24 15:35:06,337 | INFO | Process to send email. Email Job ID=658
-2026-06-24 15:35:06,339 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:35:06,345 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:35:06,345 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:35:09,064 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2117' Recipients=5
-2026-06-24 15:35:09,100 | INFO | Process to send email. Email Job ID=659
-2026-06-24 15:35:09,107 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:35:09,107 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:35:09,107 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:35:11,929 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2118' Recipients=5
-2026-06-24 15:35:11,979 | INFO | Process to send email. Email Job ID=660
-2026-06-24 15:35:11,981 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:35:11,987 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:35:11,987 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:35:14,896 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2116' Recipients=5
-2026-06-24 15:35:14,937 | INFO | Process to send email. Email Job ID=661
-2026-06-24 15:35:14,945 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:35:14,945 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:35:14,945 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:35:18,079 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2116' Recipients=5
-2026-06-24 15:35:18,138 | INFO | Process to send email. Email Job ID=662
-2026-06-24 15:35:18,146 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:35:18,146 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:35:18,146 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:35:22,377 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2116' Recipients=5
-2026-06-24 15:48:14,460 | INFO | Process to send email. Email Job ID=663
-2026-06-24 15:48:14,464 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:48:14,468 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:48:14,468 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:48:17,697 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2119' Recipients=5
-2026-06-24 15:52:18,468 | INFO | Process to send email. Email Job ID=664
-2026-06-24 15:52:18,485 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 15:52:18,485 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 15:52:18,487 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 15:52:22,925 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2120' Recipients=5
-2026-06-24 16:04:34,845 | INFO | Process to send email. Email Job ID=665
-2026-06-24 16:04:34,848 | INFO | Recipients Count => TO=1, CC=9, BCC=0
-2026-06-24 16:04:34,848 | INFO | TO: mjatin10117@gmail.com
-2026-06-24 16:04:34,848 | INFO | CC: support@alethelabs.com, manali.nagory@pipelineinfra.com, head_legal@yahoo.com, bholubabariya48@gmail.com, test@yahoo.com, Add@gmail.com, jasmin.babariya@alethelabs.co.in, manager_legal@yahoo.com, jasminbabariya7@gmail.com
-2026-06-24 16:04:39,506 | INFO | Email sent successfully. Subject='Risk action rejected - HR-2112,Studds one B' Recipients=10
-2026-06-24 16:05:59,761 | INFO | Process to send email. Email Job ID=666
-2026-06-24 16:05:59,771 | INFO | Recipients Count => TO=1, CC=9, BCC=0
-2026-06-24 16:05:59,773 | INFO | TO: mjatin10117@gmail.com
-2026-06-24 16:05:59,773 | INFO | CC: test@yahoo.com, support@alethelabs.com, bholubabariya48@gmail.com, head_legal@yahoo.com, manali.nagory@pipelineinfra.com, jasminbabariya7@gmail.com, jasmin.babariya@alethelabs.co.in, manager_legal@yahoo.com, Add@gmail.com
-2026-06-24 16:06:05,381 | INFO | Email sent successfully. Subject='Risk action approved - HR-2112,Studds one B' Recipients=10
-2026-06-24 18:15:06,198 | INFO | Process to send email. Email Job ID=667
-2026-06-24 18:15:06,211 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 18:15:06,212 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
-2026-06-24 18:15:06,212 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
-2026-06-24 18:15:09,395 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2362' Recipients=5
-2026-06-24 18:17:39,739 | INFO | Process to send email. Email Job ID=668
-2026-06-24 18:17:39,744 | INFO | Recipients Count => TO=2, CC=3, BCC=0
-2026-06-24 18:17:39,745 | INFO | TO: support@alethelabs.com, manager_legal@yahoo.com
-2026-06-24 18:17:39,745 | INFO | CC: manali.nagory@pipelineinfra.com, bholubabariya48@gmail.com, jasmin.babariya@alethelabs.co.in
-2026-06-24 18:17:42,464 | INFO | Email sent successfully. Subject='Risk Updated by Function Head - HR-2362' Recipients=5
-2026-06-24 18:21:02,954 | INFO | Process to send email. Email Job ID=669
-2026-06-24 18:21:02,959 | INFO | Recipients Count => TO=1, CC=4, BCC=0
-2026-06-24 18:21:02,959 | INFO | TO: bholubabariya48@gmail.com
-2026-06-24 18:21:02,959 | INFO | CC: support@alethelabs.com, manager_legal@yahoo.com, manali.nagory@pipelineinfra.com, jasmin.babariya@alethelabs.co.in
-2026-06-24 18:21:05,827 | INFO | Email sent successfully. Subject='Risk Rejected by Risk Manager - HR-2362' Recipients=5
-2026-06-24 18:57:03,675 | INFO | Process to send email. Email Job ID=670
-2026-06-24 18:57:03,681 | INFO | Recipients Count => TO=1, CC=9, BCC=0
-2026-06-24 18:57:03,682 | INFO | TO: mjatin10117@gmail.com
-2026-06-24 18:57:03,682 | INFO | CC: support@alethelabs.com, bholubabariya48@gmail.com, head_legal@yahoo.com, Add@gmail.com, manager_legal@yahoo.com, manali.nagory@pipelineinfra.com, jasminbabariya7@gmail.com, test@yahoo.com, jasmin.babariya@alethelabs.co.in
+2026-06-25 11:35:16,673 | INFO | Process to send email. Email Job ID=671
+2026-06-25 11:35:16,715 | INFO | Recipients Count => TO=2, CC=3, BCC=0
+2026-06-25 11:35:16,715 | INFO | TO: jasmin.babariya@alethelabs.co.in, manali.nagory@pipelineinfra.com
+2026-06-25 11:35:16,715 | INFO | CC: bholubabariya48@gmail.com, manager_legal@yahoo.com, support@alethelabs.com
+2026-06-25 11:36:21,020 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2363' Recipients=5
+2026-06-25 11:38:41,417 | INFO | Process to send email. Email Job ID=672
+2026-06-25 11:38:41,439 | INFO | Recipients Count => TO=1, CC=4, BCC=0
+2026-06-25 11:38:41,439 | INFO | TO: bholubabariya48@gmail.com
+2026-06-25 11:38:41,439 | INFO | CC: support@alethelabs.com, jasmin.babariya@alethelabs.co.in, manager_legal@yahoo.com, manali.nagory@pipelineinfra.com
+2026-06-25 11:39:22,394 | INFO | Email sent successfully. Subject='Risk Rejected by Functional Head - HR-2363' Recipients=5
+2026-06-25 11:58:45,231 | INFO | Process to send email. Email Job ID=673
+2026-06-25 11:58:45,231 | INFO | Recipients Count => TO=2, CC=3, BCC=0
+2026-06-25 11:58:45,244 | INFO | TO: manali.nagory@pipelineinfra.com, jasmin.babariya@alethelabs.co.in
+2026-06-25 11:58:45,245 | INFO | CC: manager_legal@yahoo.com, support@alethelabs.com, bholubabariya48@gmail.com
+2026-06-25 11:58:48,606 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2364' Recipients=5
+2026-06-25 11:59:18,681 | INFO | Process to send email. Email Job ID=674
+2026-06-25 11:59:18,693 | INFO | Recipients Count => TO=1, CC=4, BCC=0
+2026-06-25 11:59:18,696 | INFO | TO: bholubabariya48@gmail.com
+2026-06-25 11:59:18,696 | INFO | CC: manager_legal@yahoo.com, support@alethelabs.com, manali.nagory@pipelineinfra.com, jasmin.babariya@alethelabs.co.in
+2026-06-25 11:59:21,914 | INFO | Email sent successfully. Subject='Risk Rejected by Functional Head - HR-2364' Recipients=5
+2026-06-25 12:00:02,083 | INFO | Process to send email. Email Job ID=675
+2026-06-25 12:00:02,090 | INFO | Recipients Count => TO=2, CC=3, BCC=0
+2026-06-25 12:00:02,091 | INFO | TO: manali.nagory@pipelineinfra.com, jasmin.babariya@alethelabs.co.in
+2026-06-25 12:00:02,092 | INFO | CC: manager_legal@yahoo.com, support@alethelabs.com, bholubabariya48@gmail.com
+2026-06-25 12:00:05,936 | INFO | Email sent successfully. Subject='New Risk Registered - HR-2364' Recipients=5

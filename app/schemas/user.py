@@ -28,7 +28,7 @@ class UserCreate(BaseModel):
     status: str
     
 class ChangePasswordRequest(BaseModel):
-    log_id: str
+    id: int
     old_password: str
     new_password: str
 
