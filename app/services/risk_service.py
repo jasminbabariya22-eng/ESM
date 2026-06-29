@@ -147,8 +147,8 @@ def create_update_risk(db: Session, data, current_user):
             if not risk:
                 raise ValueError("RiskRegister not found")
             
-            old_status = risk.risk_status
-            old_risk_owner_id = risk.risk_owner_id
+            # old_status = risk.risk_status
+            # old_risk_owner_id = risk.risk_owner_id
             
             if user_type_name.upper() == 'RISK OWNER':
                 risk.risk_head_approval_by = None
@@ -169,14 +169,14 @@ def create_update_risk(db: Session, data, current_user):
                 # if risk.status.id == opened_status:
                 #     send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
             
-                risk.risk_owner_id = to_int(register_data.risk_owner_id)
-                risk.risk_status = to_int(register_data.risk_status)
+                # risk.risk_owner_id = to_int(register_data.risk_owner_id)
+                # risk.risk_status = to_int(register_data.risk_status)
 
-                if (
-                    user_type_name.upper() == "RISK OWNER"
-                    and old_status == pending_for_action
-                ):
-                    send_risk_created_email(db, risk.risk_register_id)
+                # if (
+                #     user_type_name.upper() == "RISK OWNER"
+                #     and old_status == pending_for_action
+                # ):
+                #     send_risk_created_email(db, risk.risk_register_id)
 
             risk.risk_name = register_data.risk_name
             risk.dept_id = to_int(register_data.dept_id)
@@ -188,6 +188,9 @@ def create_update_risk(db: Session, data, current_user):
 
             risk.modified_by = current_user["id"]
             risk.modified_on = datetime.now(timezone.utc)
+            
+            if risk.status.id == opened_status and user_type_name.upper() == "RISK OWNER":
+                    send_risk_created_email(db, risk.risk_register_id)     # send email on risk creation or update
             
         #reset_risk_approvals(risk)
 
