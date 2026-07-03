@@ -9,7 +9,7 @@ from app.schemas.user import UserHybridResponse
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 from app.models.user_type import UserType
-
+from app.core.security import (get_password_hash,verify_password)
 
 router = APIRouter(
     prefix="/users",
@@ -27,7 +27,10 @@ def create_user(
     current_user: dict = Depends(get_current_user)
 ):
     try:
+              
         user_data = user.dict()
+        
+        user_data["password"] = get_password_hash(user_data["password"])
 
         # convert empty string to null
         if user_data.get("contact_no") == "string" or user_data.get("contact_no") == "":
@@ -165,6 +168,10 @@ def update_user(
             raise HTTPException(status_code=404, detail="User not found")
 
         update_data = user_update.dict(exclude_unset=True)
+        
+        # Hash password if it is being updateds
+        if "password" in update_data and update_data["password"]:
+            update_data["password"] = get_password_hash(update_data["password"])
 
         for key, value in update_data.items():
             setattr(user, key, value)
@@ -265,7 +272,7 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
             .join(UserType, User.user_type_id == UserType.id)
             .filter(
                 User.dept_id == dept_id,
-                UserType.name != 'Functional Head',
+                # UserType.name != 'Functional Head',
                 UserType.name != 'Admin',
                 User.is_deleted == 0)
             ).all()
@@ -360,21 +367,18 @@ def change_password(
             )
 
         # Verify old password
-        if user.password != password_data.old_password:
-            return error_response(
-                message="Invalid old password",
-                status_code=401
-            )
+        if not verify_password(password_data.old_password,user.password):
+                return error_response(message="Invalid old password",status_code=401)
 
         # Prevent same password
-        if password_data.old_password == password_data.new_password:
+        if verify_password(password_data.old_password, user.password) and password_data.new_password == password_data.old_password:
             return error_response(
                 message="New password must be different from old password",
                 status_code=400
             )
 
         # Update password
-        user.password = password_data.new_password
+        user.password = get_password_hash(password_data.new_password)
         user.modified_on = datetime.utcnow()
 
         db.commit()

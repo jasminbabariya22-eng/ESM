@@ -251,7 +251,8 @@ def get_reference_by_reference_id(
 def get_last_risk_status(
     
     risk_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
 
     try:

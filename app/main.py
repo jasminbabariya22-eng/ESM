@@ -47,6 +47,9 @@ from app.api.email_job_api import router as email_job_router
 from app.api.financial_year import router as financial_year_router
 from dotenv import load_dotenv
 import os
+
+from app.api.excel_import_router import router as excel_import_router
+
 load_dotenv()
 
 app = FastAPI()
@@ -86,6 +89,8 @@ app.include_router(risk_treatment_router)
 # Financial Year API
 app.include_router(financial_year_router)
 
+# Excel Import API
+app.include_router(excel_import_router)
 
 # Add global exception handlers
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
@@ -143,12 +148,12 @@ async def log_requests(request: Request, call_next):
         media_type=response.media_type,
     )
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(
-        f"ERROR | {request.method} {request.url} | MESSAGE: {str(exc)}"
-    )
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal Server Error"}
-    )
+# @app.exception_handler(Exception)
+# async def global_exception_handler(request: Request, exc: Exception):
+#     logger.error(
+#         f"ERROR | {request.method} {request.url} | MESSAGE: {str(exc)}"
+#     )
+#     return JSONResponse(
+#         status_code=500,
+#         content={"detail": "Internal Server Error"}
+#     )
