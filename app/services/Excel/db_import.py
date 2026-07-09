@@ -7,6 +7,8 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.core.config import settings
 
 from app.models.user import User
 from app.models.department import Department
@@ -24,7 +26,7 @@ from app.services.Excel.excel_parser import RiskRegisterRecord, normalize_risk_c
 
 logger = logging.getLogger("risk_import")
 
-
+SCHEMA = settings.DB_SCHEMA
 PIPELINE_VERSION = "2026-07-03.1"
 
 
@@ -39,7 +41,8 @@ IMPORTER_USER_ID = 1               #admin
 FINANCIAL_YEAR = "2026-2027"
 DEFAULT_RISK_STATUS = 9
 # DEFAULT_APPROVAL_STATUS = 12
-DEFAULT_ACTION_STATUS = None
+DEFAULT_ACTION_STATUS = 1
+APPROVED_STATUS_ID = 1
 
 
 ROLE_TYPE_BY_LABEL = {
@@ -89,7 +92,7 @@ class ImportCaches:
     user_types: dict[str, int]
     departments_by_short_name: dict[str, "Department"]
     departments_by_id: dict[int, "Department"]
-    existing_users: dict[tuple[str, str, int, int], "User"]  # (first,last,dept_id,role_id) lower -> User
+    existing_users: dict[tuple[str, int], "User"]  # (login, dept_id) lower -> User
     existing_users_by_email: dict[str, "User"]
     existing_risk_ids: dict[str, "RiskRegister"]             # "HR-0013" -> RiskRegister
     existing_descriptions: dict[tuple, "RiskDescription"]    # dedup key -> RiskDescription
@@ -111,11 +114,17 @@ def build_caches(db: Session) -> ImportCaches:
     departments_by_id = {d.id: d for d in depts}
 
     users = db.query(User).filter(User.is_deleted == 0).all()
+    # existing_users = {
+    #     (u.first_name.strip().lower(), (u.last_name or "").strip().lower(),
+    #      u.dept_id, u.role_id): u
+    #     for u in users
+    # }
     existing_users = {
-        (u.first_name.strip().lower(), (u.last_name or "").strip().lower(),
-         u.dept_id, u.role_id): u
+        (u.log_id.strip().lower(),
+         u.dept_id): u
         for u in users
     }
+    
     existing_users_by_email = {
         u.email.strip().lower(): u for u in users if u.email
     }
@@ -265,17 +274,19 @@ def import_users(db: Session, caches: ImportCaches, name_info: dict[str, dict]) 
             role_label, role_id, user_type_id,
         )
 
-        key = (first.lower(), last.lower(), dept.id, role_id)
+        # key = (first.lower(), last.lower(), dept.id, role_id)
+        log_id = f"{first.lower()}@example.com"
+        key = (log_id, dept.id)
         user = caches.existing_users.get(key)
 
         if user is None:
-            email = f"{first.lower()}@example.com"
+            log_id = f"{first.lower()}@example.com"
             user = User(
-                log_id=email,
+                log_id=log_id,
                 password=DEFAULT_PASSWORD,
                 first_name=first,
                 last_name=last,
-                email=email,
+                email=log_id,
                 dept_id=dept.id,
                 role_id=role_id,
                 user_type_id=user_type_id,
@@ -317,6 +328,108 @@ def _adopt_existing_number(dept: "Department", risk_id: str) -> None:
     n = int(m.group(1))
     if n > dept.last_risk_number:
         dept.last_risk_number = n
+        
+        
+# ROLE BASED (BY NAME FROM DB)
+def get_users_by_role_name(db, role_name):
+    result = db.execute(
+        text(f"""
+            SELECT u.id
+            FROM {SCHEMA}.mst_users u
+            JOIN {SCHEMA}.mst_user_type r
+                ON r.id = u.user_type_id
+            WHERE r.name = :role_name
+              AND u.is_deleted = 0
+              AND r.is_deleted = 0
+        """),
+        {"role_name": role_name},
+    ).fetchall()
+
+    return [row.id for row in result if row.id]
+
+
+def get_users_by_role_name_fd(db, role_name, dept_id):
+    result = db.execute(
+        text(f"""
+            SELECT u.id
+            FROM {SCHEMA}.mst_users u
+            JOIN {SCHEMA}.mst_user_type r
+                ON r.id = u.user_type_id
+            WHERE r.name = :role_name
+              AND u.dept_id = :dept_id
+              AND u.is_deleted = 0
+              AND r.is_deleted = 0
+        """),
+        {
+            "role_name": role_name,
+            "dept_id": dept_id,
+        },
+    ).fetchall()
+
+    return [row.id for row in result if row.id]
+
+
+def _resolve_approver(db: Session, caches: ImportCaches, excel_email: str, role_name: str, dept_id: Optional[int],) -> Optional["User"]:
+    if excel_email:
+        user = caches.existing_users_by_email.get(excel_email.strip().lower())
+        if user is not None:
+            return user
+        logger.warning(
+            "Excel specified approver email %r for %r but no matching user "
+            "exists in the DB -- falling back to role lookup",
+            excel_email, role_name,
+        )
+ 
+    user_ids = (
+            get_users_by_role_name_fd(db, role_name, dept_id)
+            if dept_id is not None
+            else get_users_by_role_name(db, role_name)
+        )
+
+    if not user_ids:
+        logger.warning(
+            "No user found with user_type %r%s",
+            role_name,
+            f" in dept_id={dept_id}" if dept_id is not None else "",
+        )
+        return None
+
+    if len(user_ids) > 1:
+        logger.warning(
+            "Multiple users found with user_type %r%s: %s -- using the first",
+            role_name,
+            f" in dept_id={dept_id}" if dept_id is not None else "",
+            user_ids,
+            )
+
+    return db.query(User).filter(User.id == user_ids[0]).first()
+
+
+def _apply_approvals(db: Session, db_risk: "RiskRegister", dept_id: int, reg: "RiskRegisterRecord", caches: ImportCaches) -> None:
+    now = datetime.utcnow()
+ 
+    fh = _resolve_approver(db,caches,None,"Functional Head",dept_id,)
+    if fh is not None:
+        db_risk.risk_function_head_approval_status = APPROVED_STATUS_ID
+        db_risk.risk_function_head_approval_remark = "APPROVED"
+        db_risk.risk_function_head_approval_by = fh.id
+        db_risk.risk_function_head_approval_on = now
+    else:
+        logger.warning("No Functional Head resolved for risk %s -- leaving FH approval blank", db_risk.risk_id)
+ 
+    rm = _resolve_approver(db, caches, None, "Risk Manager", None)
+    if rm is not None:
+        db_risk.risk_manager_approval_status = APPROVED_STATUS_ID
+        db_risk.risk_manager_approval_remark = "APPROVED"
+        db_risk.risk_manager_approval_by = rm.id
+        db_risk.risk_manager_approved_on = now
+ 
+    rh = _resolve_approver(db, caches, None, "Risk Head", None)
+    if rh is not None:
+        db_risk.risk_head_approval_status = APPROVED_STATUS_ID
+        db_risk.risk_head_approval_remark = "APPROVED"
+        db_risk.risk_head_approval_by = rh.id
+        db_risk.risk_head_approved_on = now
 
 
 def import_risk_registers(
@@ -355,7 +468,7 @@ def import_risk_registers(
                 risk_name=reg.category or reg.group_key,
                 dept_id=dept.id,
                 risk_owner_id=owner_info["id"],
-                risk_co_owner_id=owner_info["id"],
+                risk_co_owner_id=None,
                 financial_year=FINANCIAL_YEAR,
                 risk_status=DEFAULT_RISK_STATUS,
                 risk_progress="0",
@@ -372,8 +485,18 @@ def import_risk_registers(
             db.add(db_risk)
             db.flush()
             db.refresh(db_risk)
-            caches.existing_risk_ids[risk_id] = db_risk
-            created += 1
+            
+            has_action_plan = any(
+                treatment.action_plan and treatment.action_plan.strip()
+                for description in reg.descriptions
+                for treatment in description.treatments
+            )
+
+            if has_action_plan:
+                _apply_approvals(db, db_risk, dept.id, reg, caches)
+                
+                caches.existing_risk_ids[risk_id] = db_risk
+                created += 1
         else:
             reused += 1
 
@@ -536,7 +659,7 @@ def import_risk_treatments(
                         progress="0",
                         action_status_id=DEFAULT_ACTION_STATUS,
                         next_followup_date=None,
-                        approval_status=0,
+                        approval_status=APPROVED_STATUS_ID,
                         # created_by = the actual action owner for THIS treatment
                         created_by=owner_info["id"],
                         created_on=datetime.utcnow(),

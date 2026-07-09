@@ -47,7 +47,7 @@ def send_email(db: Session, job):
         )
 
         server = db.execute(text(f"""
-            SELECT *
+            SELECT *    
             FROM {SCHEMA}.email_server
             WHERE email_server_id = :id
             AND is_deleted = 0

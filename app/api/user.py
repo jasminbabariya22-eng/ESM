@@ -9,7 +9,7 @@ from app.schemas.user import UserHybridResponse
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 from app.models.user_type import UserType
-from app.core.security import (get_password_hash,verify_password)
+from app.core.security import get_password_hash,verify_password
 
 router = APIRouter(
     prefix="/users",
@@ -86,7 +86,8 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
             User.id == user_id,
-            User.is_deleted == 0
+            User.is_deleted == 0,
+            User.status == 'Active'
         ).first()
 
         if not user:
@@ -161,7 +162,8 @@ def update_user(
     try:
         user = db.query(User).filter(
             User.id == user_id,
-            User.is_deleted == 0
+            User.is_deleted == 0,
+            User.status == 'Active'
         ).first()
 
         if not user:
@@ -217,7 +219,7 @@ def get_users(db: Session = Depends(get_db)):
     try:
         users = (db.query(User)
                  .join(UserType, User.user_type_id == UserType.id)
-                 .filter(UserType.name != 'Admin',User.is_deleted == 0)
+                 .filter(UserType.name != 'Admin',User.is_deleted == 0, User.status == 'Active')
                  .order_by(User.first_name)
                  ).all()
 
@@ -274,7 +276,9 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
                 User.dept_id == dept_id,
                 # UserType.name != 'Functional Head',
                 UserType.name != 'Admin',
-                User.is_deleted == 0)
+                User.is_deleted == 0,
+                User.status == 'Active'
+            )
             ).all()
 
         if not users:
@@ -357,7 +361,8 @@ def change_password(
         # Fetch user by id
         user = db.query(User).filter(
             User.id == password_data.id,
-            User.is_deleted == 0
+            User.is_deleted == 0,
+            User.status == 'Active'
         ).first()
 
         if not user:

@@ -19,7 +19,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(
         User.log_id == data.log_id,
-        User.is_deleted == 0
+        User.is_deleted == 0,
+        User.status == 'Active'
     ).first()
 
     print("Entered Password:", data.password)
@@ -29,7 +30,6 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(data.password,user.password):
         raise HTTPException(status_code=401,detail="Invalid credentials")
     
-    # Get menu ids based on role_id
     menu_ids = db.query(UserRoleMap.menu_id).filter(
         UserRoleMap.role_id == user.role_id
     ).all()

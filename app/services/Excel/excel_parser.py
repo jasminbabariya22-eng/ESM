@@ -16,8 +16,11 @@ class RiskTreatmentRecord:
     action_plan: str
     action_owner: str = ""
     due_date: Optional[pd.Timestamp] = None
-    action_status: str = ""                       # only present in "export" format
-    source_row: int = -1                       # 0-based row index in the ORIGINAL sheet (for error messages)
+    action_status: str = ""
+    fh: str = ""
+    rm: str = ""
+    rh: str = ""
+    source_row: int = -1
 
 
 @dataclass
@@ -193,6 +196,9 @@ def _group_rows(
                     action_owner=_clean(row["action_owner"]),
                     due_date=_parse_date(row["due_date"]),
                     action_status=_clean(row["action_status"]),
+                    fh=_clean(row.get("fh")),
+                    rm=_clean(row.get("rm")),
+                    rh=_clean(row.get("rh")),
                     source_row=i,
                 )
             )
@@ -227,7 +233,7 @@ EXPORT_COLUMNS = [
 UNIFIED_COLUMNS = [
     "Department", "S.No", "Risk Category", "Risk Owner", "Risk Description",
     "Inherent Risk", "Current Mitigation", "Current Risk",
-    "Action Owner", "Action Plan", "Due Date",
+    "Action Owner", "Action Plan", "Due Date", "FH", "RM", "RH"
 ]
 
 
@@ -253,6 +259,9 @@ def parse_template_sheet(raw_df: pd.DataFrame, dept_code: str, sheet_name: str) 
             "action_plan": r.get("Action Plan"),
             "action_owner": r.get("Action Owner"),
             "due_date": r.get("Due Date"),
+            "fh": r.get("FH"),
+            "rm": r.get("RM"),
+            "rh": r.get("RH"),
             "action_status": None,
         })
 
@@ -281,6 +290,9 @@ def parse_export_sheet(raw_df: pd.DataFrame, dept_code: str, sheet_name: str) ->
             "action_plan": r.get("Action Plan"),
             "action_owner": r.get("Action Owner"),
             "due_date": r.get("Due Date"),
+            "fh": _clean(r.get("FH")),
+            "rm": _clean(r.get("RM")),
+            "rh": _clean(r.get("RH")),
             "action_status": r.get("Action Status"),
         })
 
@@ -309,6 +321,9 @@ def parse_unified_sheet(raw_df: pd.DataFrame, sheet_name: str) -> list[RiskRegis
             "action_plan": r.get("Action Plan"),
             "action_owner": r.get("Action Owner"),
             "due_date": r.get("Due Date"),
+            "fh": _clean(r.get("FH")),
+            "rm": _clean(r.get("RM")),
+            "rh": _clean(r.get("RH")),
             "action_status": None,
         })
 
