@@ -9,6 +9,9 @@ from app.models.email_job_mst import EmailJobMst
 from app.models.risk_register import RiskRegister
 from app.models.risk_treatment import RiskTreatment
 
+from app.models.user import User
+from app.core.security import encrypt_text
+
 SCHEMA = settings.DB_SCHEMA    # fetch schema from config for dynamic queries
 
 
@@ -775,3 +778,44 @@ def send_action_approve_reject_email(db: Session, treatment: RiskTreatment):
     body = build_email_template("Action plan has been " + status, content)
     
     create_email_job(db, to_action, cc_emails, subject, body, created_by=risk.risk_owner_id)
+    
+    
+    
+    
+#-------------------------------Reset Password ------------
+
+
+def send_forgot_password_email(db: Session, user: User):
+
+    encrypted_email = encrypt_text(user.email)
+    reset_url = f"{settings.MAIN_URL}?code={encrypted_email}"
+    
+    subject = "Reset Password"
+    content = f"""
+        <p>Hello {user.first_name} {user.last_name},</p>
+
+        <p>
+            We received a request to reset your password.
+        </p>
+
+        <p>
+            <a href="{reset_url}">
+                Click here to reset your password
+            </a>
+        </p>
+
+        <p>
+            If you didn't request this, you can safely ignore this email.
+        </p>
+        
+        <p>Regards,<br>Enterprise Risk Management System</p>
+    """
+
+    body = build_email_template(
+        "Reset Password",
+        content
+    )
+
+    create_email_job(db=db,to_list=[user.email],cc_list=[],subject=subject,body=body,created_by=user.id)
+    
+    

@@ -3,6 +3,10 @@ from jose import jwt
 from passlib.context import CryptContext
 from app.core.config import settings
 
+from cryptography.fernet import Fernet
+
+
+#--------------------Password-----------------------
 
 # Security utilities for password hashing and JWT token management
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -29,3 +33,16 @@ def create_access_token(data: dict):
         settings.SECRET_KEY,
         algorithm=settings.ALGORITHM
     )
+    
+    
+    
+#-------------------email id -------------------------------
+cipher = Fernet(settings.FERNET_KEY.encode())
+
+
+def encrypt_text(text: str) -> str:
+    return cipher.encrypt(text.encode()).decode()
+
+
+def decrypt_text(token: str) -> str:
+    return cipher.decrypt(token.encode()).decode()

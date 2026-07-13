@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.auth import LoginRequest, LoginResponse
+from app.schemas.auth import *
 from app.core.security import create_access_token
-from app.core.response import success_response
-from app.core.security import verify_password
+from app.core.response import success_response, error_response
+from app.core.security import *
 
 from app.models.user_role_map import UserRoleMap
+
+from app.services.email_event_service import send_forgot_password_email
 
 
 # Authentication APIs
@@ -61,3 +63,78 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer"
     })
+    
+    
+    
+    
+#---------------- Reset Password ------------------
+
+@router.post("/Reset-password")
+def forgot_password(
+    data: ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+
+        user = db.query(User).filter(
+            User.log_id == data.log_id,
+            User.is_deleted == 0,
+            User.status == "Active"
+        ).first()
+
+        if not user:
+            return error_response(
+                message="User not found.",
+                status_code=400
+            )
+
+        send_forgot_password_email(db, user)
+
+        db.commit()
+
+        return success_response(
+            message="Password reset email queued successfully."
+        )
+
+    except Exception as e:
+        db.rollback()
+        return error_response(
+            message=str(e),
+            status_code=500
+        )
+        
+        
+        
+#-----------------Change password ------------------------
+
+@router.post("/change-password")
+def change_password(
+    data: changepasswordRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+
+        email = decrypt_text(data.code)
+
+        user = db.query(User).filter(
+            User.email == email,
+            User.is_deleted == 0,
+            User.status == "Active"
+        ).first()
+
+        if not user:
+            return error_response(
+                message="Invalid reset link.",
+                status_code=400
+            )
+
+        user.password = get_password_hash(data.new_password)
+
+        user.modified_on = datetime.now()
+
+        db.commit()
+
+        return success_response(message="Password changed successfully.")
+
+    except Exception:
+        return error_response(message="Invalid or expired reset link.",status_code=400)

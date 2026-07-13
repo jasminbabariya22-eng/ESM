@@ -19,3 +19,12 @@ class LoginResponse(BaseModel):
     user_type: str
     access_token: str
     token_type: str = "Bearer"
+    
+    
+class ResetPasswordRequest(BaseModel):
+    log_id: str
+    
+    
+class changepasswordRequest(BaseModel):
+    code: str
+    new_password: str
