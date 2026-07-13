@@ -492,7 +492,7 @@ def import_risk_registers(
                 for treatment in description.treatments
             )
 
-            if has_action_plan:
+            if not has_action_plan:
                 _apply_approvals(db, db_risk, dept.id, reg, caches)
                 
                 caches.existing_risk_ids[risk_id] = db_risk
