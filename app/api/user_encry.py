@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserResponse
+from app.schemas.user import *
 from typing import List
 from datetime import datetime
 from app.schemas.user import UserHybridResponse
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 from app.models.user_type import UserType
-
+from app.core.security import get_password_hash,verify_password
 
 router = APIRouter(
     prefix="/users",
@@ -27,7 +27,10 @@ def create_user(
     current_user: dict = Depends(get_current_user)
 ):
     try:
+              
         user_data = user.dict()
+        
+        user_data["password"] = get_password_hash(user_data["password"])
 
         # convert empty string to null
         if user_data.get("contact_no") == "string" or user_data.get("contact_no") == "":
@@ -83,7 +86,8 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter(
             User.id == user_id,
-            User.is_deleted == 0
+            User.is_deleted == 0,
+            User.status == 'Active'
         ).first()
 
         if not user:
@@ -158,13 +162,18 @@ def update_user(
     try:
         user = db.query(User).filter(
             User.id == user_id,
-            User.is_deleted == 0
+            User.is_deleted == 0,
+            User.status == 'Active'
         ).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
         update_data = user_update.dict(exclude_unset=True)
+        
+        # Hash password if it is being updateds
+        if "password" in update_data and update_data["password"]:
+            update_data["password"] = get_password_hash(update_data["password"])
 
         for key, value in update_data.items():
             setattr(user, key, value)
@@ -210,7 +219,7 @@ def get_users(db: Session = Depends(get_db)):
     try:
         users = (db.query(User)
                  .join(UserType, User.user_type_id == UserType.id)
-                 .filter(User.is_deleted == 0,User.log_id != 'admin')
+                 .filter(UserType.name != 'Admin',User.is_deleted == 0, User.status == 'Active')
                  .order_by(User.first_name)
                  ).all()
 
@@ -265,9 +274,11 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
             .join(UserType, User.user_type_id == UserType.id)
             .filter(
                 User.dept_id == dept_id,
-                #UserType.name != 'Functional Head',
+                # UserType.name != 'Functional Head',
                 UserType.name != 'Admin',
-                User.is_deleted == 0)
+                User.is_deleted == 0,
+                User.status == 'Active'
+            )
             ).all()
 
         if not users:
@@ -307,4 +318,80 @@ def get_user_by_deptid( dept_id: int, db: Session = Depends(get_db)):
 
         return success_response(response)        
     except Exception as e:
+        return error_response(str(e), 400)
+    
+    
+
+# CHANGE PASSWORD
+
+# @router.put("/password/change-password")
+# def change_password(
+#     password_data: ChangePasswordRequest,
+#     db: Session = Depends(get_db)
+# ):
+#     try:
+#         user = db.query(User).filter(
+#             User.log_id == password_data.log_id,
+#             User.is_deleted == 0
+#         ).first()
+
+#         # Check user exists and old password matches
+#         if not user or user.password != password_data.old_password:
+#             return error_response(message="Invalid credentials",status_code=401)
+
+#         # Update password
+#         user.password = password_data.new_password
+#         user.modified_on = datetime.utcnow()
+
+#         db.commit()
+
+#         return success_response(message="Password changed successfully")
+
+#     except Exception as e:
+#         db.rollback()
+#         return error_response(str(e), 400)
+
+
+@router.put("/password/change-password")
+def change_password(
+    password_data: ChangePasswordRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        # Fetch user by id
+        user = db.query(User).filter(
+            User.id == password_data.id,
+            User.is_deleted == 0,
+            User.status == 'Active'
+        ).first()
+
+        if not user:
+            return error_response(
+                message="User not found",
+                status_code=404
+            )
+
+        # Verify old password
+        if not verify_password(password_data.old_password,user.password):
+                return error_response(message="Invalid old password",status_code=401)
+
+        # Prevent same password
+        if verify_password(password_data.old_password, user.password) and password_data.new_password == password_data.old_password:
+            return error_response(
+                message="New password must be different from old password",
+                status_code=400
+            )
+
+        # Update password
+        user.password = get_password_hash(password_data.new_password)
+        user.modified_on = datetime.utcnow()
+
+        db.commit()
+
+        return success_response(
+            message="Password changed successfully"
+        )
+
+    except Exception as e:
+        db.rollback()
         return error_response(str(e), 400)
