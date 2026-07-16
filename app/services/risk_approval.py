@@ -236,3 +236,225 @@ def approve_risk(db, data, user_id):
         risk.risk_status,
         risk_status_name
     )
+
+
+
+#----------------Force Approval--------------------------
+
+def force_approve_risk(db,data,user_id,user_type):
+    risk = db.query(RiskRegister).filter(
+        RiskRegister.risk_register_id == data.risk_register_id,
+        RiskRegister.is_deleted == 0
+    ).first()
+
+    if not risk:
+        raise Exception("Risk not found")
+    
+    current_time = datetime.now(timezone.utc)
+    
+    role_levels = {
+        "Functional Head": [1],
+        "Risk Manager": [1, 2],
+        "Risk Head": [1, 2, 3]
+    }
+
+    approval_levels = role_levels.get(user_type)
+
+    if not approval_levels:
+        raise Exception(
+            "You are not authorized to perform force approval."
+        )
+    
+    approved_levels = []
+
+    for level in approval_levels:
+        
+        # FH
+        if level == 1:
+            if risk.risk_function_head_approval_status == 1:
+                continue
+
+            risk.risk_function_head_approval_status = 1
+            risk.risk_function_head_approval_remark = data.remark
+            risk.risk_function_head_approval_by = user_id
+            risk.risk_function_head_approval_on = current_time
+
+            approved_levels.append(1)
+            
+        # RM
+        elif level == 2:
+
+            if risk.risk_manager_approval_status == 1:
+                continue
+
+            risk.risk_manager_approval_status = 1
+            risk.risk_manager_approval_remark = data.remark
+            risk.risk_manager_approval_by = user_id
+            risk.risk_manager_approved_on = current_time
+
+            approved_levels.append(2)
+            
+        # RH
+        elif level == 3:
+
+            if risk.risk_head_approval_status == 1:
+                continue
+
+            risk.risk_head_approval_status = 1
+            risk.risk_head_approval_remark = data.remark
+            risk.risk_head_approval_by = user_id
+            risk.risk_head_approved_on = current_time
+
+            approved_levels.append(3)
+            
+    if not approved_levels:
+        raise Exception("Risk is already fully approved.")
+            
+        # ---------------- STATUS QUERY ----------------
+
+    statuses = db.query(Status).filter(
+        Status.status_name.in_([
+            "Pending for Action"
+        ]),
+        Status.is_deleted == 0
+    ).all()
+
+    status_map = {
+        s.status_name: s.id
+        for s in statuses
+    }
+
+    pending_id = status_map.get("Pending for Action")
+    
+    approvals = [
+        risk.risk_function_head_approval_status,
+        risk.risk_manager_approval_status,
+        risk.risk_head_approval_status
+    ]
+
+    risk_status_name = None
+
+    if -1 in approvals:
+
+        risk.risk_status = pending_id
+        risk_status_name = "Pending for Action"
+
+    else:
+
+        current_status = db.query(Status).filter(
+            Status.id == risk.risk_status
+        ).first()
+
+        risk_status_name = (
+            current_status.status_name
+            if current_status
+            else None
+        )
+    
+        # ---------------- HISTORY INSERT ----------------
+
+    hist = RiskRegisterHist(
+
+        risk_register_id=risk.risk_register_id,
+
+        risk_id=risk.risk_id,
+        risk_name=risk.risk_name,
+
+        dept_id=risk.dept_id,
+        risk_owner_id=risk.risk_owner_id,
+        risk_co_owner_id=risk.risk_co_owner_id,
+
+        financial_year=risk.financial_year,
+
+        risk_status=risk.risk_status,
+        risk_progress=risk.risk_progress,
+
+        # ---------------- FUNCTION HEAD ----------------
+
+        risk_function_head_approval_status=
+            risk.risk_function_head_approval_status,
+
+        risk_function_head_approval_remark=
+            risk.risk_function_head_approval_remark,
+
+        risk_function_head_approval_on=
+            risk.risk_function_head_approval_on,
+
+        risk_function_head_approval_by=
+            risk.risk_function_head_approval_by,
+
+        # ---------------- RISK HEAD ----------------
+
+        risk_head_approval_status=
+            risk.risk_head_approval_status,
+
+        risk_head_approved_on=
+            risk.risk_head_approved_on,
+
+        risk_head_approval_remark=
+            risk.risk_head_approval_remark,
+
+        risk_head_approval_by=
+            risk.risk_head_approval_by,
+
+        # ---------------- RISK MANAGER ----------------
+
+        risk_manager_approval_status=
+            risk.risk_manager_approval_status,
+
+        risk_manager_approved_on=
+            risk.risk_manager_approved_on,
+
+        risk_manager_approval_remark=
+            risk.risk_manager_approval_remark,
+
+        risk_manager_approval_by=
+            risk.risk_manager_approval_by,
+
+        # ---------------- AUDIT ----------------
+
+        created_by=risk.created_by,
+        created_on=risk.created_on,
+
+        modified_by=user_id,
+        modified_on=current_time,
+
+        is_active=risk.is_active,
+        is_deleted=risk.is_deleted
+
+    )
+
+    db.add(hist)
+    
+        # ---------------- EMAILS ----------------
+
+    for level in approved_levels:
+
+        send_function_approval_email_seq(
+            db,
+            risk.risk_register_id,
+            level
+        )
+
+    if (
+        risk.risk_function_head_approval_status == 1
+        and
+        risk.risk_manager_approval_status == 1
+        and
+        risk.risk_head_approval_status == 1
+    ):
+        send_treatment_email_after_approval(
+            db,
+            risk.risk_register_id
+        )
+        
+    db.commit()
+
+    db.refresh(risk)
+
+    return (
+        risk,
+        approved_levels,
+        risk.risk_status,
+        risk_status_name
+    )

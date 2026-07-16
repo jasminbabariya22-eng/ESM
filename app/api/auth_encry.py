@@ -12,10 +12,8 @@ from app.models.user_role_map import UserRoleMap
 from app.services.email_event_service import send_forgot_password_email
 
 
-
 # Authentication APIs
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
 
 # This API is used for login and returns user details along with access token
 @router.post("/login", response_model=LoginResponse)
@@ -27,16 +25,17 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         User.status == 'Active'
     ).first()
 
-    if not user:
-        raise HTTPException(status_code=401, detail="User does not exists")
+    print("Entered Password:", data.password)
+    print("DB Password:", user.password)
+    print("Verify:", verify_password(data.password, user.password))
+
+    if not user or not verify_password(data.password,user.password):
+        raise HTTPException(status_code=401,detail="Invalid credentials")
     
-    if data.password:
-        if user.password != data.password:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        
     menu_ids = db.query(UserRoleMap.menu_id).filter(
         UserRoleMap.role_id == user.role_id
     ).all()
+
     menu_list = [menu.menu_id for menu in menu_ids]
 
     access_token = create_access_token(
@@ -64,6 +63,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer"
     })
+    
+    
     
     
 #---------------- Reset Password ------------------

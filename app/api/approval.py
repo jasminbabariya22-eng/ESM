@@ -7,9 +7,9 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.response import success_response, error_response
 
-from app.schemas.risk_approval import RiskApprovalRequest
+from app.schemas.risk_approval import *
 
-from app.services.risk_approval import approve_risk
+from app.services.risk_approval import *
 
 from datetime import date
 
@@ -259,6 +259,100 @@ def get_risk_history(
     except Exception as e:
 
         return error_response(str(e), 400)
+
+
+
+#----------------force Approval------------------
+
+
+@router.post("/force-approve")
+def force_approve_api(
+    data: ForceApproveRequest,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+
+    try:
+        (risk, approved_levels, risk_status_id, risk_status_name) = force_approve_risk(
+            db=db,
+            data=data,
+            user_id=current_user["id"],
+            user_type=current_user["user_type_name"]
+        )
+
+        user_obj = db.query(User).filter(
+            User.id == current_user["id"]
+        ).first()
+
+        approval_by_name = (
+            user_obj.log_id
+            if user_obj
+            else None
+        )
+
+        # ---------------- LEVEL NAMES ----------------
+
+        level_map = {
+            1: "Functional Head",
+            2: "Risk Manager",
+            3: "Risk Head"
+        }
+
+        approved_level_names = [
+            level_map[level]
+            for level in approved_levels
+        ]
+
+        return success_response(
+            data={
+
+                "risk_register_id":
+                    risk.risk_register_id,
+
+                "approved_levels":
+                    approved_levels,
+
+                "approved_level_names":
+                    approved_level_names,
+
+                "approval_by":
+                    approval_by_name,
+
+                "approval_by_user_type":
+                    current_user["user_type_name"],
+
+                "risk_status_id":
+                    risk_status_id,
+
+                "risk_status_name":
+                    risk_status_name,
+
+                "remark":
+                    data.remark,
+
+                "approved_on":
+                    date.today()
+
+            }
+        )
+
+    except Exception as e:
+
+        return error_response(
+            str(e),
+            400
+        )
+
+
+
+
+
+
+
+
+
+
+
 
 
 
