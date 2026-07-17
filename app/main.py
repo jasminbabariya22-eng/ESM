@@ -54,6 +54,14 @@ load_dotenv()
 
 app = FastAPI()
 
+
+@app.get("/health", tags=["Health"])
+def health():
+    return {
+        "status": "healthy",
+        "service": "ESM API"
+    }
+
 # Authenticate and get current user
 app.include_router(auth_router)
 

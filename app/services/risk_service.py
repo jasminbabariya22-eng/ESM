@@ -803,7 +803,251 @@ def get_approval_status_name(status):
 #         raise e
 
 ##----------------------------------------------------------new function------------
-def get_risk_by_dept(db, dept_id,financial_year,current_user):  
+
+# def get_risk_by_dept(db, dept_id,financial_year,current_user):  
+#     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
+    
+    
+    
+#     try:
+#         dept_id_cur_user = current_user['dept_id']
+#         user_type_name = current_user['user_type_name']
+#         query = db.query(
+#                     RiskRegister,
+#                     RiskDescription
+#                 ).outerjoin(
+#                     RiskDescription,
+#                     RiskRegister.risk_register_id == RiskDescription.risk_register_id
+#                 ).join(
+#                     Status,
+#                     RiskRegister.risk_status == Status.id)
+                
+#         #query = query.filter(RiskRegister.is_deleted == 0)
+        
+#         # if user_type_name.upper() == 'RISK OWNER':
+#         #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user)
+#         # elif user_type_name.upper() == 'FUNCTIONAL HEAD':
+#         #     query = query.filter(RiskRegister.is_deleted == 0,RiskRegister.dept_id == dept_id_cur_user,
+#         #                    func.upper(Status.status_name) != 'DRAFT' ,  
+#         #                      func.upper(Status.status_name) != 'PENDING FOR ACTION'  )
+#         # elif user_type_name.upper() == 'RISK MANAGER':
+#         #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_function_head_approval_status == 1 and RiskRegister.risk_manager_approval_status != -1)
+#         # elif user_type_name.upper() == 'RISK HEAD':
+#         #     query = query.filter(RiskRegister.is_deleted == 0, RiskRegister.risk_manager_approval_status == 1 and RiskRegister.risk_head_approval_status != -1)
+#         # else:
+#         #     query = query.filter(RiskRegister.is_deleted == 0)
+        
+#         no_rejection_condition = and_(
+
+#             or_(
+#                 RiskRegister.risk_function_head_approval_status.is_(None),
+#                 RiskRegister.risk_function_head_approval_status != -1
+#             ),
+
+#             or_(
+#                 RiskRegister.risk_manager_approval_status.is_(None),
+#                 RiskRegister.risk_manager_approval_status != -1
+#             ),
+
+#             or_(
+#                 RiskRegister.risk_head_approval_status.is_(None),
+#                 RiskRegister.risk_head_approval_status != -1
+#             )
+#         )
+        
+#         # ---------------- ROLE FILTER ----------------
+
+#         if user_type_name.upper() == 'RISK OWNER':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+#                 RiskRegister.dept_id == dept_id_cur_user
+#             )
+
+#         elif user_type_name.upper() == 'FUNCTIONAL HEAD':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+
+#                 RiskRegister.dept_id == dept_id_cur_user,
+
+#                 func.upper(Status.status_name) != 'DRAFT', func.upper(Status.status_name) != 'PENDING FOR ACTION',
+
+#                 no_rejection_condition
+#             )
+
+#         elif user_type_name.upper() == 'RISK MANAGER':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+
+#                 # FH approved
+#                 RiskRegister.risk_function_head_approval_status == 1,
+
+#                 no_rejection_condition
+#             )
+
+#         elif user_type_name.upper() == 'RISK HEAD':
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0,
+
+#                 # RM approved
+#                 RiskRegister.risk_manager_approval_status == 1,
+
+#                 no_rejection_condition
+#             )
+
+#         else:
+
+#             query = query.filter(
+#                 RiskRegister.is_deleted == 0
+#             )
+
+#         if dept_id:
+#             query = query.filter( RiskRegister.dept_id == dept_id )
+            
+            
+#         # Financial Year Filter. if not pass give current only
+#         if financial_year:
+#             query = query.filter(
+#                 RiskRegister.financial_year == financial_year
+#             )
+#         else:
+#             # Current financial year
+#             today = datetime.now()
+
+#             if today.month >= 4:
+#                 current_fy = f"{today.year}-{today.year + 1}"
+#             else:
+#                 current_fy = f"{today.year - 1}-{today.year}"
+
+#             query = query.filter(
+#                 RiskRegister.financial_year == current_fy
+#     )
+
+
+#         records = query.order_by(
+#                 RiskRegister.risk_register_id,
+#                 RiskDescription.risk_description_id
+#             ).all()    
+        
+#         action_required = False
+#         result = []
+#         for rr, rd in records:
+#             action_required = False
+#             if rd:
+#                 action_required = ( 
+#                     db.query(RiskTreatment)
+#                     .filter(RiskTreatment.risk_register_id == rr.risk_register_id,
+#                             RiskTreatment.progress == '100',
+                            
+#                             or_(
+#                                 RiskTreatment.approval_status.notin_([-1, 1]),
+#                                 RiskTreatment.approval_status.is_(None)
+#                             )
+#                             ).first()
+#                             is not None
+#                 )
+             
+#             risk_owner_name = None
+#             if rr.risk_owner:
+#                 risk_owner_name = rr.risk_owner.log_id
+            
+#             risk_status_name = None
+#             if rr.status:
+#                 risk_status_name = rr.status.status_name
+                
+#             # APPROVAL STATUS NAMES
+#             # # read status from risk history table last entry
+#             #risk_id_tmp = rr.risk_register_id
+#             #risk_history = (
+#             #    db.query(RiskRegisterHist)
+#             #    .filter(RiskRegisterHist.risk_register_id == risk_id_tmp,
+#             #            RiskRegisterHist.modified_on.isnot(None))
+#             #    .order_by((RiskRegisterHist.modified_on).desc())
+#             #    .first()
+#             #)
+            
+#             function_head_approval_status_name = (
+#                 get_approval_status_name(
+#                     rr.risk_function_head_approval_status
+#                 )
+#             )
+
+#             risk_manager_approval_status_name = (
+#                 get_approval_status_name(
+#                     rr.risk_manager_approval_status
+#                 )
+#             )
+
+#             risk_head_approval_status_name = (
+#                 get_approval_status_name(
+#                     rr.risk_head_approval_status
+#                 )
+#             )
+
+#             likelihood = None
+#             impact = None
+#             current_likelihood = None
+#             current_impact = None
+#             inherent_color_str = None
+#             inherent_color_code = None
+#             current_color_str = None
+#             current_color_code = None
+           
+#             if rd is not None:
+#                 if rd.inherent_risk_likelihood_id:
+#                     likelihood = rd.inherent_risk_likelihood_id
+#                 if rd.inherent_risk_impact_id:
+#                     impact = rd.inherent_risk_impact_id
+
+#                 if rd.current_risk_likelihood_id:
+#                     current_likelihood = rd.current_risk_likelihood_id
+#                 if rd.current_risk_impact_id:
+#                     current_impact = rd.current_risk_impact_id
+
+
+#                 if likelihood and impact:
+#                     #inherent_color_str = get_color(likelihood*impact)
+#                     inherent_color_code = f"{likelihood}{impact_map.get(impact)}"
+#                     inherent_color_str = get_color_code(inherent_color_code)
+
+#                 if current_likelihood and current_impact:
+#                     #current_color_str = get_color(current_likelihood*current_impact)
+#                     current_color_code = f"{current_likelihood}{impact_map.get(current_impact)}"
+#                     current_color_str = get_color_code(current_color_code)
+
+#             result.append({
+#                 **to_dict(rr),
+#                 **to_dict(rd, RiskDescription, prefix="rd_"),
+#                 "inherent_color_str": inherent_color_str,
+#                 "inherent_color_code" : inherent_color_code,
+#                 "current_color_str": current_color_str,
+#                 "current_color_code" : current_color_code,
+#                 "risk_owner_name" : risk_owner_name,
+#                 "risk_status_name" : risk_status_name,
+                
+#                 "function_head_approval_status_name":
+#                     function_head_approval_status_name,
+
+#                 "risk_manager_approval_status_name":
+#                     risk_manager_approval_status_name,
+
+#                 "risk_head_approval_status_name":
+#                     risk_head_approval_status_name,
+#                 "action_required": action_required
+#             })
+
+#         return result
+#     except Exception as e:
+#         raise e
+    
+    
+    
+    
+#---------------------new function with no restriction in FH, RM, RH---------------------
+def get_risk_by_dept(db, dept_id,current_user,financial_year):  
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     
     
@@ -881,7 +1125,8 @@ def get_risk_by_dept(db, dept_id,financial_year,current_user):
                 RiskRegister.is_deleted == 0,
 
                 # FH approved
-                RiskRegister.risk_function_head_approval_status == 1,
+                #RiskRegister.risk_function_head_approval_status == 1,
+                func.upper(Status.status_name) != 'DRAFT', func.upper(Status.status_name) != 'PENDING FOR ACTION',
 
                 no_rejection_condition
             )
@@ -892,7 +1137,8 @@ def get_risk_by_dept(db, dept_id,financial_year,current_user):
                 RiskRegister.is_deleted == 0,
 
                 # RM approved
-                RiskRegister.risk_manager_approval_status == 1,
+                #RiskRegister.risk_manager_approval_status == 1,
+                func.upper(Status.status_name) != 'DRAFT', func.upper(Status.status_name) != 'PENDING FOR ACTION',
 
                 no_rejection_condition
             )
@@ -905,25 +1151,16 @@ def get_risk_by_dept(db, dept_id,financial_year,current_user):
 
         if dept_id:
             query = query.filter( RiskRegister.dept_id == dept_id )
-            
-            
-        # Financial Year Filter. if not pass give current only
-        if financial_year:
-            query = query.filter(
-                RiskRegister.financial_year == financial_year
-            )
-        else:
-            # Current financial year
-            today = datetime.now()
 
+        if financial_year:
+            query = query.filter(RiskRegister.financial_year == financial_year)
+        else:
+            today = datetime.now()
             if today.month >= 4:
                 current_fy = f"{today.year}-{today.year + 1}"
             else:
                 current_fy = f"{today.year - 1}-{today.year}"
-
-            query = query.filter(
-                RiskRegister.financial_year == current_fy
-    )
+        query = query.filter(RiskRegister.financial_year == current_fy)
 
 
         records = query.order_by(
