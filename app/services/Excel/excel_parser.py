@@ -337,32 +337,33 @@ def parse_unified_sheet(raw_df: pd.DataFrame, sheet_name: str) -> list[RiskRegis
 
 def load_excel(path: str, default_dept_code: Optional[str] = None) -> list[RiskRegisterRecord]:
 
-    xl = pd.ExcelFile(path)
+    # xl = pd.ExcelFile(path)
     all_registers: list[RiskRegisterRecord] = []
 
-    for sheet_name in xl.sheet_names:
-        raw_df = xl.parse(sheet_name, header=None)
-        if raw_df.empty:
-            continue
+    with pd.ExcelFile(path) as xl:
+        for sheet_name in xl.sheet_names:
+            raw_df = xl.parse(sheet_name, header=None)
+            if raw_df.empty:
+                continue
 
-        try:
-            fmt = detect_sheet_format(raw_df)
-        except ValueError:
-            # Not a risk sheet (e.g. an instructions/cover sheet) -> skip.
-            continue
+            try:
+                fmt = detect_sheet_format(raw_df)
+            except ValueError:
+                # Not a risk sheet (e.g. an instructions/cover sheet) -> skip.
+                continue
 
-        dept_code = (default_dept_code or sheet_name).strip()
+            dept_code = (default_dept_code or sheet_name).strip()
 
-        if fmt == "unified":
-            registers = parse_unified_sheet(raw_df, sheet_name=sheet_name)
-            
-        elif fmt == "template":
-            registers = parse_template_sheet(raw_df, dept_code=dept_code, sheet_name=sheet_name)
-            
-        else:
-            registers = parse_export_sheet(raw_df, dept_code=sheet_name.strip(), sheet_name=sheet_name)
+            if fmt == "unified":
+                registers = parse_unified_sheet(raw_df, sheet_name=sheet_name)
+                
+            elif fmt == "template":
+                registers = parse_template_sheet(raw_df, dept_code=dept_code, sheet_name=sheet_name)
+                
+            else:
+                registers = parse_export_sheet(raw_df, dept_code=sheet_name.strip(), sheet_name=sheet_name)
 
-        all_registers.extend(registers)
+            all_registers.extend(registers)
 
     return all_registers
 

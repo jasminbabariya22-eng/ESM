@@ -275,12 +275,12 @@ def import_users(db: Session, caches: ImportCaches, name_info: dict[str, dict]) 
         )
 
         # key = (first.lower(), last.lower(), dept.id, role_id)
-        log_id = f"{first.lower()}@example.com"
-        key = (log_id, dept.id)
+        log_id = first
+        key = (log_id.lower(), dept.id)
         user = caches.existing_users.get(key)
 
         if user is None:
-            log_id = f"{first.lower()}@example.com"
+            # log_id = f"{first.lower()}@example.com"
             user = User(
                 log_id=log_id,
                 password=DEFAULT_PASSWORD,
