@@ -1,0 +1,33 @@
+name: ESM Deployment
+
+on:
+  push:
+    branches:
+      - deployment
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Latest Code
+        uses: actions/checkout@v4
+
+      - name: Stop Existing Containers
+        run: |
+          docker compose down
+        shell: powershell
+
+      - name: Build Docker Images
+        run: |
+          docker compose build
+        shell: powershell
+
+      - name: Start Containers
+        run: |
+          docker compose up -d
+        shell: powershell
+
+      - name: Show Running Containers
+        run: docker ps
+        shell: powershell
