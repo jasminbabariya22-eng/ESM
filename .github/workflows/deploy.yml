@@ -10,24 +10,37 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Latest Code
-        uses: actions/checkout@v4
-
-      - name: Stop Existing Containers
-        run: |
-          docker compose down
+      - name: Update Project
         shell: powershell
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          git fetch origin
+          git checkout deployment
+          git reset --hard origin/deployment
+
+      - name: Stop Containers
+        shell: powershell
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          docker compose down
 
       - name: Build Docker Images
-        run: |
-          docker compose build
         shell: powershell
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          docker compose build
 
       - name: Start Containers
+        shell: powershell
         run: |
-          docker compose up -d
-        shell: powershell
+          Set-Location "E:\Deployment\ESM"
 
-      - name: Show Running Containers
-        run: docker ps
+          docker compose up -d
+
+      - name: Verify Containers
         shell: powershell
+        run: |
+          docker ps
