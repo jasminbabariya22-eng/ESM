@@ -2,7 +2,7 @@ name: ESM Deployment
 
 on:
   workflow_run:
-    workflows: ["Python CI"]
+    workflows: ["ESM CI Pipeline"]
     types:
       - completed
 
