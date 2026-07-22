@@ -119,7 +119,7 @@ def get_my_dept_risks_by_dept_id(
 
     try:
 
-        risks = get_risk_by_dept(db, dept_id,financial_year,current_user)
+        risks = get_risk_by_dept(db=db,dept_id=dept_id,current_user=current_user,financial_year=financial_year)
 
         return success_response(data=risks)
     except Exception as e:
@@ -298,3 +298,20 @@ def copy_risks(
             message=str(e),
             status_code=400
         )
+        
+        
+        
+        
+## Get distinct dept for Risk Owner and Risk Co owner
+
+@router.get("/distinct-departments")
+def get_my_departments_api(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        data = get_my_departments(db, current_user)
+        return success_response(data=data)
+    
+    except Exception as e:
+        return error_response(message=str(e), status_code=400)

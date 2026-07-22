@@ -802,7 +802,7 @@ def get_approval_status_name(status):
 #     except Exception as e:
 #         raise e
 
-##----------------------------------------------------------new function------------
+#----------------------------------------------------------new function------------
 
 # def get_risk_by_dept(db, dept_id,financial_year,current_user):  
 #     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
@@ -1047,7 +1047,7 @@ def get_approval_status_name(status):
     
     
 #---------------------new function with no restriction in FH, RM, RH---------------------
-def get_risk_by_dept(db, dept_id,current_user,financial_year):  
+def get_risk_by_dept(db, dept_id,financial_year,current_user):  
     impact_map = {1:"A",2:"B",3:"C",4:"D",5:"E"}
     
     
@@ -1100,11 +1100,27 @@ def get_risk_by_dept(db, dept_id,current_user,financial_year):
         
         # ---------------- ROLE FILTER ----------------
 
+        # if user_type_name.upper() == 'RISK OWNER':
+
+        #     query = query.filter(
+        #         RiskRegister.is_deleted == 0,
+        #         RiskRegister.dept_id == dept_id_cur_user
+        #     )
+        
         if user_type_name.upper() == 'RISK OWNER':
 
             query = query.filter(
                 RiskRegister.is_deleted == 0,
-                RiskRegister.dept_id == dept_id_cur_user
+                or_(
+                    # Risk Owner: same department
+                    and_(
+                        RiskRegister.dept_id == dept_id_cur_user,
+                        RiskRegister.risk_owner_id == current_user["id"]
+                    ),
+
+                    # Risk Co-Owner: any department
+                    RiskRegister.risk_co_owner_id == current_user["id"]
+                )
             )
 
         elif user_type_name.upper() == 'FUNCTIONAL HEAD':
@@ -1160,7 +1176,8 @@ def get_risk_by_dept(db, dept_id,current_user,financial_year):
                 current_fy = f"{today.year}-{today.year + 1}"
             else:
                 current_fy = f"{today.year - 1}-{today.year}"
-        query = query.filter(RiskRegister.financial_year == current_fy)
+                
+            query = query.filter(RiskRegister.financial_year == current_fy)
 
 
         records = query.order_by(
@@ -2856,3 +2873,36 @@ def copy_risks_fy(
     except Exception as e:
         db.rollback()
         raise e
+    
+    
+## Get distinct Dept for Risk Owner and Risk CO Owner
+
+def get_my_departments(db: Session, current_user):
+    departments = (
+        db.query(
+            Department.id,
+            Department.dept_name
+        )
+        .join(
+            RiskRegister,
+            RiskRegister.dept_id == Department.id
+        )
+        .filter(
+            RiskRegister.is_deleted == 0,
+            or_(
+                RiskRegister.risk_owner_id == current_user["id"],
+                RiskRegister.risk_co_owner_id == current_user["id"]
+            )
+        )
+        .distinct()
+        .order_by(Department.dept_name)
+        .all()
+    )
+
+    return [
+        {
+            "dept_id": dept.id,
+            "dept_name": dept.dept_name
+        }
+        for dept in departments
+    ]

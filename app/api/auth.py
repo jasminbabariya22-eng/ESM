@@ -8,9 +8,12 @@ from app.core.response import success_response, error_response
 from app.core.security import *
 
 from app.models.user_role_map import UserRoleMap
+from app.models.department import Department
+from app.models.risk_register import RiskRegister
 
 from app.services.email_event_service import send_forgot_password_email
 
+from sqlalchemy import or_
 
 
 # Authentication APIs
@@ -38,6 +41,27 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         UserRoleMap.role_id == user.role_id
     ).all()
     menu_list = [menu.menu_id for menu in menu_ids]
+    
+    department_list = (
+        db.query(
+            Department.id
+        )
+        .join(
+            RiskRegister,
+            RiskRegister.dept_id == Department.id
+        )
+        .filter(
+            RiskRegister.is_deleted == 0,
+            or_(
+                RiskRegister.risk_owner_id == user.id,
+                RiskRegister.risk_co_owner_id == user.id
+            )
+        )
+        .distinct()
+        # .all()
+    )
+
+    department_list = [dept.id for dept in department_list]
 
     access_token = create_access_token(
         data={
@@ -61,6 +85,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "user_type_id": user.user_type_id,
         "user_type": user.user_type.name if user.user_type else None,
         "menuids": menu_list,
+        "allow_dept": department_list,
         "access_token": access_token,
         "token_type": "bearer"
     })
