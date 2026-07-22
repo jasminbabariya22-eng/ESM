@@ -1,0 +1,64 @@
+name: ESM Deployment
+
+on:
+  workflow_run:
+    workflows: ["ESM CI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Show Runner Info
+        run: |
+          Write-Host "Runner Name: $env:RUNNER_NAME"
+          Write-Host "Machine Name: $env:COMPUTERNAME"
+          Write-Host "Current Directory:"
+          Get-Location
+
+      - name: Go to Deployment Folder
+        run: |
+          Set-Location "E:\Deployment\ESM"
+          Get-Location
+
+      - name: Pull Latest Code
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          git fetch origin
+          git checkout deployment
+          git reset --hard origin/deployment
+
+      - name: Stop Existing Containers
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          docker compose down
+
+      - name: Build Docker Images
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          docker compose build --no-cache
+
+      - name: Start Containers
+        run: |
+          Set-Location "E:\Deployment\ESM"
+
+          docker compose up -d
+
+      - name: Show Running Containers
+        run: |
+          docker ps
+
+      - name: Show Docker Compose Status
+        run: |
+          Set-Location "E:\Deployment\ESM"
+          docker compose ps
