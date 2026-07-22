@@ -33,6 +33,9 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="User does not exists")
     
+    user_dept = user.dept_id
+    # user_type = user.user_type
+    
     if data.password:
         if user.password != data.password:
             raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -62,6 +65,11 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     )
 
     department_list = [dept.id for dept in department_list]
+    
+    final_department_list = list(set())
+    
+    department_list.append(user_dept)
+    final_department_list = list(set(department_list))
 
     access_token = create_access_token(
         data={
@@ -85,7 +93,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "user_type_id": user.user_type_id,
         "user_type": user.user_type.name if user.user_type else None,
         "menuids": menu_list,
-        "allow_dept": department_list,
+        "allow_dept": final_department_list,
         "access_token": access_token,
         "token_type": "bearer"
     })

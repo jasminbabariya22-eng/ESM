@@ -241,7 +241,7 @@ def approve_risk(db, data, user_id):
 
 #----------------Force Approval--------------------------
 
-def force_approve_risk(db,data,user_id,user_type):
+def force_approve_risk(db, data, user_id, user_type):
     risk = db.query(RiskRegister).filter(
         RiskRegister.risk_register_id == data.risk_register_id,
         RiskRegister.is_deleted == 0

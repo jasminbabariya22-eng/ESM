@@ -1127,8 +1127,11 @@ def get_risk_by_dept(db, dept_id,financial_year,current_user):
 
             query = query.filter(
                 RiskRegister.is_deleted == 0,
-
-                RiskRegister.dept_id == dept_id_cur_user,
+                
+                or_(
+            RiskRegister.dept_id == dept_id_cur_user,
+            RiskRegister.risk_co_owner_id == current_user["id"]
+        ),
 
                 func.upper(Status.status_name) != 'DRAFT', func.upper(Status.status_name) != 'PENDING FOR ACTION',
 
