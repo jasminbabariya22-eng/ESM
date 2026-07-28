@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DB_SCHEMA: str                             # Add DB_SCHEMA to settings
     
     FERNET_KEY: str
-    
+
     MAIN_URL: str
 
     class Config:

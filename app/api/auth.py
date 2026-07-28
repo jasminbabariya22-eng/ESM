@@ -66,8 +66,6 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
 
     department_list = [dept.id for dept in department_list]
     
-    final_department_list = list(set())
-    
     department_list.append(user_dept)
     final_department_list = list(set(department_list))
 

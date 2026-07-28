@@ -45,10 +45,16 @@ DEFAULT_ACTION_STATUS = 1
 APPROVED_STATUS_ID = 1
 
 
-ROLE_TYPE_BY_LABEL = {
+ROLE_TYPE_BY_LABEL_LOCAL = {
     "Risk Owner": {"role_key": "risk_owner", "type_key": "risk owner"},
     "Action Owner": {"role_key": "action_owner", "type_key": "action owner"},
     "Functional Head": {"role_key": "functional_head", "type_key": "functional head"},
+}
+
+ROLE_TYPE_BY_LABEL = {
+    "Risk Owner": {"role_key": "operator", "type_key": "risk owner"},
+    "Action Owner": {"role_key": "operator", "type_key": "action owner"},
+    "Functional Head": {"role_key": "operator", "type_key": "functional head"},
 }
 
 
@@ -93,6 +99,9 @@ class ImportCaches:
     departments_by_short_name: dict[str, "Department"]
     departments_by_id: dict[int, "Department"]
     existing_users: dict[tuple[str, int], "User"]  # (login, dept_id) lower -> User
+    
+    existing_users_by_logid: dict[str, "User"]
+    
     existing_users_by_email: dict[str, "User"]
     existing_risk_ids: dict[str, "RiskRegister"]             # "HR-0013" -> RiskRegister
     existing_descriptions: dict[tuple, "RiskDescription"]    # dedup key -> RiskDescription
@@ -125,6 +134,11 @@ def build_caches(db: Session) -> ImportCaches:
         for u in users
     }
     
+    existing_users_by_logid = {
+            u.log_id.strip().lower(): u
+            for u in users
+        }
+    
     existing_users_by_email = {
         u.email.strip().lower(): u for u in users if u.email
     }
@@ -152,6 +166,9 @@ def build_caches(db: Session) -> ImportCaches:
         departments_by_short_name=departments_by_short_name,
         departments_by_id=departments_by_id,
         existing_users=existing_users,
+        
+        existing_users_by_logid=existing_users_by_logid,
+        
         existing_users_by_email=existing_users_by_email,
         existing_risk_ids=existing_risk_ids,
         existing_descriptions=existing_descriptions,
@@ -194,7 +211,7 @@ def validate_role_mappings(caches: ImportCaches, name_info: dict[str, dict]) -> 
 
     problems = []
     for label in sorted(needed_labels):
-        mapping = ROLE_TYPE_BY_LABEL.get(label)
+        mapping = ROLE_TYPE_BY_LABEL_LOCAL.get(label)
         if mapping is None:
             problems.append(f"  - {label!r}: no entry in ROLE_TYPE_BY_LABEL at all")
             continue
@@ -263,7 +280,7 @@ def import_users(db: Session, caches: ImportCaches, name_info: dict[str, dict]) 
         role_label = info["role"]
         first, last = split_name(name)
 
-        mapping = ROLE_TYPE_BY_LABEL[role_label]  
+        mapping = ROLE_TYPE_BY_LABEL_LOCAL[role_label]  
         role_id = caches.roles[mapping["role_key"]]
         user_type_id = caches.user_types[mapping["type_key"]]
         dept = resolve_department(caches, info["dept_code"])
@@ -275,12 +292,13 @@ def import_users(db: Session, caches: ImportCaches, name_info: dict[str, dict]) 
         )
 
         # key = (first.lower(), last.lower(), dept.id, role_id)
+        #log_id = f"{first.lower()}@example.com"
         log_id = first
         key = (log_id.lower(), dept.id)
         user = caches.existing_users.get(key)
 
         if user is None:
-            # log_id = f"{first.lower()}@example.com"
+            #log_id = f"{first.lower()}@example.com"
             user = User(
                 log_id=log_id,
                 password=DEFAULT_PASSWORD,
@@ -438,7 +456,7 @@ def import_risk_registers(
     registers: list[RiskRegisterRecord],
     user_map: dict[str, dict],
 ) -> dict[tuple[str, str, str], dict]:
-    
+
     risk_register_map: dict[tuple[str, str, str], dict] = {}
     created, reused = 0, 0
 
@@ -450,42 +468,72 @@ def import_risk_registers(
             db_risk = caches.existing_risk_ids.get(reg.existing_risk_id)
 
         if db_risk is None:
+
             owner_info = user_map.get(reg.owner)
             if owner_info is None:
                 logger.warning(
                     "Register %s (%r): owner %r not in user_map, skipping register",
-                    reg.group_key, reg.category, reg.owner,
+                    reg.group_key,
+                    reg.category,
+                    reg.owner,
                 )
                 continue
 
+            # -----------------------------
+            # Lookup co-owner (optional)
+            # -----------------------------
+            co_owner = None
+
+            if reg.co_owner:
+                co_owner = caches.existing_users_by_logid.get(
+                        reg.co_owner.strip().lower()
+                    )
+
+                if co_owner is None:
+                    logger.warning(
+                        "Risk %s: Co-owner '%s' not found. Leaving co-owner empty.",
+                        reg.group_key,
+                        reg.co_owner,
+                    )
+
+            # -----------------------------
+            # Generate Risk ID
+            # -----------------------------
             if reg.existing_risk_id and PRESERVE_ORIGINAL_RISK_ID:
                 risk_id = reg.existing_risk_id
                 _adopt_existing_number(dept, risk_id)
             else:
                 risk_id = generate_risk_id(db, dept)
 
+            # -----------------------------
+            # Create Risk Register
+            # -----------------------------
             risk_schema = RiskRegisterCreate(
                 risk_name=reg.category or reg.group_key,
                 dept_id=dept.id,
                 risk_owner_id=owner_info["id"],
-                risk_co_owner_id=None,
+                risk_co_owner_id = co_owner.id if co_owner else None,
                 financial_year=FINANCIAL_YEAR,
                 risk_status=DEFAULT_RISK_STATUS,
                 risk_progress="0",
                 is_active=0,
             )
+
             db_risk = RiskRegister(
                 **risk_schema.model_dump(),
                 risk_id=risk_id,
-                # created_by = the actual risk owner, not a generic importer id
                 created_by=owner_info["id"],
                 created_on=datetime.utcnow(),
                 is_deleted=0,
             )
+
             db.add(db_risk)
             db.flush()
             db.refresh(db_risk)
-            
+
+            # -----------------------------
+            # Auto Approval
+            # -----------------------------
             has_action_plan = any(
                 treatment.action_plan and treatment.action_plan.strip()
                 for description in reg.descriptions
@@ -494,9 +542,10 @@ def import_risk_registers(
 
             if not has_action_plan:
                 _apply_approvals(db, db_risk, dept.id, reg, caches)
-                
-                caches.existing_risk_ids[risk_id] = db_risk
-                created += 1
+
+            caches.existing_risk_ids[risk_id] = db_risk
+            created += 1
+
         else:
             reused += 1
 
@@ -507,7 +556,12 @@ def import_risk_registers(
             "owner_id": db_risk.risk_owner_id,
         }
 
-    logger.info("Risk registers: %d created, %d reused (already existed)", created, reused)
+    logger.info(
+        "Risk registers: %d created, %d reused (already existed)",
+        created,
+        reused,
+    )
+
     return risk_register_map
 
 

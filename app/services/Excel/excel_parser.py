@@ -40,6 +40,7 @@ class RiskRegisterRecord:
     group_key: str                            # "S.No" value or "Risk ID" value, as string
     category: str                             # Category / Risk Name
     owner: str                                # owner on the FIRST row of the group -> used as register owner
+    co_owner: str                                # owner on the SECOND row of the group -> used as description owner
     existing_risk_id: Optional[str] = None    # only set for "export" format (Risk ID already assigned)
     descriptions: list[RiskDescriptionRecord] = field(default_factory=list)
     source_sheet: str = ""
@@ -148,6 +149,7 @@ def _group_rows(
                 group_key=_clean(row["group_key"]),
                 category=_clean(row["category"]),
                 owner=_clean(row["owner"]),
+                co_owner=_clean(row["co_owner"]),
                 existing_risk_id=_clean(row["group_key"]) if dept_code_looks_like_id(row["group_key"]) else None,
                 source_sheet=sheet_name,
             )
@@ -163,6 +165,7 @@ def _group_rows(
                     group_key=f"__orphan_row_{i}",
                     category=_clean(row["category"]),
                     owner=_clean(row["owner"]),
+                    co_owner=_clean(row["co_owner"]),
                     source_sheet=sheet_name,
                 )
                 registers.append(current_register)
@@ -218,20 +221,20 @@ def dept_code_looks_like_id(value) -> bool:
 
 TEMPLATE_COLUMNS = [
     "S.No", "Category", "Risk Description", "Inherent Risk",
-    "Current Mitigation", "Current Risk", "Risk Owner",
+    "Current Mitigation", "Current Risk", "Risk Owner", "Risk Co Owner",
     "Action Plan", "Due Date", "Action Owner",
     "Q1", "Q2", "Q3", "Q4", "Backup",
 ]
 
 EXPORT_COLUMNS = [
     "Risk ID", "Risk Name", "Risk Description", "Inherent Risk",
-    "Current Mitigation", "Current Risk", "Risk Owner",
+    "Current Mitigation", "Current Risk", "Risk Owner", "Risk Co Owner",
     "Action Plan", "Action Owner", "Due Date", "Action Status",
 ]
 
 
 UNIFIED_COLUMNS = [
-    "Department", "S.No", "Risk Category", "Risk Owner", "Risk Description",
+    "Department", "S.No", "Risk Category", "Risk Owner", "Risk Co Owner", "Risk Description",
     "Inherent Risk", "Current Mitigation", "Current Risk",
     "Action Owner", "Action Plan", "Due Date", "FH", "RM", "RH"
 ]
@@ -252,6 +255,7 @@ def parse_template_sheet(raw_df: pd.DataFrame, dept_code: str, sheet_name: str) 
             "dept_code": None,                         # not present in this format -> use default
             "category": r.get("Category"),
             "owner": r.get("Risk Owner"),
+            "co_owner": r.get("Risk Co Owner"),
             "description": r.get("Risk Description"),
             "inherent": r.get("Inherent Risk"),
             "mitigation": r.get("Current Mitigation"),
@@ -283,6 +287,7 @@ def parse_export_sheet(raw_df: pd.DataFrame, dept_code: str, sheet_name: str) ->
             "dept_code": None,                          # dept comes from the sheet name for this format
             "category": r.get("Risk Name"),
             "owner": r.get("Risk Owner"),
+            "co_owner": r.get("Risk Co Owner"),
             "description": r.get("Risk Description"),
             "inherent": r.get("Inherent Risk"),
             "mitigation": r.get("Current Mitigation"),
@@ -314,6 +319,7 @@ def parse_unified_sheet(raw_df: pd.DataFrame, sheet_name: str) -> list[RiskRegis
             "dept_code": r.get("Department"),
             "category": r.get("Risk Category"),
             "owner": r.get("Risk Owner"),
+            "co_owner": r.get("Risk Co Owner"),
             "description": r.get("Risk Description"),
             "inherent": r.get("Inherent Risk"),
             "mitigation": r.get("Current Mitigation"),
@@ -337,7 +343,7 @@ def parse_unified_sheet(raw_df: pd.DataFrame, sheet_name: str) -> list[RiskRegis
 
 def load_excel(path: str, default_dept_code: Optional[str] = None) -> list[RiskRegisterRecord]:
 
-    # xl = pd.ExcelFile(path)
+    #xl = pd.ExcelFile(path)
     all_registers: list[RiskRegisterRecord] = []
 
     with pd.ExcelFile(path) as xl:
