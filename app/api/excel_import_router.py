@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from tempfile import NamedTemporaryFile
 import shutil
@@ -9,6 +10,7 @@ from app.core.response import success_response, error_response
 from app.core.dependencies import get_current_user
 from app.services.Excel.excel_parser import load_excel
 from app.services.Excel.db_import import run_import
+from app.services.Excel.validation import validate_excel_file
 
 router = APIRouter(prefix="/excel", tags=["Excel Import"])
 
@@ -33,7 +35,15 @@ async def import_excel(
             shutil.copyfileobj(file.file, temp)
             temp_path = temp.name
 
-        registers = load_excel(temp_path)              # Save uploaded file
+        # Validate first
+        val_result = validate_excel_file(db, temp_path)
+        if not val_result["success"]:
+            return JSONResponse(
+                status_code=400,
+                content=val_result
+            )
+
+        registers = load_excel(temp_path)              # Load excel rows
 
         result = run_import(db, registers)         # Import into DB
 

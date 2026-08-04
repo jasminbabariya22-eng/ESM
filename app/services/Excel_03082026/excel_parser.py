@@ -234,8 +234,8 @@ EXPORT_COLUMNS = [
 
 
 UNIFIED_COLUMNS = [
-    "Department", "S.No", "Risk Category", "Risk Owner", "Risk Co Owner",
-    "Inherent Risk", "Current Mitigation", "Current Risk", 
+    "Department", "S.No", "Risk Category", "Risk Owner", "Risk Co Owner", "Risk Description",
+    "Inherent Risk", "Current Mitigation", "Current Risk",
     "Action Owner", "Action Plan", "Due Date", "FH", "RM", "RH"
 ]
 
@@ -320,7 +320,7 @@ def parse_unified_sheet(raw_df: pd.DataFrame, sheet_name: str) -> list[RiskRegis
             "category": r.get("Risk Category"),
             "owner": r.get("Risk Owner"),
             "co_owner": r.get("Risk Co Owner"),
-            "description": r.get("Risk Category"),
+            "description": r.get("Risk Description"),
             "inherent": r.get("Inherent Risk"),
             "mitigation": r.get("Current Mitigation"),
             "current": r.get("Current Risk"),

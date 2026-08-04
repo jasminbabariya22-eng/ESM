@@ -286,28 +286,64 @@ def collect_users_from_registers(registers: list[RiskRegisterRecord]) -> dict[st
 
 def import_users(db: Session, caches: ImportCaches, name_info: dict[str, dict]) -> dict[str, dict]:
     user_map: dict[str, dict] = {}
-
-    # Query all users for robust case-insensitive lookup
-    users = db.query(User).filter(User.is_deleted == 0).all()
-    users_by_logid = {u.log_id.strip().lower(): u for u in users if u.log_id}
-    users_by_email = {u.email.strip().lower(): u for u in users if u.email}
-    users_by_name = {}
-    for u in users:
-        full_name = f"{u.first_name} {u.last_name}".strip().lower()
-        users_by_name[full_name] = u
-        if not u.last_name or u.last_name.strip() in ("", "-"):
-            users_by_name[u.first_name.strip().lower()] = u
+    created = 0
 
     for name, info in name_info.items():
-        lookup = name.strip().lower()
-        user = users_by_logid.get(lookup)
-        if user is None:
-            user = users_by_email.get(lookup)
-        if user is None:
-            user = users_by_name.get(lookup)
+        role_label = info["role"]
+        first, last = split_name(name)
+
+        mapping = ROLE_TYPE_BY_LABEL_LOCAL[role_label]  
+        role_id = caches.roles[mapping["role_key"]]
+        user_type_id = caches.user_types[mapping["type_key"]]
+        dept = resolve_department(caches, info["dept_code"])
+
+        logger.debug(
+            "resolve user %r: excel_dept=%r -> dept_id=%s (%s), role_label=%r -> role_id=%s, user_type_id=%s",
+            name, info["dept_code"], dept.id, dept.dept_short_name,
+            role_label, role_id, user_type_id,
+        )
+
+        # key = (first.lower(), last.lower(), dept.id, role_id)
+        #log_id = f"{first.lower()}@example.com"
+        log_id = first
+        # key = (log_id.lower(), dept.id)
+        # user = caches.existing_users.get(key)
+        user = caches.existing_users_by_logid.get(log_id.lower())
+        
+        # print("=" * 80)
+        # print("Excel Log ID :", log_id)
+        # print("Excel Dept   :", dept.id)
+        # # print("Lookup Key   :", key)
+
+        # for k in caches.existing_users.keys():
+        #     if k[0] == log_id.lower():
+        #         print("Found same log_id in cache:", k)
+        # print("=" * 80)
 
         if user is None:
-            raise Exception(f"User '{name}' does not exist.")
+            #log_id = f"{first.lower()}@example.com"
+            user = User(
+                log_id=log_id,
+                password=DEFAULT_PASSWORD,
+                first_name=first,
+                last_name=last,
+                email=log_id,
+                dept_id=dept.id,
+                role_id=role_id,
+                user_type_id=user_type_id,
+                status="Active",
+                created_by=IMPORTER_USER_ID,
+                created_on=datetime.utcnow(),
+                is_deleted=0,
+            )
+            db.add(user)
+            db.flush()
+            db.refresh(user)
+
+            # caches.existing_users[key] = user
+            caches.existing_users[(log_id.lower(), dept.id)] = user
+            caches.existing_users_by_logid[log_id.lower()] = user
+            created += 1
 
         user_map[name] = {
             "id": user.id,
@@ -315,7 +351,7 @@ def import_users(db: Session, caches: ImportCaches, name_info: dict[str, dict]) 
             "email": user.email,
         }
 
-    logger.info("Users: %d matched to existing", len(user_map))
+    logger.info("Users: %d matched to existing, %d newly created", len(user_map) - created, created)
     return user_map
 
 
