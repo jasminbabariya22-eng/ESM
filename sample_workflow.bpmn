@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  
+  <bpmn:process id="RiskApprovalWorkflow_New" name="Risk Approval Process" isExecutable="true">
+    
+    <!-- 1. Start Event -->
+    <bpmn:startEvent id="StartEvent" name="Workflow Start">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent" targetRef="PENDING_FH" />
+
+    <!-- 2. Functional Head Approval User Task -->
+    <bpmn:userTask id="PENDING_FH" name="Pending Functional Head" camunda:candidateGroups="FUNCTION_HEAD">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:incoming>Flow_Draft_Resubmit</bpmn:incoming>
+      <bpmn:outgoing>Flow_FH_Task</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_FH_Task" sourceRef="PENDING_FH" targetRef="Gateway_FH" />
+    
+    <!-- 3. Gateway for Functional Head Decision -->
+    <bpmn:exclusiveGateway id="Gateway_FH" name="FH Decision">
+      <bpmn:incoming>Flow_FH_Task</bpmn:incoming>
+      <bpmn:outgoing>Flow_FH_Approve</bpmn:outgoing>
+      <bpmn:outgoing>Flow_FH_Reject</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <!-- FH Approved: Move to Risk Manager -->
+    <bpmn:sequenceFlow id="Flow_FH_Approve" name="Approve" sourceRef="Gateway_FH" targetRef="PENDING_RM">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved == True</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- FH Rejected: Return to Draft -->
+    <bpmn:sequenceFlow id="Flow_FH_Reject" name="Reject" sourceRef="Gateway_FH" targetRef="DRAFT">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved == False</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- 4. Risk Manager Approval User Task -->
+    <bpmn:userTask id="PENDING_RM" name="Pending Risk Manager" camunda:candidateGroups="RISK_MANAGER">
+      <bpmn:incoming>Flow_FH_Approve</bpmn:incoming>
+      <bpmn:outgoing>Flow_RM_Task</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_RM_Task" sourceRef="PENDING_RM" targetRef="Gateway_RM" />
+    
+    <!-- 5. Gateway for Risk Manager Decision -->
+    <bpmn:exclusiveGateway id="Gateway_RM" name="RM Decision">
+      <bpmn:incoming>Flow_RM_Task</bpmn:incoming>
+      <bpmn:outgoing>Flow_RM_Approve</bpmn:outgoing>
+      <bpmn:outgoing>Flow_RM_Reject</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <!-- RM Approved: Move to Risk Head -->
+    <bpmn:sequenceFlow id="Flow_RM_Approve" name="Approve" sourceRef="Gateway_RM" targetRef="PENDING_RH">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved == True</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- RM Rejected: Return to Draft -->
+    <bpmn:sequenceFlow id="Flow_RM_Reject" name="Reject" sourceRef="Gateway_RM" targetRef="DRAFT">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved == False</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- 6. Risk Head Approval User Task -->
+    <bpmn:userTask id="PENDING_RH" name="Pending Risk Head" camunda:candidateGroups="RISK_HEAD">
+      <bpmn:incoming>Flow_RM_Approve</bpmn:incoming>
+      <bpmn:outgoing>Flow_RH_Task</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_RH_Task" sourceRef="PENDING_RH" targetRef="Gateway_RH" />
+    
+    <!-- 7. Gateway for Risk Head Decision -->
+    <bpmn:exclusiveGateway id="Gateway_RH" name="RH Decision">
+      <bpmn:incoming>Flow_RH_Task</bpmn:incoming>
+      <bpmn:outgoing>Flow_RH_Approve</bpmn:outgoing>
+      <bpmn:outgoing>Flow_RH_Reject</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <!-- RH Approved: Complete Process -->
+    <bpmn:sequenceFlow id="Flow_RH_Approve" name="Approve" sourceRef="Gateway_RH" targetRef="APPROVED">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved == True</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <!-- RH Rejected: Return to Draft -->
+    <bpmn:sequenceFlow id="Flow_RH_Reject" name="Reject" sourceRef="Gateway_RH" targetRef="DRAFT">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">approved == False</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- 8. Draft State User Task (For Risk Owner resubmission) -->
+    <bpmn:userTask id="DRAFT" name="Draft Resubmit" camunda:candidateGroups="RISK_OWNER">
+      <bpmn:incoming>Flow_FH_Reject</bpmn:incoming>
+      <bpmn:incoming>Flow_RM_Reject</bpmn:incoming>
+      <bpmn:incoming>Flow_RH_Reject</bpmn:incoming>
+      <bpmn:outgoing>Flow_Draft_Resubmit</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_Draft_Resubmit" name="Resubmit" sourceRef="DRAFT" targetRef="PENDING_FH" />
+
+    <!-- 9. Process End Event -->
+    <bpmn:endEvent id="APPROVED" name="Workflow Approved">
+      <bpmn:incoming>Flow_RH_Approve</bpmn:incoming>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+  
+  <!-- BPMN Diagram Layout Coordinates for Visual Rendering -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="RiskApprovalWorkflow_New">
+      
+      <!-- Start Event Shape -->
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="134" y="145" width="73" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- PENDING_FH Shape -->
+      <bpmndi:BPMNShape id="Activity_FH_di" bpmnElement="PENDING_FH">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <!-- Gateway_FH Shape -->
+      <bpmndi:BPMNShape id="Gateway_FH_di" bpmnElement="Gateway_FH" isMarkerVisible="true">
+        <dc:Bounds x="395" y="97" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="390" y="73" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- PENDING_RM Shape -->
+      <bpmndi:BPMNShape id="Activity_RM_di" bpmnElement="PENDING_RM">
+        <dc:Bounds x="500" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <!-- Gateway_RM Shape -->
+      <bpmndi:BPMNShape id="Gateway_RM_di" bpmnElement="Gateway_RM" isMarkerVisible="true">
+        <dc:Bounds x="655" y="97" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="650" y="73" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- PENDING_RH Shape -->
+      <bpmndi:BPMNShape id="Activity_RH_di" bpmnElement="PENDING_RH">
+        <dc:Bounds x="760" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <!-- Gateway_RH Shape -->
+      <bpmndi:BPMNShape id="Gateway_RH_di" bpmnElement="Gateway_RH" isMarkerVisible="true">
+        <dc:Bounds x="915" y="97" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="909" y="73" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- DRAFT Shape (Resubmit) -->
+      <bpmndi:BPMNShape id="Activity_Draft_di" bpmnElement="DRAFT">
+        <dc:Bounds x="500" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <!-- End Event Shape -->
+      <bpmndi:BPMNShape id="Event_APPROVED_di" bpmnElement="APPROVED">
+        <dc:Bounds x="1052" y="104" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1046" y="147" width="48" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      
+      <!-- Connections -->
+      <bpmndi:BPMNEdge id="Flow_Start_di" bpmnElement="Flow_Start">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_FH_Task_di" bpmnElement="Flow_FH_Task">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="395" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_FH_Approve_di" bpmnElement="Flow_FH_Approve">
+        <di:waypoint x="445" y="120" />
+        <di:waypoint x="500" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_FH_Reject_di" bpmnElement="Flow_FH_Reject">
+        <di:waypoint x="420" y="147" />
+        <di:waypoint x="420" y="280" />
+        <di:waypoint x="500" y="280" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_RM_Task_di" bpmnElement="Flow_RM_Task">
+        <di:waypoint x="600" y="120" />
+        <di:waypoint x="655" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_RM_Approve_di" bpmnElement="Flow_RM_Approve">
+        <di:waypoint x="705" y="120" />
+        <di:waypoint x="760" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_RM_Reject_di" bpmnElement="Flow_RM_Reject">
+        <di:waypoint x="680" y="147" />
+        <di:waypoint x="680" y="280" />
+        <di:waypoint x="600" y="280" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_RH_Task_di" bpmnElement="Flow_RH_Task">
+        <di:waypoint x="860" y="120" />
+        <di:waypoint x="915" y="120" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_RH_Approve_di" bpmnElement="Flow_RH_Approve">
+        <di:waypoint x="965" y="120" />
+        <di:waypoint x="1052" y="122" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_RH_Reject_di" bpmnElement="Flow_RH_Reject">
+        <di:waypoint x="940" y="147" />
+        <di:waypoint x="940" y="280" />
+        <di:waypoint x="600" y="280" />
+      </bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_Draft_Resubmit_di" bpmnElement="Flow_Draft_Resubmit">
+        <di:waypoint x="500" y="280" />
+        <di:waypoint x="290" y="280" />
+        <di:waypoint x="290" y="160" />
+      </bpmndi:BPMNEdge>
+      
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

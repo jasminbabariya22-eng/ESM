@@ -1,0 +1,337 @@
+CREATE DATABASE workflow_erm;
+
+CREATE SCHEMA workflow;
+
+------------------------------------------------------------
+-- Workflow Definition
+------------------------------------------------------------
+CREATE TABLE workflow.workflow_definition
+(
+    workflow_id         SERIAL PRIMARY KEY,
+
+    workflow_name       VARCHAR(200) NOT NULL,
+    description         TEXT,
+
+    is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_by          INTEGER,
+    created_on          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_by          INTEGER,
+    updated_on          TIMESTAMP
+);
+
+------------------------------------------------------------
+-- Workflow State
+------------------------------------------------------------
+CREATE TABLE workflow.workflow_state
+(
+    state_id            SERIAL PRIMARY KEY,
+
+    workflow_id         INTEGER NOT NULL
+        REFERENCES workflow.workflow_definition(workflow_id),
+
+    state_code          VARCHAR(50) NOT NULL,
+    state_name          VARCHAR(200) NOT NULL,
+
+    state_type          VARCHAR(20) NOT NULL DEFAULT 'NORMAL'
+        CHECK (state_type IN ('START','NORMAL','END')),
+
+    sequence_no         INTEGER NOT NULL,
+
+    created_on          TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_workflow_state_code
+        UNIQUE(workflow_id, state_code)
+);
+
+------------------------------------------------------------
+-- Workflow Transition
+------------------------------------------------------------
+CREATE TABLE workflow.workflow_transition
+(
+    transition_id       SERIAL PRIMARY KEY,
+
+    workflow_id         INTEGER NOT NULL
+        REFERENCES workflow.workflow_definition(workflow_id),
+
+    current_state_id    INTEGER NOT NULL
+        REFERENCES workflow.workflow_state(state_id),
+
+    action_name         VARCHAR(50) NOT NULL,
+
+    next_state_id       INTEGER NOT NULL
+        REFERENCES workflow.workflow_state(state_id),
+
+    role_code           VARCHAR(20) NOT NULL,
+
+    is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_on          TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_transition
+        UNIQUE(current_state_id, action_name, role_code)
+);
+
+------------------------------------------------------------
+-- Workflow Instance
+------------------------------------------------------------
+CREATE TABLE workflow.workflow_instance
+(
+    instance_id         SERIAL PRIMARY KEY,
+
+    workflow_id         INTEGER NOT NULL
+        REFERENCES workflow.workflow_definition(workflow_id),
+
+    entity_type         VARCHAR(50) NOT NULL,
+
+    entity_id           INTEGER NOT NULL,
+
+    current_state_id    INTEGER NOT NULL
+        REFERENCES workflow.workflow_state(state_id),
+
+    status              VARCHAR(20) NOT NULL DEFAULT 'Running'
+        CHECK (status IN ('Running','Completed','Cancelled')),
+
+    started_by          INTEGER,
+
+    started_on          TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    completed_on        TIMESTAMP,
+
+    CONSTRAINT uq_workflow_entity
+        UNIQUE(entity_type, entity_id)
+);
+
+------------------------------------------------------------
+-- Workflow History
+------------------------------------------------------------
+CREATE TABLE workflow.workflow_history
+(
+    history_id          SERIAL PRIMARY KEY,
+
+    instance_id         INTEGER NOT NULL
+        REFERENCES workflow.workflow_instance(instance_id),
+
+    from_state_id       INTEGER
+        REFERENCES workflow.workflow_state(state_id),
+
+    to_state_id         INTEGER
+        REFERENCES workflow.workflow_state(state_id),
+
+    action_name         VARCHAR(50) NOT NULL,
+
+    performed_by        INTEGER,
+
+    performed_role      VARCHAR(20),
+
+    remarks             TEXT,
+
+    performed_on        TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+------------------------------------------------------------
+-- Indexes
+------------------------------------------------------------
+
+CREATE INDEX idx_state_workflow
+ON workflow.workflow_state(workflow_id);
+
+CREATE INDEX idx_transition_lookup
+ON workflow.workflow_transition(workflow_id, current_state_id);
+
+CREATE INDEX idx_instance_state
+ON workflow.workflow_instance(current_state_id);
+
+CREATE INDEX idx_history_instance
+ON workflow.workflow_history(instance_id);
+
+CREATE INDEX idx_history_states
+ON workflow.workflow_history(from_state_id, to_state_id);
+
+
+
+-- ============================================================================
+-- SPIFFWORKFLOW MIGRATION SCRIPT FOR THE WORKFLOW DATABASE SCHEMA
+-- ============================================================================
+
+-- Set the target schema for all operations
+SET search_path TO workflow;
+
+-- ----------------------------------------------------------------------------
+-- 1. CREATE NEW TABLES
+-- ----------------------------------------------------------------------------
+
+-- Table: bpmn_definition
+-- Purpose: Stores versioned BPMN 2.0 XML process designs.
+CREATE TABLE bpmn_definition (
+    id SERIAL PRIMARY KEY,
+    spec_id VARCHAR(100) NOT NULL,
+    version INT NOT NULL,
+    description TEXT,
+    xml_content TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_by INT,
+    created_on TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uq_spec_version UNIQUE (spec_id, version)
+);
+
+CREATE INDEX idx_bpmn_spec ON bpmn_definition (spec_id);
+
+-- Table: workflow_human_task
+-- Purpose: Index for pending, ready, and completed Human/User Tasks.
+CREATE TABLE workflow_human_task (
+    task_id SERIAL PRIMARY KEY,
+    instance_id INT NOT NULL,
+    task_spec_id VARCHAR(100) NOT NULL,
+    role_code VARCHAR(50) NOT NULL,
+    assignee_id INT,
+    status VARCHAR(20) NOT NULL, -- e.g., 'READY', 'COMPLETED', 'SUSPENDED'
+    created_on TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    completed_on TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_human_task_instance ON workflow_human_task (instance_id);
+CREATE INDEX idx_human_task_role ON workflow_human_task (role_code, status);
+
+-- Table: workflow_activity_history
+-- Purpose: Log of fine-grained BPMN execution steps (Service Tasks, scripts, gateways).
+CREATE TABLE workflow_activity_history (
+    activity_history_id SERIAL PRIMARY KEY,
+    instance_id INT NOT NULL,
+    activity_id VARCHAR(100) NOT NULL,
+    activity_name VARCHAR(200),
+    activity_type VARCHAR(50) NOT NULL, -- e.g., 'userTask', 'serviceTask', 'exclusiveGateway'
+    status VARCHAR(20) NOT NULL, -- e.g., 'STARTED', 'COMPLETED', 'FAILED'
+    variables JSONB DEFAULT '{}'::jsonb NOT NULL,
+    error_message TEXT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_activity_history_instance ON workflow_activity_history (instance_id);
+
+-- ----------------------------------------------------------------------------
+-- 2. ALTER EXISTING TABLES & MIGRATE DATA
+-- ----------------------------------------------------------------------------
+
+-- A. Alter workflow_instance to support SpiffWorkflow variables and serialization
+ALTER TABLE workflow_instance 
+ADD COLUMN bpmn_definition_id INT REFERENCES bpmn_definition(id),
+ADD COLUMN current_task_code VARCHAR(50),
+ADD COLUMN serialized_state JSONB;
+
+-- B. Alter workflow_history to decouple it from state IDs and use codes
+ALTER TABLE workflow_history
+ADD COLUMN from_state_code VARCHAR(50),
+ADD COLUMN to_state_code VARCHAR(50);
+
+-- C. Seed the bpmn_definition table based on current definitions
+INSERT INTO bpmn_definition (spec_id, version, description, xml_content, is_active)
+SELECT 
+    CASE 
+        WHEN workflow_id = 1 THEN 'TestRiskApprovalWorkflow'
+        WHEN workflow_id = 3 THEN 'RiskApprovalWorkflow'
+        ELSE 'Workflow_' || workflow_id::text
+    END as spec_id,
+    1 as version,
+    description,
+    '<!-- Initial placeholder BPMN XML migration definition for ' || workflow_name || ' -->' as xml_content,
+    is_active
+FROM workflow_definition;
+
+-- D. Migrate Active Instances
+-- Maps instance.workflow_id -> bpmn_definition.id, sets the current task code from state_code,
+-- and builds a starting serialized state wrapper JSON.
+UPDATE workflow_instance wi
+SET 
+    bpmn_definition_id = bd.id,
+    current_task_code = ws.state_code,
+    serialized_state = json_build_object(
+        'spec_id', bd.spec_id,
+        'version', bd.version,
+        'variables', '{}'::json,
+        'tokens', json_build_array(
+            json_build_object(
+                'task_spec_id', ws.state_code,
+                'state', CASE WHEN wi.status = 'Running' THEN 'READY' ELSE 'COMPLETED' END
+            )
+        )
+    )::jsonb
+FROM workflow_state ws
+JOIN bpmn_definition bd ON 
+    bd.spec_id = CASE 
+        WHEN ws.workflow_id = 1 THEN 'TestRiskApprovalWorkflow'
+        WHEN ws.workflow_id = 3 THEN 'RiskApprovalWorkflow'
+        ELSE 'Workflow_' || ws.workflow_id::text
+    END
+WHERE wi.current_state_id = ws.state_id;
+
+-- E. Migrate History Logs
+-- Maps from_state_id and to_state_id to their text-based code representation.
+UPDATE workflow_history wh
+SET from_state_code = ws_from.state_code
+FROM workflow_state ws_from
+WHERE wh.from_state_id = ws_from.state_id;
+
+UPDATE workflow_history wh
+SET to_state_code = ws_to.state_code
+FROM workflow_state ws_to
+WHERE wh.to_state_id = ws_to.state_id;
+
+-- F. Populate legacy Task Index for open workflows (Seed workflow_human_task table)
+-- Creates ready tasks for running instances to populate the inbox queues immediately.
+INSERT INTO workflow_human_task (instance_id, task_spec_id, role_code, status, created_on)
+SELECT 
+    wi.instance_id,
+    wi.current_task_code,
+    CASE 
+        WHEN wi.current_task_code = 'PENDING_FH' THEN 'FUNCTIONAL_HEAD'
+        WHEN wi.current_task_code = 'PENDING_RM' THEN 'RISK_MANAGER'
+        WHEN wi.current_task_code = 'PENDING_RH' THEN 'RISK_HEAD'
+        ELSE 'RISK_OWNER'
+    END as role_code,
+    'READY' as status,
+    wi.started_on
+FROM workflow_instance wi
+WHERE wi.status = 'Running' AND wi.current_task_code NOT IN ('DRAFT', 'APPROVED');
+
+-- ----------------------------------------------------------------------------
+-- 3. DEPRECATE LEGACY SCHEMAS & RETAIN AUDIT INTEGRITY
+-- ----------------------------------------------------------------------------
+
+-- Drop foreign keys from the instance and history tables to allow dropping/renaming definition files
+ALTER TABLE workflow_instance ALTER COLUMN workflow_id DROP NOT NULL;
+ALTER TABLE workflow_instance ALTER COLUMN current_state_id DROP NOT NULL;
+ALTER TABLE workflow_history ALTER COLUMN from_state_id DROP NOT NULL;
+ALTER TABLE workflow_history ALTER COLUMN to_state_id DROP NOT NULL;
+
+-- Rename legacy tables to mark them as deprecated but keep them in database for emergency rollbacks
+ALTER TABLE workflow_transition RENAME TO deprecated_workflow_transition;
+ALTER TABLE workflow_state RENAME TO deprecated_workflow_state;
+ALTER TABLE workflow_definition RENAME TO deprecated_workflow_definition;
+
+-- ----------------------------------------------------------------------------
+-- 4. APPLY INDEXES FOR PERFORMANCE
+-- ----------------------------------------------------------------------------
+CREATE INDEX idx_instance_bpmn_def ON workflow_instance (bpmn_definition_id);
+CREATE INDEX idx_instance_task_code ON workflow_instance (current_task_code);
+CREATE INDEX idx_instance_entity ON workflow_instance (entity_type, entity_id);
+CREATE INDEX idx_history_codes ON workflow_history (from_state_code, to_state_code);
+
+
+CREATE TABLE workflow.workflow_entity_config
+(
+    config_id SERIAL PRIMARY KEY,
+
+    entity_type VARCHAR(100) NOT NULL,
+
+    specification_id VARCHAR(100) NOT NULL,
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_on TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    modified_on TIMESTAMP WITH TIME ZONE,
+
+    CONSTRAINT uq_workflow_entity_config
+        UNIQUE (entity_type)
+);

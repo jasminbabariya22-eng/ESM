@@ -1,0 +1,9 @@
+{
+  "name": "erm-workflow-root",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm run dev --prefix studio",
+    "build": "npm run build --prefix studio",
+    "preview": "npm run preview --prefix studio"
+  }
+}
